@@ -1,0 +1,32 @@
+﻿<Window x:Class="ShortPeakRobot.RobotControl"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ShortPeakRobot"
+        mc:Ignorable="d"
+        Title="RobotControl" Height="207" Width="540" Loaded="Window_Loaded">
+    <Grid>
+        <TextBox x:Name="TBSignalBuyID"  HorizontalAlignment="Left" Height="22" Margin="9,34,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="150"/>
+        <TextBox x:Name="TBSignalSellID" HorizontalAlignment="Left" Height="22" Margin="209,34,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="150"/>
+        <TextBox x:Name="TBTakeProfitID" HorizontalAlignment="Left" Height="22" Margin="209,83,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="150"/>
+        <TextBox x:Name="TBStopLossID" HorizontalAlignment="Left" Height="22" Margin="9,83,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="150"/>
+        <TextBox x:Name="TBPosition" HorizontalAlignment="Left" Height="22" Margin="417,34,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="100"/>
+        <TextBox x:Name="TBOpenPositionPrice" HorizontalAlignment="Left" Height="22" Margin="419,83,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="100"/>
+        <Button x:Name="BtnSaveState" HorizontalAlignment="Left" Height="22" Margin="275,123,0,0"   VerticalAlignment="Top" Width="129" Click="BtnSaveState_Click">Изменить состояние</Button>
+        <Button x:Name="BtnResetSLTP" HorizontalAlignment="Left" Height="22" Margin="135,123,0,0"   VerticalAlignment="Top" Width="129" Click="BtnResetSLTP_Click">Переставить СЛ ТП</Button>
+        <Label Content="Signal buy id" HorizontalAlignment="Left" Height="28" Margin="9,6,0,0" VerticalAlignment="Top" Width="103"/>
+        <Label Content="Signal sell id" HorizontalAlignment="Left" Height="28" Margin="194,6,0,0" VerticalAlignment="Top" Width="104"/>
+        <Label Content="Position" HorizontalAlignment="Left" Height="23" Margin="415,6,0,0" VerticalAlignment="Top" Width="103"/>
+
+        <Label Content="StopLoss id" HorizontalAlignment="Left" Height="23" Margin="8,58,0,0" VerticalAlignment="Top" Width="103"/>
+        <Label Content="TakeProfit id" HorizontalAlignment="Left" Height="25" Margin="206,58,0,0" VerticalAlignment="Top" Width="104"/>
+        <Label Content="Open Price" HorizontalAlignment="Left" Height="26" Margin="418,56,0,0" VerticalAlignment="Top" Width="103"/>
+
+        <Button x:Name="BtnCloseSignalBuy" Content="X" HorizontalAlignment="Left" Height="22" Margin="165,34,0,0" VerticalAlignment="Top" Width="25" Click="BtnCloseSignalBuy_Click"/>
+        <Button x:Name="BtnCloseSignalSell" Content="X" HorizontalAlignment="Left" Height="22" Margin="366,34,0,0" VerticalAlignment="Top" Width="25" Click="BtnCloseSignalSell_Click"/>
+        <Button x:Name="BtnCloseStopLoss" Content="X" HorizontalAlignment="Left" Height="22" Margin="165,83,0,0" VerticalAlignment="Top" Width="25" Click="BtnCloseStopLoss_Click"/>
+        <Button x:Name="BtnCloseTakeProfit" Content="X" HorizontalAlignment="Left" Height="22" Margin="366,83,0,0" VerticalAlignment="Top" Width="25" Click="BtnCloseTakeProfit_Click"/>
+
+    </Grid>
+</Window>
