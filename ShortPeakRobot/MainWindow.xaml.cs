@@ -86,9 +86,9 @@ namespace ShortPeakRobot
             foreach (var symbol in SymbolInitialization.list)
             {
                 //снимаем ордера
-                var cancelAllOrders = await BinanceApi.client.UsdFuturesApi.Trading.CancelAllOrdersAsync(symbol);
+                //var cancelAllOrders = await BinanceApi.client.UsdFuturesApi.Trading.CancelAllOrdersAsync(symbol);
 
-                MarketServices.CloseSymbolPositionAsync(symbol);
+                //MarketServices.CloseSymbolPositionAsync(symbol);
 
 
             }

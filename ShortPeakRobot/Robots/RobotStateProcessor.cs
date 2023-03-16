@@ -257,7 +257,7 @@ namespace ShortPeakRobot.Robots
                 if (cancelResult.Success)
                 {
                     RobotVM.robots[robotId].Log(LogType.RobotState, "PlacedSignalOrdersReaction cansel other signal order after reconnect");
-                    RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel signal order");
+                    //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel signal order");
                 }
                 else
                 {
@@ -274,7 +274,7 @@ namespace ShortPeakRobot.Robots
                 if (cancelResult.Success)
                 {
                     RobotVM.robots[robotId].Log(LogType.RobotState, "PlacedSignalOrdersReaction cansel other signal order after reconnect");
-                    RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel signal order");
+                    //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel signal order");
                 }
                 else
                 {
@@ -298,7 +298,7 @@ namespace ShortPeakRobot.Robots
                 if (placeOrderResult.Success)
                 {
                     RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSignalOrderReaction close position after reconnect");
-                    RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(placeOrderResult, robotId), "Close robot position");
+                    //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(placeOrderResult, robotId), "Close robot position");
                 }
                 else
                 {
@@ -314,7 +314,7 @@ namespace ShortPeakRobot.Robots
                     if (cancelResult.Success)
                     {
                         RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSignalOrderReaction cansel other signal order after reconnect");
-                        RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel other signal order");
+                        //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel other signal order");
                     }
                     else
                     {
@@ -335,7 +335,7 @@ namespace ShortPeakRobot.Robots
                 if (placeOrderResult.Success)
                 {
                     RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSignalOrderReaction after reconnect");
-                    RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(placeOrderResult, robotId), "Close robot position");
+                    //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(placeOrderResult, robotId), "Close robot position");
                 }
                 else
                 {
@@ -352,7 +352,7 @@ namespace ShortPeakRobot.Robots
                     if (cancelResult.Success)
                     {
                         RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSignalOrderReaction cansel other signal order after reconnect");
-                        RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel other signal order");
+                        //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel other signal order");
                     }
                     else
                     {
@@ -382,7 +382,7 @@ namespace ShortPeakRobot.Robots
                 if (cancelResult.Success)
                 {
                     RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSLPTOrderReaction cansel SLTP order after reconnect");
-                    RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel SLTP order");
+                    //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel SLTP order");
                 }
                 else
                 {
@@ -399,7 +399,7 @@ namespace ShortPeakRobot.Robots
                 if (cancelResult.Success)
                 {
                     RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSLPTOrderReaction cansel SLTP order after reconnect");
-                    RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel SLTP order");
+                    //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel SLTP order");
                 }
                 else
                 {
@@ -424,7 +424,7 @@ namespace ShortPeakRobot.Robots
                 if (placeOrderResult.Success)
                 {
                     RobotVM.robots[robotId].Log(LogType.RobotState, "FilledTwoSLPTOrderReaction close position after reconnect");
-                    RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(placeOrderResult, robotId), "Close robot position");
+                    //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(placeOrderResult, robotId), "Close robot position");
                 }
                 else
                 {
@@ -443,7 +443,7 @@ namespace ShortPeakRobot.Robots
                 if (placeOrderResult.Success)
                 {
                     RobotVM.robots[robotId].Log(LogType.RobotState, "FilledTwoSLPTOrderReaction close position after reconnect");
-                    RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(placeOrderResult, robotId), "Close robot position");
+                    //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(placeOrderResult, robotId), "Close robot position");
                 }
                 else
                 {

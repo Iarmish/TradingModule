@@ -121,7 +121,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
 
                 //------ выставление СЛ ТП после сбоя
-                await HLRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(HLRobot.RobotState.Position));
+                 HLRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(HLRobot.RobotState.Position));
 
                 //-------------
                 IsReady = true;
@@ -143,7 +143,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: HLRobot.RobotState, robotId: RobotId,
                     HLRobot.SignalBuyOrder, HLRobot.SignalSellOrder, HLRobot.StopLossOrder, HLRobot.TakeProfitOrder);
                 //------ выставление СЛ ТП после сбоя
-                await HLRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(HLRobot.RobotState.Position));
+                 HLRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(HLRobot.RobotState.Position));
 
                 HLRobot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
             }
@@ -188,7 +188,8 @@ namespace ShortPeakRobot.Robots.Algorithms
                     Quantity = HLRobot.BaseSettings.Volume,
                     Price = 0,
                     StopPrice = stopPrice,
-                    robotOrderType = RobotOrderType.SignalSell
+                    robotOrderType = RobotOrderType.SignalSell,
+                    robotRequestType = RobotRequestType.PlaceOrder
                 });
 
                 //var PlacedOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
@@ -241,7 +242,8 @@ namespace ShortPeakRobot.Robots.Algorithms
                     Quantity = HLRobot.BaseSettings.Volume,
                     Price = 0,
                     StopPrice = stopPrice,
-                    robotOrderType = RobotOrderType.SignalBuy
+                    robotOrderType = RobotOrderType.SignalBuy,
+                    robotRequestType = RobotRequestType.PlaceOrder
                 });
                 
             }

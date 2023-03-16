@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ShortPeakRobot.Robots
@@ -23,43 +24,15 @@ namespace ShortPeakRobot.Robots
     {
         public static void SaveState(int robotId, RobotState robotState)
         {
-            lock (RobotVM.robots[robotId].Locker)
-            {
-                var state = RobotVM.robots[robotId]._context.RobotStates
-                                .Where(x => x.ClientId == RobotsInitialization.ClientId && x.RobotId == robotId).FirstOrDefault();
 
-                if (state != null)
-                {
-                    state.Position = robotState.Position;
-                    state.OpenPositionPrice = robotState.OpenPositionPrice;
-                    state.SignalBuyOrderId = robotState.SignalBuyOrderId;
-                    state.SignalSellOrderId = robotState.SignalSellOrderId;
-                    state.StopLossOrderId = robotState.StopLossOrderId;
-                    state.TakeProfitOrderId = robotState.TakeProfitOrderId;
+            
+                RobotVM.robots[robotId].NeedSaveState = true;
 
-                    RobotVM.robots[robotId]._context.RobotStates.Update(state);
-                    RobotVM.robots[robotId]._context.SaveChanges();
-                }
-                else
-                {
-                    RobotVM.robots[robotId]._context.RobotStates.Add(robotState);
-                    RobotVM.robots[robotId]._context.SaveChanges();
-                }
-            }
+                
+            
 
 
-            //string fileName = robotId + "/RobotState.json";
 
-            //if (!Directory.Exists(robotId.ToString()))
-            //{
-            //    Directory.CreateDirectory(robotId.ToString());
-            //}
-
-
-            //using (FileStream fs = new FileStream(fileName, FileMode.Create))
-            //{
-            //    await JsonSerializer.SerializeAsync(fs, robotState);
-            //}
 
         }
 
@@ -86,26 +59,7 @@ namespace ShortPeakRobot.Robots
             }
 
 
-            //var fileName = robotId + "/RobotState.json";
-            //if (Directory.Exists(robotId.ToString()) && File.Exists(fileName))
-            //{
-            //    using (FileStream fs = new FileStream(fileName, FileMode.Open))
-            //    {
-            //        var state = await JsonSerializer.DeserializeAsync<RobotState>(fs);
-            //        if (state != null)
-            //        {
-            //            return state;
-            //        }
-            //        else
-            //        {
-            //            return null;
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    return null;
-            //}
+
 
 
 

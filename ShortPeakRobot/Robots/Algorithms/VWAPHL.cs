@@ -109,7 +109,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
 
                 //------ выставление СЛ ТП после сбоя
-                await VwapRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(VwapRobot.RobotState.Position));
+                 VwapRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(VwapRobot.RobotState.Position));
 
                 //-------------
                 IsReady = true;
@@ -130,7 +130,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: VwapRobot.RobotState, robotId: RobotId,
                     VwapRobot.StopLossOrder, VwapRobot.TakeProfitOrder, VwapRobot.StopLossOrder, VwapRobot.TakeProfitOrder);
                 //------ выставление СЛ ТП после сбоя
-                await VwapRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(VwapRobot.RobotState.Position));
+                 VwapRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(VwapRobot.RobotState.Position));
 
                 VwapRobot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
             }
@@ -167,19 +167,19 @@ namespace ShortPeakRobot.Robots.Algorithms
                     IsSignalSellOrderPlaced = true;
                     SignalSellPrice = vwap;
 
-                    var plasedOrder = await VwapRobot.PlaceSignalOrder( OrderSide.Sell, FuturesOrderType.Limit, vwap, null);
-                    if (plasedOrder.Success)
-                    {
-                        VwapRobot.SignalSellOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
-                        VwapRobot.RobotState.SignalSellOrderId = VwapRobot.SignalSellOrder.OrderId;
-                        RobotServices.SaveState(RobotId, VwapRobot.RobotState);
+                    //var plasedOrder = await VwapRobot.PlaceSignalOrder( OrderSide.Sell, FuturesOrderType.Limit, vwap, null);
+                    //if (plasedOrder.Success)
+                    //{
+                    //    VwapRobot.SignalSellOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
+                    //    VwapRobot.RobotState.SignalSellOrderId = VwapRobot.SignalSellOrder.OrderId;
+                    //    RobotServices.SaveState(RobotId, VwapRobot.RobotState);
 
-                        RobotServices.SaveOrder(RobotId, VwapRobot.SignalSellOrder, "Place Signal Sell Order");
-                    }
-                    else
-                    {                        
-                        VwapRobot.Log(LogType.Error, " Signal Sell Error " + plasedOrder.Error.ToString());
-                    }
+                    //    //RobotServices.SaveOrder(RobotId, VwapRobot.SignalSellOrder, "Place Signal Sell Order");
+                    //}
+                    //else
+                    //{                        
+                    //    VwapRobot.Log(LogType.Error, " Signal Sell Error " + plasedOrder.Error.ToString());
+                    //}
 
                 }
                 //------------ заменяем ордера ------------
@@ -196,19 +196,19 @@ namespace ShortPeakRobot.Robots.Algorithms
                         robotRequestType = RobotRequestType.CancelOrder
                     });
 
-                    var plasedOrder = await VwapRobot.PlaceSignalOrder(OrderSide.Sell, FuturesOrderType.Limit, vwap, null);
-                    if (plasedOrder.Success)
-                    {
-                        VwapRobot.SignalSellOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
-                        VwapRobot.RobotState.SignalSellOrderId = VwapRobot.SignalSellOrder.OrderId;
-                        RobotServices.SaveState(RobotId, VwapRobot.RobotState);
+                    //var plasedOrder = await VwapRobot.PlaceSignalOrder(OrderSide.Sell, FuturesOrderType.Limit, vwap, null);
+                    //if (plasedOrder.Success)
+                    //{
+                    //    VwapRobot.SignalSellOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
+                    //    VwapRobot.RobotState.SignalSellOrderId = VwapRobot.SignalSellOrder.OrderId;
+                    //    RobotServices.SaveState(RobotId, VwapRobot.RobotState);
 
-                        RobotServices.SaveOrder(RobotId, VwapRobot.SignalSellOrder, "Place Signal Sell Order");
-                    }
-                    else
-                    {
-                        VwapRobot.Log(LogType.Error, " Signal Sell Error " + plasedOrder.Error.ToString());
-                    }
+                    //    //RobotServices.SaveOrder(RobotId, VwapRobot.SignalSellOrder, "Place Signal Sell Order");
+                    //}
+                    //else
+                    //{
+                    //    VwapRobot.Log(LogType.Error, " Signal Sell Error " + plasedOrder.Error.ToString());
+                    //}
 
 
                 }
@@ -219,18 +219,18 @@ namespace ShortPeakRobot.Robots.Algorithms
                     IsSignalBuyOrderPlaced = true;
                     SignalBuyPrice = vwap;
 
-                    var plasedOrder = await VwapRobot.PlaceSignalOrder(OrderSide.Buy, FuturesOrderType.Limit, vwap, null);
-                    if (plasedOrder.Success)
-                    {
-                        VwapRobot.SignalBuyOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
-                        VwapRobot.RobotState.SignalBuyOrderId = VwapRobot.SignalBuyOrder.OrderId;
+                    //var plasedOrder = await VwapRobot.PlaceSignalOrder(OrderSide.Buy, FuturesOrderType.Limit, vwap, null);
+                    //if (plasedOrder.Success)
+                    //{
+                    //    VwapRobot.SignalBuyOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
+                    //    VwapRobot.RobotState.SignalBuyOrderId = VwapRobot.SignalBuyOrder.OrderId;
 
-                        RobotServices.SaveOrder(RobotId, VwapRobot.SignalBuyOrder, "Place Signal Buy Order");
-                    }
-                    else
-                    {
-                        VwapRobot.Log(LogType.Error, " Signal Buy Error " + plasedOrder.Error.ToString());
-                    }
+                    //    //RobotServices.SaveOrder(RobotId, VwapRobot.SignalBuyOrder, "Place Signal Buy Order");
+                    //}
+                    //else
+                    //{
+                    //    VwapRobot.Log(LogType.Error, " Signal Buy Error " + plasedOrder.Error.ToString());
+                    //}
 
                 }
                 //------------ заменяем ордера ------------
@@ -246,19 +246,19 @@ namespace ShortPeakRobot.Robots.Algorithms
                         robotRequestType = RobotRequestType.CancelOrder
                     });
 
-                    var plasedOrder = await VwapRobot.PlaceSignalOrder(OrderSide.Buy, FuturesOrderType.Limit, vwap, null);
-                    if (plasedOrder.Success)
-                    {
-                        VwapRobot.SignalBuyOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
-                        VwapRobot.RobotState.SignalBuyOrderId = VwapRobot.SignalBuyOrder.OrderId;
-                        RobotServices.SaveState(RobotId, VwapRobot.RobotState);
+                    //var plasedOrder = await VwapRobot.PlaceSignalOrder(OrderSide.Buy, FuturesOrderType.Limit, vwap, null);
+                    //if (plasedOrder.Success)
+                    //{
+                    //    VwapRobot.SignalBuyOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
+                    //    VwapRobot.RobotState.SignalBuyOrderId = VwapRobot.SignalBuyOrder.OrderId;
+                    //    RobotServices.SaveState(RobotId, VwapRobot.RobotState);
 
-                        RobotServices.SaveOrder(RobotId, VwapRobot.SignalBuyOrder, "Place Signal Buy Order");
-                    }
-                    else
-                    {
-                        VwapRobot.Log(LogType.Error, " Signal Buy Error " + plasedOrder.Error.ToString());
-                    }
+                    //    //RobotServices.SaveOrder(RobotId, VwapRobot.SignalBuyOrder, "Place Signal Buy Order");
+                    //}
+                    //else
+                    //{
+                    //    VwapRobot.Log(LogType.Error, " Signal Buy Error " + plasedOrder.Error.ToString());
+                    //}
 
 
                 }

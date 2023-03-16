@@ -7,6 +7,7 @@ using ShortPeakRobot.API;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
 using ShortPeakRobot.Market;
+using ShortPeakRobot.Migrations;
 using ShortPeakRobot.Robots.Algorithms;
 using ShortPeakRobot.Robots.DTO;
 using ShortPeakRobot.Robots.Models;
@@ -35,6 +36,12 @@ namespace ShortPeakRobot.Robots
         private RobotCommands Command { get; set; } = RobotCommands.Nothing;
 
         public object Locker = new object();
+
+        //public bool NeedSaveRobotState { get; set; }
+
+
+        public bool NeedSaveState { get; set; }
+
 
         private bool _Selected;
         public bool Selected
@@ -141,6 +148,18 @@ namespace ShortPeakRobot.Robots
         {
 
             var arrClientOrderId = data.Data.UpdateData.ClientOrderId.Split(':');
+            //сохраняем ордер
+            if (arrClientOrderId.Length > 1 && arrClientOrderId[0] == "robot")
+            {
+                var id = arrClientOrderId[1];
+
+                if (Convert.ToInt32(id) == Id)
+                {
+                    var order = RobotOrderDTO.DTO(data, Id);
+                    RobotServices.SaveOrder(Id, order, "");//to Db
+                }
+            }
+            //сохраняем сделки
             if (data.Data.UpdateData.Status == OrderStatus.Filled || data.Data.UpdateData.Status == OrderStatus.PartiallyFilled)
             {
                 if (arrClientOrderId.Length > 1 && arrClientOrderId[0] == "robot")
@@ -154,7 +173,7 @@ namespace ShortPeakRobot.Robots
                     }
                 }
             }
-            
+
 
         }
 
@@ -165,28 +184,28 @@ namespace ShortPeakRobot.Robots
             if (data.Data.UpdateData.OrderId == SignalSellOrder.OrderId &&
                 data.Data.UpdateData.Status == OrderStatus.Filled)
             {
-                var trade = RobotTradeDTO.DTO(data, Id);
-                RobotServices.SaveTrade(trade, Id);//to Db
-
-                //CancelOrderAsync(SignalBuyOrder, "Cancel Signal Order");
-                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
+                if (SignalBuyOrder.OrderId != 0)
                 {
-                    RobotId = Id,
-                    Symbol = Symbol,
-                    robotOrderType = RobotOrderType.SignalBuy,
-                    robotRequestType = RobotRequestType.CancelOrder
-                });
+                    MarketData.MarketManager.AddRequestQueue(new BinanceRequest
+                    {
+                        RobotId = Id,
+                        Symbol = Symbol,
+                        robotRequestType = RobotRequestType.CancelOrder,
+                        OrderId = SignalBuyOrder.OrderId
+                    });
+                    RobotState.SignalBuyOrderId = 0;
+                    SignalBuyOrder = new();
+                }
 
                 var volume = data.Data.UpdateData.Quantity;
 
                 Task.Run(async () =>// выставляем СЛ ТП
                 {
                     var SLTPsuccess = await SetSLTP(OrderSide.Sell, volume, (decimal)SignalSellOrder.StopPrice);
-                    if (!SLTPsuccess)
-                    {
-                        //обработать
-                        Log(LogType.Error, "SLTP errror");
-                    }
+
+                    Thread.Sleep(500);
+                    RobotServices.SaveState(Id, RobotState);
+
                 });
                 return;
             }
@@ -194,28 +213,28 @@ namespace ShortPeakRobot.Robots
             if (data.Data.UpdateData.OrderId == SignalBuyOrder.OrderId &&
                 data.Data.UpdateData.Status == OrderStatus.Filled)
             {
-                var trade = RobotTradeDTO.DTO(data, Id);
-                RobotServices.SaveTrade(trade, Id);//to Db
-
-                //CancelOrderAsync(SignalSellOrder, "Cancel Signal Order");
-                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
+                if (SignalSellOrder.OrderId != 0)
                 {
-                    RobotId = Id,
-                    Symbol = Symbol,
-                    robotOrderType = RobotOrderType.SignalSell,
-                    robotRequestType = RobotRequestType.CancelOrder
-                });
+                    MarketData.MarketManager.AddRequestQueue(new BinanceRequest
+                    {
+                        RobotId = Id,
+                        Symbol = Symbol,
+                        robotRequestType = RobotRequestType.CancelOrder,
+                        OrderId = SignalSellOrder.OrderId
+                    });
+                    RobotState.SignalSellOrderId = 0;
+                    SignalSellOrder = new();
+                }
+
 
                 var volume = data.Data.UpdateData.Quantity;
 
                 Task.Run(async () =>
                 {
                     var SLTPsuccess = await SetSLTP(OrderSide.Buy, volume, (decimal)SignalBuyOrder.StopPrice);
-                    if (!SLTPsuccess)
-                    {
-                        //обработать
-                        Log(LogType.Error, "SLTP errror");
-                    }
+                    Thread.Sleep(500);
+                    RobotServices.SaveState(Id, RobotState);
+
                 });
                 return;
             }
@@ -225,20 +244,20 @@ namespace ShortPeakRobot.Robots
                 data.Data.UpdateData.Status == OrderStatus.Filled)
             {
                 Position = 0;
-                RobotState = new();
-                RobotServices.SaveState(Id, RobotState);
 
-                //CancelOrderAsync(TakeProfitOrder, "Cancel TakeProfit Order");
+
+
                 MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
                     RobotId = Id,
                     Symbol = Symbol,
-                    robotOrderType = RobotOrderType.TakeProfit,
-                    robotRequestType = RobotRequestType.CancelOrder
+                    robotRequestType = RobotRequestType.CancelOrder,
+                    OrderId = TakeProfitOrder.OrderId
                 });
 
-                var trade = RobotTradeDTO.DTO(data, Id);
-                RobotServices.SaveTrade(trade, Id);//to Db
+                TakeProfitOrder = new();
+                RobotState = new();
+                RobotServices.SaveState(Id, RobotState);
 
                 MarketServices.GetRobotData(Id);//for UI
 
@@ -250,20 +269,21 @@ namespace ShortPeakRobot.Robots
                 data.Data.UpdateData.Status == OrderStatus.Filled)
             {
                 Position = 0;
-                RobotState = new();
-                RobotServices.SaveState(Id, RobotState);
+
 
                 //CancelOrderAsync(StopLossOrder, "Cancel StopLoss Order");
                 MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
                     RobotId = Id,
                     Symbol = Symbol,
-                    robotOrderType = RobotOrderType.StopLoss,
-                    robotRequestType = RobotRequestType.CancelOrder
+                    robotRequestType = RobotRequestType.CancelOrder,
+                    OrderId = StopLossOrder.OrderId
                 });
 
-                var trade = RobotTradeDTO.DTO(data, Id);
-                RobotServices.SaveTrade(trade, Id);//to Db
+                StopLossOrder = new();
+                RobotState = new();
+                RobotServices.SaveState(Id, RobotState);
+
                 MarketServices.GetRobotData(Id);//for UI
 
                 return;
@@ -290,12 +310,11 @@ namespace ShortPeakRobot.Robots
                 {
                     RobotId = Id,
                     Symbol = Symbol,
-                    robotOrderType = RobotOrderType.StopLoss,
-                    robotRequestType = RobotRequestType.CancelOrder
+                    robotRequestType = RobotRequestType.CancelOrder,
+                    OrderId = StopLossOrder.OrderId
                 });
 
-                var trade = RobotTradeDTO.DTO(data, Id);
-                RobotServices.SaveTrade(trade, Id);//to Db
+
 
                 SetPartialStopLoss(data.Data.UpdateData.Side, data.Data.UpdateData.Quantity);
 
@@ -307,7 +326,7 @@ namespace ShortPeakRobot.Robots
         }
 
 
-        
+
 
 
         public void Run()
@@ -360,93 +379,105 @@ namespace ShortPeakRobot.Robots
 
         private void DbManager()
         {
-            lock (Locker)
+            bool needSaveContext = false;
+
+            if (NeedSaveState)
             {
-                if (RobotLogsQueue.Count > 0)
+                needSaveContext = true;
+                var state = _context.RobotStates
+                                .Where(x => x.ClientId == RobotsInitialization.ClientId && x.RobotId == Id).FirstOrDefault();
+                Thread.Sleep(30);
+
+                if (state != null)
                 {
-                    var RobotLogsTemp = new List<RobotLog>();
-                    RobotLogsQueue.ForEach(x => RobotLogsTemp.Add(RobotLogsDTO.DTO(x)));
-                    RobotLogsQueue.Clear();
+                    state.Position = RobotState.Position;
+                    state.OpenPositionPrice = RobotState.OpenPositionPrice;
+                    state.SignalBuyOrderId = RobotState.SignalBuyOrderId;
+                    state.SignalSellOrderId = RobotState.SignalSellOrderId;
+                    state.StopLossOrderId = RobotState.StopLossOrderId;
+                    state.TakeProfitOrderId = RobotState.TakeProfitOrderId;
 
-
-
-                    try
-                    {
-                        _context.RobotLogs.AddRange(RobotLogsTemp);
-                        _context.SaveChanges();
-                        Thread.Sleep(200);
-                    }
-                    catch (Exception)
-                    {
-                        throw;
-                    }
-
-
-                    if (MarketData.Info.SelectedRobotId == Id)
-                    {
-
-                        App.Current.Dispatcher.Invoke(() =>
-                        {
-                            LogVM.logs.Clear();
-                            LogVM.AddRange(_context.RobotLogs.Where(x => x.ClientId == RobotsInitialization.ClientId &&
-                            x.RobotId == Id && x.Date > MarketData.Info.StartSessionDate).ToList());
-
-                        });
-                    }
-
+                    _context.RobotStates.Update(state);
                 }
-
-
-                if (RobotOrdersQueue.Count > 0)
+                else
                 {
-                    var RobotOrdersTemp = new List<RobotOrder>();
+                    _context.RobotStates.Add(RobotState);
 
-                    RobotOrdersQueue.ForEach(x => RobotOrdersTemp.Add(RobotOrderDTO.DTO(x)));
-                    RobotOrdersQueue.Clear();
-
-
-                    _context.RobotOrders.AddRange(RobotOrdersTemp);
-                        _context.SaveChanges();
-                        
-                        Thread.Sleep(200);
-                    
-
-                    if (MarketData.Info.SelectedRobotId == Id)
-                    {
-
-                        App.Current.Dispatcher.Invoke(() =>
-                        {
-                            MarketServices.GetRobotData(Id);
-                        });
-                    }
-                }
-
-
-                if (RobotTradesQueue.Count > 0)
-                {
-                    var RobotTradesTemp = new List<RobotTrade>();
-
-                    RobotTradesQueue.ForEach(x => RobotTradesTemp.Add(RobotTradeDTO.DTO(x)));
-                    RobotTradesQueue.Clear();
-
-
-                    _context.RobotTrades.AddRange(RobotTradesQueue);
-                        _context.SaveChanges();                        
-                        Thread.Sleep(200);
-                   
-
-
-                    if (MarketData.Info.SelectedRobotId == Id)
-                    {
-
-                        App.Current.Dispatcher.Invoke(() =>
-                        {
-                            MarketServices.GetRobotData(Id);
-                        });
-                    }
-                    MarketServices.GetSessioProfit();
                 }
             }
+
+            if (RobotLogsQueue.Count > 0)
+            {
+                needSaveContext = true;
+                var RobotLogsTemp = new List<RobotLog>();
+
+                lock (Locker)
+                {
+                    foreach (var log in RobotLogsQueue)
+                    {
+                        RobotLogsTemp.Add(RobotLogsDTO.DTO(log));
+                    }
+
+                    RobotLogsQueue.Clear();
+                }
+
+                _context.RobotLogs.AddRange(RobotLogsTemp);
+
+            }
+
+
+            if (RobotOrdersQueue.Count > 0)
+            {
+                needSaveContext = true;
+                var RobotOrdersTemp = new List<RobotOrder>();
+
+                lock (Locker)
+                {
+                    foreach (var order in RobotOrdersQueue)
+                    {
+                        RobotOrdersTemp.Add(RobotOrderDTO.DTO(order));
+                    }
+
+                    RobotOrdersQueue.Clear();
+                }
+
+
+
+                _context.RobotOrders.AddRange(RobotOrdersTemp);
+            }
+
+
+            if (RobotTradesQueue.Count > 0)
+            {
+                needSaveContext = true;
+                var RobotTradesTemp = new List<RobotTrade>();
+
+                lock (Locker)
+                {
+                    foreach (var trade in RobotTradesQueue)
+                    {
+                        RobotTradesTemp.Add(RobotTradeDTO.DTO(trade));
+                    }
+
+                    RobotTradesQueue.Clear();
+                }
+
+
+                _context.RobotTrades.AddRange(RobotTradesTemp);
+
+                Task.Run(() =>
+                {
+                    Thread.Sleep(1000);
+                    MarketServices.GetSessioProfit();
+
+                });
+            }
+
+            if (needSaveContext)
+            {
+                _context.SaveChanges();
+            }
+
         }
 
 
@@ -459,7 +490,7 @@ namespace ShortPeakRobot.Robots
 
             if (Position > 0)
             {
-                
+
                 var plasedOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
                        symbol: Symbol,
                        side: OrderSide.Sell,
@@ -468,7 +499,7 @@ namespace ShortPeakRobot.Robots
                        newClientOrderId: "robot:" + Id + ":" +
                        new DateTimeOffset(DateTime.UtcNow, TimeSpan.Zero).ToUnixTimeSeconds());
 
-                RobotServices.SaveOrder(Id, RobotOrderDTO.DTO(plasedOrder, Id), "Close position");
+                //RobotServices.SaveOrder(Id, RobotOrderDTO.DTO(plasedOrder, Id), "Close position");
                 MarketServices.GetRobotData(Id);//for IU
             }
 
@@ -482,7 +513,7 @@ namespace ShortPeakRobot.Robots
                        newClientOrderId: "robot:" + Id + ":" +
                        new DateTimeOffset(DateTime.UtcNow, TimeSpan.Zero).ToUnixTimeSeconds());
 
-                RobotServices.SaveOrder(Id, RobotOrderDTO.DTO(plasedOrder, Id), "Close position");
+                //RobotServices.SaveOrder(Id, RobotOrderDTO.DTO(plasedOrder, Id), "Close position");
                 MarketServices.GetRobotData(Id);//for IU
             }
 
@@ -507,7 +538,7 @@ namespace ShortPeakRobot.Robots
 
             if (plasedOrder.Success)
             {
-                RobotServices.SaveOrder(Id, RobotOrderDTO.DTO(plasedOrder, Id), "Change position");
+                //RobotServices.SaveOrder(Id, RobotOrderDTO.DTO(plasedOrder, Id), "Change position");
                 MarketServices.GetRobotData(Id);//for IU
 
                 if (side == OrderSide.Buy)
@@ -556,110 +587,73 @@ namespace ShortPeakRobot.Robots
             var SLTPsuccess = true;
             if (side == OrderSide.Sell)// СЛ ТП на продажу
             {
-                //var signalPrice = 0m;
-                //if (SignalSellOrder.StopPrice == 0) { signalPrice = SignalSellOrder.Price; }
-                //else { signalPrice = (decimal)SignalSellOrder.StopPrice; }
-
                 Position = -volume;
                 RobotState.Position = -volume;
-                RobotServices.SaveState(Id, RobotState);
                 //--------StopLoss
-                var placedStopLossOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
-                    symbol: Symbol,
-                    side: OrderSide.Buy,
-                    type: FuturesOrderType.StopMarket,
-                    quantity: volume,
-                    stopPrice: signalPrice + BaseSettings.StopLossPercent,
-                    timeInForce: TimeInForce.GoodTillCanceled);
-
-                if (placedStopLossOrder.Success)
+                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
-                    StopLossOrder = RobotOrderDTO.DTO(placedStopLossOrder, Id);
-                    RobotState.StopLossOrderId = StopLossOrder.OrderId;
+                    RobotId = Id,
+                    Symbol = Symbol,
+                    Side = (int)OrderSide.Buy,
+                    OrderType = (int)FuturesOrderType.StopMarket,
+                    Quantity = volume,
+                    Price = 0,
+                    StopPrice = signalPrice + BaseSettings.StopLossPercent,
+                    robotOrderType = RobotOrderType.StopLoss,
+                    robotRequestType = RobotRequestType.PlaceOrder
+                });
 
-                    RobotServices.SaveOrder(Id, StopLossOrder, "Place StopLoss Order");
-                }
-                else
-                {
-                    SLTPsuccess = false;
-                    Log(LogType.Error, " StopLoss Error " + placedStopLossOrder.Error.ToString());
-                }
+
                 //--------TakeProfit
-                var placedTakeProfitOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
-                    symbol: Symbol,
-                    side: OrderSide.Buy,
-                    type: FuturesOrderType.Limit,
-                    quantity: volume,
-                    price: signalPrice - BaseSettings.TakeProfitPercent,
-                    timeInForce: TimeInForce.GoodTillCanceled);
-
-                if (placedTakeProfitOrder.Success)
+                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
-                    TakeProfitOrder = RobotOrderDTO.DTO(placedTakeProfitOrder, Id);
-                    RobotState.TakeProfitOrderId = TakeProfitOrder.OrderId;
+                    RobotId = Id,
+                    Symbol = Symbol,
+                    Side = (int)OrderSide.Buy,
+                    OrderType = (int)FuturesOrderType.Limit,
+                    Quantity = volume,
+                    Price = signalPrice - BaseSettings.TakeProfitPercent,
+                    StopPrice = 0,
+                    robotOrderType = RobotOrderType.TakeProfit,
+                    robotRequestType = RobotRequestType.PlaceOrder
+                });
 
-                    RobotServices.SaveOrder(Id, TakeProfitOrder, "Place TakeProfit Order");
-                }
-                else
-                {
-                    SLTPsuccess = false;
-                    Log(LogType.Error, "TakeProfit Error " + placedTakeProfitOrder.Error.ToString());
-                }
 
                 OpenPositionPrice = (decimal)SignalSellOrder.StopPrice;
                 RobotState.OpenPositionPrice = (decimal)SignalSellOrder.StopPrice;
             }
             else // СЛ ТП на покупку
             {
-                //var signalPrice = 0m;
-                //if (SignalBuyOrder.StopPrice == 0) { signalPrice = SignalBuyOrder.Price; }
-                //else { signalPrice = (decimal)SignalBuyOrder.StopPrice; }
-
                 Position = volume;
                 RobotState.Position = volume;
-                RobotServices.SaveState(Id, RobotState);
+
                 //--------StopLoss
-                var placedStopLossOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
-                    symbol: Symbol,
-                    side: OrderSide.Sell,
-                    type: FuturesOrderType.StopMarket,
-                    quantity: volume,
-                    stopPrice: signalPrice - BaseSettings.StopLossPercent,
-                    timeInForce: TimeInForce.GoodTillCanceled);
-
-                if (placedStopLossOrder.Success)
+                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
-                    StopLossOrder = RobotOrderDTO.DTO(placedStopLossOrder, Id);
-                    RobotState.StopLossOrderId = StopLossOrder.OrderId;
+                    RobotId = Id,
+                    Symbol = Symbol,
+                    Side = (int)OrderSide.Sell,
+                    OrderType = (int)FuturesOrderType.StopMarket,
+                    Quantity = volume,
+                    Price = 0,
+                    StopPrice = signalPrice - BaseSettings.StopLossPercent,
+                    robotOrderType = RobotOrderType.StopLoss,
+                    robotRequestType = RobotRequestType.PlaceOrder
+                });
 
-                    RobotServices.SaveOrder(Id, StopLossOrder, "Place StopLoss Order");
-                }
-                else
-                {
-                    SLTPsuccess = false;
-                    Log(LogType.Error, "StopLoss Error " + placedStopLossOrder.Error.ToString());
-                }
                 //--------TakeProfit
-                var placedTakeProfitOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
-                    symbol: Symbol,
-                    side: OrderSide.Sell,
-                    type: FuturesOrderType.Limit,
-                    quantity: volume,
-                    price: signalPrice + BaseSettings.TakeProfitPercent,
-                    timeInForce: TimeInForce.GoodTillCanceled);
-
-                if (placedTakeProfitOrder.Success)
+                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
-                    TakeProfitOrder = RobotOrderDTO.DTO(placedTakeProfitOrder, Id);
-                    RobotState.TakeProfitOrderId = TakeProfitOrder.OrderId;
-
-                    RobotServices.SaveOrder(Id, TakeProfitOrder, "Place TakeProfit Order");
-                }
-                else
-                {
-                    SLTPsuccess = false;
-                    Log(LogType.Error, "TakeProfit Error " + placedTakeProfitOrder.Error.ToString());
-                }
+                    RobotId = Id,
+                    Symbol = Symbol,
+                    Side = (int)OrderSide.Sell,
+                    OrderType = (int)FuturesOrderType.Limit,
+                    Quantity = volume,
+                    Price = signalPrice + BaseSettings.TakeProfitPercent,
+                    StopPrice = 0,
+                    robotOrderType = RobotOrderType.TakeProfit,
+                    robotRequestType = RobotRequestType.PlaceOrder
+                });
 
                 OpenPositionPrice = (decimal)SignalBuyOrder.StopPrice;
                 RobotState.OpenPositionPrice = (decimal)SignalBuyOrder.StopPrice;
@@ -668,26 +662,26 @@ namespace ShortPeakRobot.Robots
             RobotState.SignalSellOrderId = 0;
             SignalBuyOrder = new();
             RobotState.SignalBuyOrderId = 0;
-            RobotServices.SaveState(Id, RobotState);
+
 
             MarketServices.GetRobotData(Id);
             return SLTPsuccess;
         }
 
-        public async void CancelOrderAsync2(RobotOrder order, string desc)
-        {
-            if (order.Status == (int)OrderStatus.New)
-            {
-                var result = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(Symbol, order.OrderId);
-                if (!result.Success)
-                {
-                    //обработать
-                    Log(LogType.Error, desc);
-                }
-                RobotServices.SaveOrder(Id, order, desc);
-            }
-            MarketServices.GetRobotData(Id);
-        }
+        //public async void CancelOrderAsync(RobotOrder order, string desc)
+        //{
+        //    if (order.Status == (int)OrderStatus.New)
+        //    {
+        //        var result = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(Symbol, order.OrderId);
+        //        if (!result.Success)
+        //        {
+        //            //обработать
+        //            Log(LogType.Error, desc);
+        //        }
+        //        //RobotServices.SaveOrder(Id, order, desc);
+        //    }
+        //    MarketServices.GetRobotData(Id);
+        //}
 
         public async void CancelOrderByIdAsync(long orderId, string desc)
         {
@@ -704,7 +698,7 @@ namespace ShortPeakRobot.Robots
             MarketServices.GetRobotData(Id);
         }
 
-        private async Task SetPartialStopLoss(OrderSide side, decimal volume)
+        private void SetPartialStopLoss(OrderSide side, decimal volume)
         {
             if (side == OrderSide.Buy)
             {
@@ -713,25 +707,19 @@ namespace ShortPeakRobot.Robots
                 else { signalPrice = (decimal)SignalSellOrder.StopPrice; }
 
                 //--------StopLoss
-                var placedStopLossOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
-                    symbol: Symbol,
-                    side: OrderSide.Buy,
-                    type: FuturesOrderType.StopMarket,
-                    quantity: BaseSettings.Volume,
-                    stopPrice: signalPrice + BaseSettings.StopLossPercent,
-                    timeInForce: TimeInForce.GoodTillCanceled);
-
-                if (placedStopLossOrder.Success)
+                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
-                    StopLossOrder = RobotOrderDTO.DTO(placedStopLossOrder, Id);
-                    RobotState.StopLossOrderId = StopLossOrder.OrderId;
+                    RobotId = Id,
+                    Symbol = Symbol,
+                    Side = (int)OrderSide.Buy,
+                    OrderType = (int)FuturesOrderType.StopMarket,
+                    Quantity = volume,
+                    Price = 0,
+                    StopPrice = signalPrice + BaseSettings.StopLossPercent,
+                    robotOrderType = RobotOrderType.StopLoss,
+                    robotRequestType = RobotRequestType.PlaceOrder
+                });
 
-                    RobotServices.SaveOrder(Id, StopLossOrder, "Place StopLoss Order");
-                }
-                else
-                {
-                    RobotVM.robots[Id].Log(LogType.Error, " StopLoss Error " + placedStopLossOrder.Error.ToString());
-                }
 
             }
             else
@@ -741,25 +729,19 @@ namespace ShortPeakRobot.Robots
                 else { signalPrice = (decimal)SignalBuyOrder.StopPrice; }
 
                 //--------StopLoss
-                var placedStopLossOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
-                    symbol: RobotVM.robots[Id].Symbol,
-                    side: OrderSide.Sell,
-                    type: FuturesOrderType.StopMarket,
-                    quantity: BaseSettings.Volume,
-                    stopPrice: signalPrice - BaseSettings.StopLossPercent,
-                    timeInForce: TimeInForce.GoodTillCanceled);
-
-                if (placedStopLossOrder.Success)
+                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
-                    StopLossOrder = RobotOrderDTO.DTO(placedStopLossOrder, Id);
-                    RobotState.StopLossOrderId = StopLossOrder.OrderId;
+                    RobotId = Id,
+                    Symbol = Symbol,
+                    Side = (int)OrderSide.Sell,
+                    OrderType = (int)FuturesOrderType.StopMarket,
+                    Quantity = volume,
+                    Price = 0,
+                    StopPrice = signalPrice - BaseSettings.StopLossPercent,
+                    robotOrderType = RobotOrderType.StopLoss,
+                    robotRequestType = RobotRequestType.PlaceOrder
+                });
 
-                    RobotServices.SaveOrder(Id, StopLossOrder, "Place StopLoss Order");
-                }
-                else
-                {
-                    Log(LogType.Error, "StopLoss Error " + placedStopLossOrder.Error.ToString());
-                }
             }
         }
 
@@ -768,57 +750,54 @@ namespace ShortPeakRobot.Robots
             if (SignalBuyOrder.Status == (int)OrderStatus.New ||
                 SignalBuyOrder.Status == (int)OrderStatus.PartiallyFilled)
             {
-                //CancelOrderAsync(SignalBuyOrder, "SignalHigh Close Robot Position");
                 MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
                     RobotId = Id,
                     Symbol = Symbol,
-                    robotOrderType = RobotOrderType.SignalBuy,
-                    robotRequestType = RobotRequestType.CancelOrder
+                    robotRequestType = RobotRequestType.CancelOrder,
+                    OrderId = SignalBuyOrder.OrderId
                 });
             }
 
             if (SignalSellOrder.Status == (int)OrderStatus.New ||
                 SignalSellOrder.Status == (int)OrderStatus.PartiallyFilled)
             {
-                //CancelOrderAsync(SignalSellOrder, "SignalLow Close Robot Position");
+
                 MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
                     RobotId = Id,
                     Symbol = Symbol,
-                    robotOrderType = RobotOrderType.SignalSell,
-                    robotRequestType = RobotRequestType.CancelOrder
+                    robotRequestType = RobotRequestType.CancelOrder,
+                    OrderId = SignalSellOrder.OrderId
                 });
             }
 
             if (StopLossOrder.Status == (int)OrderStatus.New ||
                 StopLossOrder.Status == (int)OrderStatus.PartiallyFilled)
             {
-                //CancelOrderAsync(StopLossOrder, "StopLoss Close Robot Position");
                 MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
                     RobotId = Id,
                     Symbol = Symbol,
-                    robotOrderType = RobotOrderType.StopLoss,
-                    robotRequestType = RobotRequestType.CancelOrder
+                    robotRequestType = RobotRequestType.CancelOrder,
+                    OrderId = StopLossOrder.OrderId
                 });
             }
 
             if (TakeProfitOrder.Status == (int)OrderStatus.New ||
                 TakeProfitOrder.Status == (int)OrderStatus.PartiallyFilled)
             {
-                //CancelOrderAsync(TakeProfitOrder, "TakeProfit Close Robot Position");
                 MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
                     RobotId = Id,
                     Symbol = Symbol,
-                    robotOrderType = RobotOrderType.TakeProfit,
-                    robotRequestType = RobotRequestType.CancelOrder
+                    robotRequestType = RobotRequestType.CancelOrder,
+                    OrderId = TakeProfitOrder.OrderId
                 });
             }
             RobotState = new();
             await ResetRobotState();
-            //RobotServices.SaveState(Id, RobotState);
+            RobotServices.SaveState(Id, RobotState);
 
             IsRun = false;//robot stop
             MarketServices.GetRobotData(Id);
@@ -863,27 +842,24 @@ namespace ShortPeakRobot.Robots
 
         }
 
-        public async Task SetSLTPAfterFail(CandlesAnalyse candlesAnalyse, decimal volume)
+        public void SetSLTPAfterFail(CandlesAnalyse candlesAnalyse, decimal volume)
         {
-            if (candlesAnalyse == CandlesAnalyse.BuySLTP)
+            Task.Run(async () =>// выставляем СЛ ТП
             {
-                var SLTPsuccess = await SetSLTP(OrderSide.Buy, volume, (decimal)SignalBuyOrder.StopPrice);
-                if (!SLTPsuccess)
+                if (candlesAnalyse == CandlesAnalyse.BuySLTP)
                 {
-                    //обработать
-                    Log(LogType.Error, "SLTP errror");
+                    var SLTPsuccess = await SetSLTP(OrderSide.Buy, volume, (decimal)SignalBuyOrder.StopPrice);
+                    Thread.Sleep(500);
+                    RobotServices.SaveState(Id, RobotState);
                 }
-            }
 
-            if (candlesAnalyse == CandlesAnalyse.SellSLTP)
-            {
-                var SLTPsuccess = await SetSLTP(OrderSide.Sell, volume, (decimal)SignalSellOrder.StopPrice);
-                if (!SLTPsuccess)
+                if (candlesAnalyse == CandlesAnalyse.SellSLTP)
                 {
-                    //обработать
-                    Log(LogType.Error, "SLTP errror");
+                    var SLTPsuccess = await SetSLTP(OrderSide.Sell, volume, (decimal)SignalSellOrder.StopPrice);
+                    Thread.Sleep(500);
+                    RobotServices.SaveState(Id, RobotState);
                 }
-            }
+            });
         }
 
 
@@ -908,7 +884,7 @@ namespace ShortPeakRobot.Robots
             return true;
         }
 
-        public async Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceSignalOrder(OrderSide side, FuturesOrderType type,
+        public async Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceSignalOrder2(OrderSide side, FuturesOrderType type,
             decimal? price = null, decimal? stopPrice = null)
         {
             var order = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(

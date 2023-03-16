@@ -1,5 +1,8 @@
 ﻿using Binance.Net.Objects.Models.Futures;
+using Binance.Net.Objects.Models.Futures.Socket;
+using CryptoExchange.Net.CommonObjects;
 using CryptoExchange.Net.Objects;
+using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
 using System.Collections.Generic;
@@ -10,7 +13,22 @@ namespace ShortPeakRobot.Robots.DTO
 {
     public static class RobotOrderDTO
     {
-        
+        public static RobotOrder DTO(DataEvent<BinanceFuturesStreamOrderUpdate> data, int robotId)
+        {
+            return new RobotOrder {
+                OrderId = data.Data.UpdateData.OrderId,
+                ClientId = RobotsInitialization.ClientId,
+                RobotId = robotId,
+                StopPrice = data.Data.UpdateData.StopPrice,
+                Quantity = data.Data.UpdateData.Quantity,
+                Price = data.Data.UpdateData.Price,
+                Status = (int)data.Data.UpdateData.Status,
+                Side = (int)data.Data.UpdateData.Side,
+                Type = (int)data.Data.UpdateData.Type,
+                PlacedTime = data.Data.UpdateData.UpdateTime,
+                Symbol = data.Data.UpdateData.Symbol,
+            };
+        }
 
 
         public static RobotOrder DTO(WebCallResult<BinanceFuturesOrder> order, int robotId)

@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
 using static ShortPeakRobot.MainWindow;
@@ -31,9 +32,7 @@ namespace ShortPeakRobot.Market
         public Dictionary<string, Subscribe> subscribes { get; set; }
         public List<CallResult<UpdateSubscription>> updateSubscriptions { get; set; } = new List<CallResult<UpdateSubscription>>();
 
-        private DateTime ListenKeyTimeUpdate = DateTime.UtcNow;
-
-        //private List<BinanceRequest> queue = new List<BinanceRequest>();
+        private DateTime ListenKeyTimeUpdate = DateTime.UtcNow;        
 
         private List<BinanceRequest> RequestQueue { get; set; } = new List<BinanceRequest>();
 
@@ -41,6 +40,10 @@ namespace ShortPeakRobot.Market
         private object UserDataSubcription { get; set; }
 
         public WebCallResult<string> ListenKey;
+
+        public int orderCount { get; set; }
+        //RobotServices.SaveState(q.RobotId, RobotVM.robots[q.RobotId].RobotState);
+
         public MarketManager()
         {
             _context = new ApplicationDbContext();
@@ -118,74 +121,44 @@ namespace ShortPeakRobot.Market
 
         private async void CancelBinanceOrder(BinanceRequest q)
         {
-            long orderId = 0;
-            string desc = "";
-            RobotOrder order = new RobotOrder();
-            switch (q.robotOrderType)
+
+            if (q.OrderId == 0)
             {
-                case RobotOrderType.SignalBuy:
-                    orderId = RobotVM.robots[q.RobotId].SignalBuyOrder.OrderId;
-                    order = RobotVM.robots[q.RobotId].SignalBuyOrder;
-                    RobotVM.robots[q.RobotId].RobotState.SignalBuyOrderId = 0;
-                    RobotVM.robots[q.RobotId].SignalBuyOrder = new();
-                    RobotServices.SaveState(q.RobotId, RobotVM.robots[q.RobotId].RobotState);
-                    desc = "Cancel SignalBuy Order";
-                    break;
-                case RobotOrderType.SignalSell:
-                    orderId = RobotVM.robots[q.RobotId].SignalSellOrder.OrderId;
-                    order = RobotVM.robots[q.RobotId].SignalSellOrder;
-                    RobotVM.robots[q.RobotId].RobotState.SignalSellOrderId = 0;
-                    RobotVM.robots[q.RobotId].SignalSellOrder = new();
-                    RobotServices.SaveState(q.RobotId, RobotVM.robots[q.RobotId].RobotState);
-                    desc = "Cancel SignalSell Order";
-                    break;
-                case RobotOrderType.StopLoss:
-                    orderId = RobotVM.robots[q.RobotId].StopLossOrder.OrderId;
-                    order = RobotVM.robots[q.RobotId].StopLossOrder;
-                    RobotVM.robots[q.RobotId].RobotState.StopLossOrderId = 0;
-                    RobotVM.robots[q.RobotId].StopLossOrder = new();
-                    RobotServices.SaveState(q.RobotId, RobotVM.robots[q.RobotId].RobotState);
-                    desc = "Cancel StopLoss Order";
-                    break;
-                case RobotOrderType.TakeProfit:
-                    orderId = RobotVM.robots[q.RobotId].TakeProfitOrder.OrderId;
-                    order = RobotVM.robots[q.RobotId].TakeProfitOrder;
-                    RobotVM.robots[q.RobotId].RobotState.TakeProfitOrderId = 0;
-                    RobotVM.robots[q.RobotId].TakeProfitOrder = new();
-                    RobotServices.SaveState(q.RobotId, RobotVM.robots[q.RobotId].RobotState);
-                    desc = "Cancel TakeProfit Order";
-                    break;
-                case RobotOrderType.OrderId:
-                    orderId = q.OrderId;
-                    order.OrderId = q.OrderId;                     
-                    desc = "Cancel All Orders";
-                    break;
-                default:
-                    break;
+                App.Current.Dispatcher.Invoke(() =>
+                {
+
+
+                    LogVM.AddRange(new List<RobotLog> { new RobotLog {
+                    ClientId = 0,
+                    Date = DateTime.Now,
+                    Message = q.robotRequestType.ToString() + " " + q.Side.ToString() + " " + q.robotOrderType.ToString() +
+                    " " + q.Price,
+
+                    } });
+                });
             }
 
-            if (order.Status == (int)OrderStatus.New || order.Status == (int)OrderStatus.PartiallyFilled || order.Status == -1)
+
+
+            var result = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(q.Symbol, q.OrderId);
+            if (!result.Success)
             {
-                var result = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(q.Symbol, orderId);
-                if (result.Success)
-                {
-                    order.Status = (int)OrderStatus.Canceled;
-                    RobotServices.SaveOrder(q.RobotId, order, desc);                                       
-                }
-                else
-                {
-                    //обработать
-                    Log(LogType.Error, result.Error.ToString());
-                }
+                //обработать
+                Log(LogType.Error, result.Error.ToString());
             }
 
-           
+
+
 
         }
 
         private async void PlaceBinanceOrder(BinanceRequest q)
         {
-            var order = await MarketServices.PlaceBinanceOrder(q.RobotId, q.Symbol, (OrderSide)q.Side,
+            lock (Locker)
+            {
+                orderCount++;
+            }
+            var order = await MarketServices.PlaceBinanceOrder(orderCount, q.RobotId, q.Symbol, (OrderSide)q.Side,
                                 (FuturesOrderType)q.OrderType, q.Quantity, q.Price, q.StopPrice);
 
             if (order.Success)
@@ -194,30 +167,26 @@ namespace ShortPeakRobot.Market
                 {
                     case RobotOrderType.SignalBuy:
                         RobotVM.robots[q.RobotId].SignalBuyOrder = RobotOrderDTO.DTO(order, q.RobotId);
-                        RobotVM.robots[q.RobotId].RobotState.SignalBuyOrderId = RobotVM.robots[q.RobotId].SignalBuyOrder.OrderId;
-                        RobotServices.SaveOrder(q.RobotId, RobotVM.robots[q.RobotId].SignalBuyOrder, "Place SignalBuy Order");
+                        RobotVM.robots[q.RobotId].RobotState.SignalBuyOrderId = RobotVM.robots[q.RobotId].SignalBuyOrder.OrderId;                        
                         break;
                     case RobotOrderType.SignalSell:
                         RobotVM.robots[q.RobotId].SignalSellOrder = RobotOrderDTO.DTO(order, q.RobotId);
-                        RobotVM.robots[q.RobotId].RobotState.SignalSellOrderId = RobotVM.robots[q.RobotId].SignalSellOrder.OrderId;
-                        RobotServices.SaveOrder(q.RobotId, RobotVM.robots[q.RobotId].SignalSellOrder, "Place SignalSell Order");
+                        RobotVM.robots[q.RobotId].RobotState.SignalSellOrderId = RobotVM.robots[q.RobotId].SignalSellOrder.OrderId;                        
                         break;
                     case RobotOrderType.StopLoss:
                         RobotVM.robots[q.RobotId].StopLossOrder = RobotOrderDTO.DTO(order, q.RobotId);
-                        RobotVM.robots[q.RobotId].RobotState.StopLossOrderId = RobotVM.robots[q.RobotId].StopLossOrder.OrderId;
-                        RobotServices.SaveOrder(q.RobotId, RobotVM.robots[q.RobotId].StopLossOrder, "Place StopLoss Order");
+                        RobotVM.robots[q.RobotId].RobotState.StopLossOrderId = RobotVM.robots[q.RobotId].StopLossOrder.OrderId;                        
                         break;
                     case RobotOrderType.TakeProfit:
                         RobotVM.robots[q.RobotId].TakeProfitOrder = RobotOrderDTO.DTO(order, q.RobotId);
-                        RobotVM.robots[q.RobotId].RobotState.TakeProfitOrderId = RobotVM.robots[q.RobotId].TakeProfitOrder.OrderId;
-                        RobotServices.SaveOrder(q.RobotId, RobotVM.robots[q.RobotId].TakeProfitOrder, "Place TakeProfit Order");
+                        RobotVM.robots[q.RobotId].RobotState.TakeProfitOrderId = RobotVM.robots[q.RobotId].TakeProfitOrder.OrderId;                        
                         break;
                     default:
                         break;
                 }
 
-                RobotServices.SaveState(q.RobotId, RobotVM.robots[q.RobotId].RobotState);
-                MarketServices.GetRobotData(q.RobotId);//for IU
+                
+
             }
             else
             {
