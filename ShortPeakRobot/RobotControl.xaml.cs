@@ -52,9 +52,7 @@ namespace ShortPeakRobot
             RobotVM.robots[RobotId].Position = RobotVM.robots[RobotId].RobotState.Position;
 
             RobotVM.robots[RobotId].RobotState.OpenPositionPrice = decimal.Parse(TBOpenPositionPrice.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
-
-
-            RobotServices.SaveState(RobotId, RobotVM.robots[RobotId].RobotState);
+                        
             MessageBox.Show("Изменения сохранены.");
         }
 
@@ -72,8 +70,6 @@ namespace ShortPeakRobot
 
             RobotVM.robots[RobotId].RobotState.OpenPositionPrice = decimal.Parse(TBOpenPositionPrice.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
 
-
-            RobotServices.SaveState(RobotId, RobotVM.robots[RobotId].RobotState);
 
             if (RobotVM.robots[RobotId].RobotState.Position == 0)
             {
@@ -101,7 +97,6 @@ namespace ShortPeakRobot
             RobotVM.robots[RobotId].CancelOrderByIdAsync(orderId, "Cancel SignalBuy Order");
             RobotVM.robots[RobotId].RobotState.SignalBuyOrderId = 0;
 
-            RobotServices.SaveState(RobotId, RobotVM.robots[RobotId].RobotState);
             TBSignalBuyID.Text = "0";
         }
 
@@ -115,7 +110,6 @@ namespace ShortPeakRobot
             RobotVM.robots[RobotId].CancelOrderByIdAsync(orderId, "Cancel SignalSell Order");
             RobotVM.robots[RobotId].RobotState.SignalSellOrderId = 0;
 
-            RobotServices.SaveState(RobotId, RobotVM.robots[RobotId].RobotState);
             TBSignalSellID.Text = "0";
         }
 
@@ -130,7 +124,6 @@ namespace ShortPeakRobot
 
             RobotVM.robots[RobotId].RobotState.StopLossOrderId = 0;
 
-            RobotServices.SaveState(RobotId, RobotVM.robots[RobotId].RobotState);
             TBStopLossID.Text = "0";
         }
 
@@ -145,7 +138,6 @@ namespace ShortPeakRobot
 
             RobotVM.robots[RobotId].RobotState.TakeProfitOrderId = 0;
 
-            RobotServices.SaveState(RobotId, RobotVM.robots[RobotId].RobotState);
             TBTakeProfitID.Text = "0";
         }
     }

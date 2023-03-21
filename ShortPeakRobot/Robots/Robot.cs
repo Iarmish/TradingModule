@@ -40,7 +40,7 @@ namespace ShortPeakRobot.Robots
         //public bool NeedSaveRobotState { get; set; }
 
 
-        public bool NeedSaveState { get; set; }
+       
 
 
         private bool _Selected;
@@ -82,6 +82,20 @@ namespace ShortPeakRobot.Robots
                 {
                     _Profit = value;
                     OnPropertyChanged("Profit");
+                }
+            }
+        }
+
+         private int _Orders;
+        public int Orders
+        {
+            get { return _Orders; }
+            set
+            {
+                if (_Orders != value)
+                {
+                    _Orders = value;
+                    OnPropertyChanged("Orders");
                 }
             }
         }
@@ -143,6 +157,7 @@ namespace ShortPeakRobot.Robots
         public decimal OpenPositionPrice { get; set; }
 
         public RobotState RobotState { get; set; } = new RobotState();
+        public RobotState LastRobotState { get; set; } = new RobotState();
         //=====================================
         public void CustomOrderUpdate(DataEvent<BinanceFuturesStreamOrderUpdate> data)
         {
@@ -157,6 +172,7 @@ namespace ShortPeakRobot.Robots
                 {
                     var order = RobotOrderDTO.DTO(data, Id);
                     RobotServices.SaveOrder(Id, order, "");//to Db
+                   
                 }
             }
             //сохраняем сделки
@@ -201,11 +217,7 @@ namespace ShortPeakRobot.Robots
 
                 Task.Run(async () =>// выставляем СЛ ТП
                 {
-                    var SLTPsuccess = await SetSLTP(OrderSide.Sell, volume, (decimal)SignalSellOrder.StopPrice);
-
-                    Thread.Sleep(500);
-                    RobotServices.SaveState(Id, RobotState);
-
+                    var SLTPsuccess = await SetSLTP(OrderSide.Sell, volume, (decimal)SignalSellOrder.StopPrice);                    
                 });
                 return;
             }
@@ -231,10 +243,7 @@ namespace ShortPeakRobot.Robots
 
                 Task.Run(async () =>
                 {
-                    var SLTPsuccess = await SetSLTP(OrderSide.Buy, volume, (decimal)SignalBuyOrder.StopPrice);
-                    Thread.Sleep(500);
-                    RobotServices.SaveState(Id, RobotState);
-
+                    var SLTPsuccess = await SetSLTP(OrderSide.Buy, volume, (decimal)SignalBuyOrder.StopPrice);                    
                 });
                 return;
             }
@@ -256,10 +265,7 @@ namespace ShortPeakRobot.Robots
                 });
 
                 TakeProfitOrder = new();
-                RobotState = new();
-                RobotServices.SaveState(Id, RobotState);
-
-                MarketServices.GetRobotData(Id);//for UI
+                RobotState = new();   
 
                 return;
             }
@@ -282,9 +288,7 @@ namespace ShortPeakRobot.Robots
 
                 StopLossOrder = new();
                 RobotState = new();
-                RobotServices.SaveState(Id, RobotState);
-
-                MarketServices.GetRobotData(Id);//for UI
+                
 
                 return;
             }
@@ -318,9 +322,7 @@ namespace ShortPeakRobot.Robots
 
                 SetPartialStopLoss(data.Data.UpdateData.Side, data.Data.UpdateData.Quantity);
 
-                RobotServices.SaveState(Id, RobotState);
-                MarketServices.GetRobotData(Id);//for UI
-
+                
                 return;
             }
         }
@@ -373,17 +375,50 @@ namespace ShortPeakRobot.Robots
             while (true) // цыкл  для основных функций робота
             {
                 DbManager();
-                Thread.Sleep(3000);
+                Thread.Sleep(1500);
             }
+        }
+            
+        public void CheckSLTPCross(decimal price)
+        {
+            if (Position != 0 )
+            {               
+
+                if (Position > 0)
+                {
+                    if (price > OpenPositionPrice + BaseSettings.TakeProfitPercent || price < OpenPositionPrice - BaseSettings.StopLossPercent)
+                    {
+                        Thread.Sleep(2000);
+                        CloseRobotPosition();
+                    }
+                }
+                if (Position < 0)
+                {
+                    if (price < OpenPositionPrice - BaseSettings.TakeProfitPercent || price > OpenPositionPrice + BaseSettings.StopLossPercent)
+                    {
+                        Thread.Sleep(2000);
+                        CloseRobotPosition();
+                    }
+                }
+            }
+            else
+            {
+                return;
+            }
+
+            
         }
 
         private void DbManager()
         {
-            bool needSaveContext = false;
+            bool needSaveContext = false;            
 
-            if (NeedSaveState)
+            //сохраняем состояние
+            if (!RobotServices.CompareState(RobotState, LastRobotState))
             {
+                LastRobotState = RobotStateDTO.DTO(RobotState);
                 needSaveContext = true;
+
                 var state = _context.RobotStates
                                 .Where(x => x.ClientId == RobotsInitialization.ClientId && x.RobotId == Id).FirstOrDefault();
                 Thread.Sleep(30);
@@ -404,7 +439,10 @@ namespace ShortPeakRobot.Robots
                     _context.RobotStates.Add(RobotState);
 
                 }
+
             }
+
+           
 
             if (RobotLogsQueue.Count > 0)
             {
@@ -444,6 +482,11 @@ namespace ShortPeakRobot.Robots
 
 
                 _context.RobotOrders.AddRange(RobotOrdersTemp);
+                Task.Run(() =>
+                {
+                    Thread.Sleep(700);
+                    MarketServices.GetRobotData(Id);
+                });
             }
 
 
@@ -467,7 +510,7 @@ namespace ShortPeakRobot.Robots
 
                 Task.Run(() =>
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(1200);
                     MarketServices.GetSessioProfit();
 
                 });
@@ -479,9 +522,6 @@ namespace ShortPeakRobot.Robots
             }
 
         }
-
-
-
 
 
         public async void CloseRobotPosition()
@@ -498,9 +538,6 @@ namespace ShortPeakRobot.Robots
                        quantity: Math.Abs(Position),
                        newClientOrderId: "robot:" + Id + ":" +
                        new DateTimeOffset(DateTime.UtcNow, TimeSpan.Zero).ToUnixTimeSeconds());
-
-                //RobotServices.SaveOrder(Id, RobotOrderDTO.DTO(plasedOrder, Id), "Close position");
-                MarketServices.GetRobotData(Id);//for IU
             }
 
             if (Position < 0)
@@ -511,10 +548,7 @@ namespace ShortPeakRobot.Robots
                        type: FuturesOrderType.Market,
                        quantity: Math.Abs(Position),
                        newClientOrderId: "robot:" + Id + ":" +
-                       new DateTimeOffset(DateTime.UtcNow, TimeSpan.Zero).ToUnixTimeSeconds());
-
-                //RobotServices.SaveOrder(Id, RobotOrderDTO.DTO(plasedOrder, Id), "Close position");
-                MarketServices.GetRobotData(Id);//for IU
+                       new DateTimeOffset(DateTime.UtcNow, TimeSpan.Zero).ToUnixTimeSeconds());  
             }
 
             Position = 0;
@@ -537,10 +571,7 @@ namespace ShortPeakRobot.Robots
                        new DateTimeOffset(DateTime.UtcNow, TimeSpan.Zero).ToUnixTimeSeconds());
 
             if (plasedOrder.Success)
-            {
-                //RobotServices.SaveOrder(Id, RobotOrderDTO.DTO(plasedOrder, Id), "Change position");
-                MarketServices.GetRobotData(Id);//for IU
-
+            {    
                 if (side == OrderSide.Buy)
                 {
                     Position += qty;
@@ -555,9 +586,6 @@ namespace ShortPeakRobot.Robots
                 //обработать
                 Log(LogType.Error, "Change position errror" + plasedOrder.Error.ToString());
             }
-
-
-
 
         }
 
@@ -664,24 +692,11 @@ namespace ShortPeakRobot.Robots
             RobotState.SignalBuyOrderId = 0;
 
 
-            MarketServices.GetRobotData(Id);
+            
             return SLTPsuccess;
         }
 
-        //public async void CancelOrderAsync(RobotOrder order, string desc)
-        //{
-        //    if (order.Status == (int)OrderStatus.New)
-        //    {
-        //        var result = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(Symbol, order.OrderId);
-        //        if (!result.Success)
-        //        {
-        //            //обработать
-        //            Log(LogType.Error, desc);
-        //        }
-        //        //RobotServices.SaveOrder(Id, order, desc);
-        //    }
-        //    MarketServices.GetRobotData(Id);
-        //}
+        
 
         public async void CancelOrderByIdAsync(long orderId, string desc)
         {
@@ -695,7 +710,7 @@ namespace ShortPeakRobot.Robots
             }
 
 
-            MarketServices.GetRobotData(Id);
+            
         }
 
         private void SetPartialStopLoss(OrderSide side, decimal volume)
@@ -797,10 +812,10 @@ namespace ShortPeakRobot.Robots
             }
             RobotState = new();
             await ResetRobotState();
-            RobotServices.SaveState(Id, RobotState);
+            
 
             IsRun = false;//robot stop
-            MarketServices.GetRobotData(Id);
+            
         }
 
         public async Task ResetRobotState()
@@ -849,15 +864,13 @@ namespace ShortPeakRobot.Robots
                 if (candlesAnalyse == CandlesAnalyse.BuySLTP)
                 {
                     var SLTPsuccess = await SetSLTP(OrderSide.Buy, volume, (decimal)SignalBuyOrder.StopPrice);
-                    Thread.Sleep(500);
-                    RobotServices.SaveState(Id, RobotState);
+                    
                 }
 
                 if (candlesAnalyse == CandlesAnalyse.SellSLTP)
                 {
                     var SLTPsuccess = await SetSLTP(OrderSide.Sell, volume, (decimal)SignalSellOrder.StopPrice);
-                    Thread.Sleep(500);
-                    RobotServices.SaveState(Id, RobotState);
+                    
                 }
             });
         }
@@ -884,21 +897,21 @@ namespace ShortPeakRobot.Robots
             return true;
         }
 
-        public async Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceSignalOrder2(OrderSide side, FuturesOrderType type,
-            decimal? price = null, decimal? stopPrice = null)
-        {
-            var order = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
-                    symbol: Symbol,
-                    side: side,
-                    type: type,
-                    quantity: BaseSettings.Volume,
-                    price: price,
-                    timeInForce: TimeInForce.GoodTillCanceled,
-                    stopPrice: stopPrice);
+        //public async Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceSignalOrder2(OrderSide side, FuturesOrderType type,
+        //    decimal? price = null, decimal? stopPrice = null)
+        //{
+        //    var order = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
+        //            symbol: Symbol,
+        //            side: side,
+        //            type: type,
+        //            quantity: BaseSettings.Volume,
+        //            price: price,
+        //            timeInForce: TimeInForce.GoodTillCanceled,
+        //            stopPrice: stopPrice);
 
-            MarketServices.GetRobotData(Id);
-            return order;
-        }
+        //    
+        //    return order;
+        //}
     }
 
 

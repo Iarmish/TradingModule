@@ -32,18 +32,19 @@ namespace ShortPeakRobot.Market
         public Dictionary<string, Subscribe> subscribes { get; set; }
         public List<CallResult<UpdateSubscription>> updateSubscriptions { get; set; } = new List<CallResult<UpdateSubscription>>();
 
-        private DateTime ListenKeyTimeUpdate = DateTime.UtcNow;        
+        private DateTime ListenKeyTimeUpdate = DateTime.UtcNow;
 
         private List<BinanceRequest> RequestQueue { get; set; } = new List<BinanceRequest>();
+        private List<BinanceRequest> FailRequestQueue { get; set; } = new List<BinanceRequest>();
 
         private object Locker = new object();
+        private object FailRequestLocker = new object();
         private object UserDataSubcription { get; set; }
 
         public WebCallResult<string> ListenKey;
 
         public int orderCount { get; set; }
-        //RobotServices.SaveState(q.RobotId, RobotVM.robots[q.RobotId].RobotState);
-
+        
         public MarketManager()
         {
             _context = new ApplicationDbContext();
@@ -56,8 +57,17 @@ namespace ShortPeakRobot.Market
             }
 
             Task.Run(() => Queue());
+            Task.Run(() => BinanceFailRequestQueue());
 
+        }
 
+        private void BinanceFailRequestQueue()
+        {
+            while (true)
+            {
+                BinanceFailRequestManager();
+                Thread.Sleep(70);
+            }
         }
 
         private void Queue()
@@ -65,7 +75,6 @@ namespace ShortPeakRobot.Market
             while (true)
             {
                 BinanceRequestManager();
-
                 Thread.Sleep(70);
             }
         }
@@ -86,10 +95,52 @@ namespace ShortPeakRobot.Market
             }
         }
 
+        private void BinanceFailRequestManager()
+        {
+            lock (FailRequestLocker)
+            {
+                if (FailRequestQueue.Count > 0)
+                {
+                    
+                    foreach (var req in FailRequestQueue)
+                    {
+                        if (req.robotRequestType == RobotRequestType.PlaceOrder)
+                        {
+                            req.TryCount++;
+                            if (req.TryCount < 6)
+                            {                                
+                                Thread.Sleep(req.TryCount * 1000);
+                                PlaceBinanceOrder(req);
+                            }
+                            else
+                            {
+                                RobotServices.ForceStopRobotAsync(req.RobotId);                                
+                            }
+                        }
+
+                        if (req.robotRequestType == RobotRequestType.CancelOrder)
+                        {
+                            req.TryCount++;
+                            if (req.TryCount < 3)
+                            {
+                                Thread.Sleep(req.TryCount * 1500);
+                                CancelBinanceOrder(req);
+                            }
+                            else
+                            {
+                                //обработать
+                                //RobotServices.ForceStopRobotAsync(req.RobotId);
+                            }
+                        }
+                    }
+
+                    FailRequestQueue.Clear();
+                }
+            }
+        }
+
         private void BinanceRequestManager()
         {
-
-
             lock (Locker)
             {
                 if (RequestQueue.Count > 0)
@@ -98,30 +149,23 @@ namespace ShortPeakRobot.Market
                     {
                         if (q.robotRequestType == RobotRequestType.PlaceOrder)
                         {
-                            PlaceBinanceOrder(q);
+                            PlaceBinanceOrder(BinanceRequestDTO.DTO(q));
                         }
                         if (q.robotRequestType == RobotRequestType.CancelOrder)
                         {
-                            CancelBinanceOrder(q);
+                            CancelBinanceOrder(BinanceRequestDTO.DTO(q));
                         }
 
                         Thread.Sleep(50);
                     }
                     RequestQueue.Clear();
                 }
-
-
             }
-
-
-
-
 
         }
 
         private async void CancelBinanceOrder(BinanceRequest q)
         {
-
             if (q.OrderId == 0)
             {
                 App.Current.Dispatcher.Invoke(() =>
@@ -138,18 +182,15 @@ namespace ShortPeakRobot.Market
                 });
             }
 
-
-
             var result = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(q.Symbol, q.OrderId);
             if (!result.Success)
             {
-                //обработать
-                Log(LogType.Error, result.Error.ToString());
+                lock (FailRequestLocker)
+                {
+                    FailRequestQueue.Add(q);
+                }
+                RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Place order error" + result.Error.ToString());
             }
-
-
-
-
         }
 
         private async void PlaceBinanceOrder(BinanceRequest q)
@@ -167,32 +208,35 @@ namespace ShortPeakRobot.Market
                 {
                     case RobotOrderType.SignalBuy:
                         RobotVM.robots[q.RobotId].SignalBuyOrder = RobotOrderDTO.DTO(order, q.RobotId);
-                        RobotVM.robots[q.RobotId].RobotState.SignalBuyOrderId = RobotVM.robots[q.RobotId].SignalBuyOrder.OrderId;                        
+                        RobotVM.robots[q.RobotId].RobotState.SignalBuyOrderId = RobotVM.robots[q.RobotId].SignalBuyOrder.OrderId;
                         break;
                     case RobotOrderType.SignalSell:
                         RobotVM.robots[q.RobotId].SignalSellOrder = RobotOrderDTO.DTO(order, q.RobotId);
-                        RobotVM.robots[q.RobotId].RobotState.SignalSellOrderId = RobotVM.robots[q.RobotId].SignalSellOrder.OrderId;                        
+                        RobotVM.robots[q.RobotId].RobotState.SignalSellOrderId = RobotVM.robots[q.RobotId].SignalSellOrder.OrderId;
                         break;
                     case RobotOrderType.StopLoss:
                         RobotVM.robots[q.RobotId].StopLossOrder = RobotOrderDTO.DTO(order, q.RobotId);
-                        RobotVM.robots[q.RobotId].RobotState.StopLossOrderId = RobotVM.robots[q.RobotId].StopLossOrder.OrderId;                        
+                        RobotVM.robots[q.RobotId].RobotState.StopLossOrderId = RobotVM.robots[q.RobotId].StopLossOrder.OrderId;
                         break;
                     case RobotOrderType.TakeProfit:
                         RobotVM.robots[q.RobotId].TakeProfitOrder = RobotOrderDTO.DTO(order, q.RobotId);
-                        RobotVM.robots[q.RobotId].RobotState.TakeProfitOrderId = RobotVM.robots[q.RobotId].TakeProfitOrder.OrderId;                        
+                        RobotVM.robots[q.RobotId].RobotState.TakeProfitOrderId = RobotVM.robots[q.RobotId].TakeProfitOrder.OrderId;
                         break;
                     default:
                         break;
                 }
-
-                
-
             }
             else
             {
-                RobotVM.robots[q.RobotId].Log(LogType.Error, "Place order error" + order.Error.ToString());
+                lock (FailRequestLocker)
+                {
+                    FailRequestQueue.Add(q);
+                }
+                RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Place order error" + order.Error.ToString());
             }
         }
+
+
 
         private void SubscribtionController()
         {
@@ -322,10 +366,12 @@ namespace ShortPeakRobot.Market
 
                 if (selectedRobot.BaseSettings.IsVariableLot)
                 {
-                    selectedRobot.BaseSettings.Volume =
-                        Math.Round(selectedRobot.BaseSettings.Deposit / data.Data.Data.ClosePrice, SymbolIndexes.lot[robotSymbol]);
-
+                    //robot part deposit
                     selectedRobot.BaseSettings.CurrentDeposit = selectedRobot.BaseSettings.Deposit + selectedRobot.BaseSettings.Profit;
+                    //variable lot
+                    selectedRobot.BaseSettings.Volume =
+                        Math.Round(selectedRobot.BaseSettings.CurrentDeposit / data.Data.Data.ClosePrice, SymbolIndexes.lot[robotSymbol]);
+
                 }
 
                 if (selectedRobot.BaseSettings.SLPercent)
@@ -351,7 +397,7 @@ namespace ShortPeakRobot.Market
             }
 
 
-            if (data.Data.Data.Interval == KlineInterval.OneMinute)// передаем цены в UI
+            if (data.Data.Data.Interval == KlineInterval.OneDay)// передаем цены в UI
             {
                 SymbolVM.symbols[MarketServices.GetSymbolIndex(data.Data.Symbol)].Price = data.Data.Data.ClosePrice;
             }
@@ -378,7 +424,6 @@ namespace ShortPeakRobot.Market
             }
 
         }
-
 
         public void RobotsRun(List<int> robotIds)
         {

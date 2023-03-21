@@ -55,7 +55,7 @@ namespace ShortPeakRobot.Robots.DTO
                 Buyer = data.Data.UpdateData.BuyerIsMaker,
                 PositionSide = (int)data.Data.UpdateData.PositionSide,
                 Price = tradePrice,
-                Quantity = data.Data.UpdateData.Quantity,
+                Quantity = data.Data.UpdateData.QuantityOfLastFilledTrade,
                 Fee = data.Data.UpdateData.Fee,
                 RealizedPnl = data.Data.UpdateData.RealizedProfit,
                 Timestamp = data.Data.UpdateData.UpdateTime

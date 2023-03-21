@@ -13,20 +13,22 @@ namespace ShortPeakRobot.Robots.DTO
 {
     public static class BinanceRequestDTO
     {
-        //public static BinanceRequest DTO(BinanceRequest request)
-        //{
-        //    return new BinanceRequest
-        //    {
-        //         RobotId= request.RobotId,
-        //         Symbol = request.Symbol,
-        //         Side=request.Side,
-        //         OrderType=request.OrderType,
-        //         Quantity=request.Quantity,
-        //         Price=request.Price,
-        //         StopPrice=request.StopPrice,
-        //         robotOrderType = request.robotOrderType,
-        //         robotRequestType = request.robotRequestType,
-        //    };
-        //}
+        public static BinanceRequest DTO(BinanceRequest request)
+        {
+            return new BinanceRequest
+            {
+                RobotId = request.RobotId,
+                Symbol = request.Symbol,
+                Side = request.Side,
+                OrderType = request.OrderType,
+                Quantity = request.Quantity,
+                Price = request.Price,
+                StopPrice = request.StopPrice,
+                robotOrderType = request.robotOrderType,
+                robotRequestType = request.robotRequestType,
+                TryCount = request.TryCount,
+                OrderId = request.OrderId,
+            };
+        }
     }
 }

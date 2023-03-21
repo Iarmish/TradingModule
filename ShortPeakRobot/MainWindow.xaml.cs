@@ -22,6 +22,8 @@ using System.Collections;
 using System.Threading;
 using ShortPeakRobot.Robots.DTO;
 using System.Globalization;
+using CryptoExchange.Net.CommonObjects;
+using Symbol = ShortPeakRobot.Market.Models.Symbol;
 
 namespace ShortPeakRobot
 {
@@ -105,9 +107,9 @@ namespace ShortPeakRobot
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            MarketServices.GetBalanceUSDTAsync();
-
             MessageBox.Show("Client Id " + RobotsInitialization.ClientId);
+            await MarketServices.GetBalanceUSDTAsync();
+
 
             var date = DateTime.UtcNow;
             MarketData.Info.StartSessionDate = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Utc);
@@ -448,24 +450,7 @@ namespace ShortPeakRobot
 
         }
 
-        private async void BtnDepoCalc_Click(object sender, RoutedEventArgs e)
-        {
-            var profit = 0m;
-            
-            
-
-            var trades =  MarketServices.GetRobotTrades(MarketData.Info.SelectedRobotId, MarketData.Info.StartSessionDate);
-
-            trades.ForEach(trade =>
-            {
-                profit += trade.RealizedPnl;
-                profit -= trade.Fee;
-            });
-
-            RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.CurrentDeposit =
-                RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.Deposit + Math.Round(profit, 2);
-
-        }
+        
 
        
 
@@ -495,7 +480,9 @@ namespace ShortPeakRobot
             MarketData.Info.StartSessionDate = dateUtc;
 
             MarketServices.GetSessioProfit();
-            
+
+            MarketServices.GetBalanceUSDTAsync();
+
         }
 
         private  void BtnRobotCloseOrders_Click(object sender, RoutedEventArgs e)
@@ -520,11 +507,9 @@ namespace ShortPeakRobot
                 RobotVM.robots[MarketData.Info.SelectedRobotId].RobotState.TakeProfitOrderId = 0;
                 RobotVM.robots[MarketData.Info.SelectedRobotId].RobotState.StopLossOrderId = 0;
                 RobotVM.robots[MarketData.Info.SelectedRobotId].RobotState.SignalSellOrderId = 0;
-                RobotVM.robots[MarketData.Info.SelectedRobotId].RobotState.SignalBuyOrderId = 0;
-                RobotServices.SaveState(MarketData.Info.SelectedRobotId,
-                    RobotVM.robots[MarketData.Info.SelectedRobotId].RobotState);
+                RobotVM.robots[MarketData.Info.SelectedRobotId].RobotState.SignalBuyOrderId = 0;                
             });
-            MessageBox.Show("All orders canceled.");
+            //MessageBox.Show("All orders canceled.");
 
         }
 
@@ -556,6 +541,14 @@ namespace ShortPeakRobot
             robotStateWindow.Owner = Application.Current.MainWindow;
 
             robotStateWindow.Show();
+        }
+
+        private async void BtnCancelSymbolOrders_Click(object sender, RoutedEventArgs e)
+        {
+            var stack = (StackPanel)((Button)sender).Parent;
+            string symbol = ((TextBlock)stack.Children[0]).Text;
+
+            var cancelAllOrders = await BinanceApi.client.UsdFuturesApi.Trading.CancelAllOrdersAsync(symbol);
         }
     }
 }

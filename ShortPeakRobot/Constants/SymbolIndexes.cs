@@ -16,6 +16,7 @@ namespace Binance.Infrastructure.Constants
         { "XRPUSDT",4},        
         { "ADAUSDT",4},        
         { "DOGEUSDT",5},        
+        { "LTCUSDT",2},        
         };
 
         public static Dictionary<string, int> lot = new Dictionary<string, int>() {
@@ -26,6 +27,7 @@ namespace Binance.Infrastructure.Constants
         { "XRPUSDT",1},       
         { "ADAUSDT",0},       
         { "DOGEUSDT",0},       
+        { "LTCUSDT",2},       
         
         };
 

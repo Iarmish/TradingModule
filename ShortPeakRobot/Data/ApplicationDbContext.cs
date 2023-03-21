@@ -27,6 +27,7 @@ namespace ShortPeakRobot.Data
         public DbSet<RobotLog> RobotLogs { get; set; }
         public DbSet<RobotTrade> RobotTrades { get; set; }
         public DbSet<RobotState> RobotStates { get; set; }
+        public DbSet<TesterTrade> TesterTrades { get; set; }
         
     }
 }

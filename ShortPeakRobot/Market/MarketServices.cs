@@ -122,13 +122,18 @@ namespace ShortPeakRobot.Market
 
         }
 
-        private async static void GetOpenOrders(int robotId)
+        public async static Task<List<RobotOrder>> GetOpenOrders(int robotId)
         {
-            MarketData.OpenOrders = RobotOrderDTO.OrdersDTO(
+            var orders = RobotOrderDTO.OrdersDTO(
             await BinanceApi.client.UsdFuturesApi.Trading.GetOpenOrdersAsync(RobotVM.robots[robotId].Symbol), robotId);
+
+            MarketData.OpenOrders = orders;
+            RobotVM.robots[robotId].Orders = MarketData.OpenOrders.Count;
+            return orders;
+
         }
 
-        public static async void GetBalanceUSDTAsync()
+        public static async Task GetBalanceUSDTAsync()
         {
             var balances = await BinanceApi.client.UsdFuturesApi.Account.GetBalancesAsync();
             foreach (var item in balances.Data)

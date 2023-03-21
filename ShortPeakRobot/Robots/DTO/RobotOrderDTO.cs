@@ -5,6 +5,7 @@ using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Documents;
@@ -112,20 +113,30 @@ namespace ShortPeakRobot.Robots.DTO
 
             orders.Data.ToList().ForEach(order =>
             {
-                robotOrders.Add(new RobotOrder
+                var arrClientOrderId = order.ClientOrderId.Split(':');
+                //сохраняем ордер
+                if (arrClientOrderId.Length > 1 && arrClientOrderId[0] == "robot")
                 {
-                    OrderId = order.Id,
-                    ClientId = RobotsInitialization.ClientId,
-                    
-                    Symbol = order.Symbol,
-                    Side = (int)order.Side,                    
-                    Type = (int)order.Type,
-                    Quantity = order.Quantity,
-                    Price = order.Price,
-                    StopPrice = order.StopPrice,
-                    Status = (int)order.Status,                    
-                    PlacedTime = order.UpdateTime,
-                });
+                    var id = arrClientOrderId[1];
+
+                    if (Convert.ToInt32(id) == robotId)
+                    {
+                        robotOrders.Add(new RobotOrder
+                        {
+                            OrderId = order.Id,
+                            ClientId = RobotsInitialization.ClientId,
+                            RobotId = -1,
+                            Symbol = order.Symbol,
+                            Side = (int)order.Side,
+                            Type = (int)order.Type,
+                            Quantity = order.Quantity,
+                            Price = order.Price,
+                            StopPrice = order.StopPrice,
+                            Status = (int)order.Status,
+                            PlacedTime = order.UpdateTime,
+                        });
+                    }
+                }
             });
 
             return robotOrders;

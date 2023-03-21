@@ -10,7 +10,7 @@
         xmlns:Converters="clr-namespace:ShortPeakRobot.VMConverters"
         mc:Ignorable="d"
         x:Name="Wind"
-        Title="MainWindow" Height="608" Width="1280" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="MainWindow" Height="650" Width="1280" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <MVVM:RobotVM x:Key="robot_res"/>
         <MVVM:CellDayMonthVM x:Key="cellDayMonth_res"/>
@@ -55,7 +55,7 @@
 
                     </StackPanel>
 
-                    <ScrollViewer  Margin="0,94,0,0" Height="223" VerticalAlignment="Top">
+                    <ScrollViewer  Margin="0,94,0,274">
                         <StackPanel>
                             <StackPanel Margin="0,2,0,0" Visibility="{Binding IsActivated, Converter={StaticResource visibility_res}}" Height="24" 
                                         Background="WhiteSmoke" Orientation="Horizontal">
@@ -88,7 +88,7 @@
                         </StackPanel>
 
                     </ScrollViewer>
-                    <ScrollViewer  Margin="0,322,0,0" Height="242" VerticalAlignment="Top">
+                    <ScrollViewer Height="269" VerticalAlignment="Bottom">
                         <StackPanel>
                             <StackPanel.Resources>
                                 <MVVM:SymbolVM x:Key="symbol_res"/>
@@ -107,7 +107,10 @@
                                             <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding Price}"/>
                                             <TextBlock Foreground="{Binding Position, Converter={StaticResource numberColor_res}}"  Padding="10,5,0,0" Width="60"   Text="{Binding Position}"/>
                                             <Button x:Name="BtnCloseSymbolPosition" Height="22"  FontSize="10" Padding="8,0"  Background="MintCream"
-                                                    Click="BtnCloseSymbolPosition_Click">Закрыть позицию</Button>
+                                                    Click="BtnCloseSymbolPosition_Click">Закрыть поз</Button>
+                                            <Button x:Name="BtnCancelSymbolOrders" Height="22"  FontSize="10" Padding="8,0"  Background="MintCream" Click="BtnCancelSymbolOrders_Click"
+                                                    >Снять ордера</Button>
+                                            
                                         </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -300,9 +303,7 @@
 
                         <CheckBox  IsChecked="{Binding SLPercent}"  Content="SL Percent" Margin="108,39,145,0" Height="18" VerticalAlignment="Top"/>
                         <CheckBox  IsChecked="{Binding TPPercent}"  Content="TP Percent" Margin="108,67,119,0" Height="18" VerticalAlignment="Top"/>
-                        <TextBox x:Name="BT_DepoDate" Width="70" IsEnabled="{Binding IsVariableLot}" Text="01.03.2023" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="180,159,0,0" />
                         <Label Content="{Binding CurrentDeposit}" x:Name="LabCurrDepo" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="52" Margin="100,156,0,0"/>
-                        <Button Margin="255,159,0,0" x:Name="BtnDepoCalc" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Width="43" Click="BtnDepoCalc_Click">Calc</Button>
                     </Grid>
 
 
@@ -430,18 +431,31 @@
                         <Converters:OrderSideConverter x:Key="sideConverter_res"/>
                         <Converters:OrderTypeConverter x:Key="typeConverter_res"/>
                     </Grid.Resources>
-                    <ScrollViewer >
+                    <StackPanel   Height="24" 
+                                        Background="WhiteSmoke" Orientation="Horizontal" VerticalAlignment="Top">
+
+                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="Дата"/>
+                        <TextBlock   Padding="10,5,0,0" Width="140"   Text="Order Id"/>
+                        <TextBlock   Padding="10,5,0,0" Width="60"   Text="Символ"/>
+                        <TextBlock   Padding="2,5,0,0" Width="80"   Text="СтопЦена"/>
+                        <TextBlock   Padding="10,5,0,0" Width="80"   Text="Цена"/>
+                        <TextBlock   Padding="10,5,0,0" Width="60"   Text="Позиция"/>
+                        <TextBlock   Padding="10,5,0,0" Width="60"   Text="Side"/>
+                        <TextBlock   Padding="10,5,0,0" Width="80"   Text="Type"/>
+                        <TextBlock   Padding="10,5,0,0" Width="60"   Text="Status"/>
+                    </StackPanel>
+                    <ScrollViewer Margin="0,25,0,0" >
                         <ItemsControl ItemsSource="{Binding orders}" DataContext="{StaticResource robotOrder_res}"  >
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate >
                                     <StackPanel Margin="0,2,0,0"  Height="24" Background="WhiteSmoke" Orientation="Horizontal">
-                                        <TextBlock Text="{Binding PlacedTime, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="5,3,5,0" Width="120" 
+                                        <TextBlock Text="{Binding PlacedTime, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="5,3,5,0" Width="100" 
                                                  Margin="0,0,0,0" />
 
                                         <TextBlock   Padding="10,5,0,0" Width="140"   Text="{Binding OrderId}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Symbol}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="80"   Text="{Binding StopPrice}"/>
-                                        <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Price}"/>
+                                        <TextBlock   Padding="10,5,0,0" Width="80"   Text="{Binding Price}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Quantity}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Side, Converter={StaticResource sideConverter_res}}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="80"   Text="{Binding Type, Converter={StaticResource typeConverter_res}}"/>
@@ -467,7 +481,7 @@
                                         Background="WhiteSmoke" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,0,10,0">
 
 
-                        <TextBlock   Padding="10,5,0,0" Width="120"   Text="Дата"/>
+                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="Дата"/>
                         <TextBlock   Padding="10,5,0,0" Width="140"   Text="Order Id"/>
                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="Символ"/>
                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="Позиция"/>
@@ -481,12 +495,12 @@
                         <Label Content="{Binding SessionRobotProfit}" Height="30" Width="120" />
                     </StackPanel>
 
-                    <ScrollViewer Margin="0,24,0,34" >
+                    <ScrollViewer Margin="0,25,0,34" >
                         <ItemsControl ItemsSource="{Binding trades}" DataContext="{StaticResource robotTrade_res}" >
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate >
                                     <StackPanel Margin="0,2,0,0"  Height="24" Background="WhiteSmoke" Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="10,5,0,0" Width="120" 
+                                        <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="10,5,0,0" Width="100" 
                                                    />
                                         <TextBlock   Padding="10,5,0,0" Width="140"   Text="{Binding OrderId}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Symbol}"/>

@@ -1,15 +1,11 @@
 ﻿using Binance.Net.Enums;
-using ShortPeakRobot.API;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Market;
 using ShortPeakRobot.Market.Models;
 using ShortPeakRobot.Robots.Algorithms.Models;
-using ShortPeakRobot.Robots.DTO;
 using ShortPeakRobot.ViewModel;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace ShortPeakRobot.Robots.Algorithms
@@ -77,8 +73,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 if (candlesAnalyse == CandlesAnalyse.Required)
                 {
                     SpRobot.RobotState = new();
-                    await SpRobot.ResetRobotState();
-                    RobotServices.SaveState(RobotId, SpRobot.RobotState);
+                    await SpRobot.ResetRobotState();                    
 
                     var candlesForCheck = candles.Where(x => x.OpenTime != carrentCendle.OpenTime).ToList();
 
@@ -105,7 +100,7 @@ namespace ShortPeakRobot.Robots.Algorithms
 
                 //-------------
                 IsReady = true;
-                MarketServices.GetRobotData(RobotId);
+                
             }
 
             if (!IsReady)
@@ -140,6 +135,8 @@ namespace ShortPeakRobot.Robots.Algorithms
                 NewCandle(LastCandle);
             }
 
+            //------------------- Проверка на выход за пределы СЛ ТП
+            Task.Run(() => SpRobot.CheckSLTPCross(currentPrice));
             //---------------- скидываем пики
             if ((LowPeak.Peak != 0 && SpRobot.Position != 0) ||
                 (SpRobot.SignalSellOrder.OrderId != 0 && !SpRobot.CheckTradingStatus(carrentCendle.OpenTime)))
@@ -155,7 +152,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                     });
                     SpRobot.RobotState.SignalSellOrderId = 0;
                     SpRobot.SignalSellOrder = new();
-                    RobotServices.SaveState(RobotId, SpRobot.RobotState);
+                   
                 }
                 LowPeak.Peak = 0;
             }
@@ -175,7 +172,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                     });
                     SpRobot.RobotState.SignalBuyOrderId = 0;
                     SpRobot.SignalBuyOrder = new();
-                    RobotServices.SaveState(RobotId, SpRobot.RobotState);
+                    
                 }
                 HighPeak.Peak = 0;
             }
@@ -213,11 +210,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                     robotRequestType = RobotRequestType.PlaceOrder
                 });
 
-                Task.Run(() =>
-                {
-                    Thread.Sleep(200);
-                    RobotServices.SaveState(RobotId, SpRobot.RobotState);
-                });
+                
                 
             }
 
@@ -257,11 +250,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 });
 
 
-                Task.Run(() =>
-                {
-                    Thread.Sleep(300);
-                    RobotServices.SaveState(RobotId, SpRobot.RobotState);
-                });
+                
                 
 
             }

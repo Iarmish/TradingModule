@@ -22,18 +22,49 @@ namespace ShortPeakRobot.Robots
 {
     public static class RobotServices
     {
-        public static void SaveState(int robotId, RobotState robotState)
+        public static bool CompareState(RobotState FirstState, RobotState SecondState)
         {
+            if (FirstState.OpenPositionPrice != SecondState.OpenPositionPrice) { return false; }
+            if (FirstState.Position != SecondState.Position) { return false; }
+            if (FirstState.SignalBuyOrderId != SecondState.SignalBuyOrderId) { return false; }
+            if (FirstState.SignalSellOrderId != SecondState.SignalSellOrderId) { return false; }
+            if (FirstState.StopLossOrderId != SecondState.StopLossOrderId) { return false; }
+            if (FirstState.TakeProfitOrderId != SecondState.TakeProfitOrderId) { return false; }
 
+            return true;
+        }
+        //public static void SaveState(int robotId, RobotState robotState)
+        //{            
+        //        RobotVM.robots[robotId].NeedSaveState = true;
+        //}
+
+
+        public static async void ForceStopRobotAsync(int robotId)
+        {   
+                var openOrders = await MarketServices.GetOpenOrders(robotId);
+
+                openOrders.ForEach(o =>
+                {
+                    //RobotVM.robots[MarketData.Info.SelectedRobotId].CancelOrderAsync(o, "Cancel robot orders");
+                    MarketData.MarketManager.AddRequestQueue(new BinanceRequest
+                    {
+                        RobotId = robotId,
+                        Symbol = RobotVM.robots[robotId].Symbol,
+                        robotOrderType = RobotOrderType.OrderId,
+                        robotRequestType = RobotRequestType.CancelOrder,
+                        OrderId = o.OrderId
+                    });
+                });
+
+
+                RobotVM.robots[robotId].ResetRobotStateOrders();
+                RobotVM.robots[robotId].RobotState.TakeProfitOrderId = 0;
+                RobotVM.robots[robotId].RobotState.StopLossOrderId = 0;
+                RobotVM.robots[robotId].RobotState.SignalSellOrderId = 0;
+                RobotVM.robots[robotId].RobotState.SignalBuyOrderId = 0;
+
+                RobotVM.robots[robotId].Stop();
             
-                RobotVM.robots[robotId].NeedSaveState = true;
-
-                
-            
-
-
-
-
         }
 
 
@@ -57,10 +88,6 @@ namespace ShortPeakRobot.Robots
                     return state;
                 }
             }
-
-
-
-
 
 
         }

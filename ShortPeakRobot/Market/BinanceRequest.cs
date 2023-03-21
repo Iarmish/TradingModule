@@ -10,6 +10,7 @@ namespace ShortPeakRobot.Market
     public class BinanceRequest
     {
         public int RobotId { get; set; }
+        public int TryCount { get; set; }
         public string Symbol { get; set; } = "";
         public int Side { get; set; }
         public int OrderType { get; set; }
