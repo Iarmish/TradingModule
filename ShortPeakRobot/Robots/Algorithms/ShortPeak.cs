@@ -136,7 +136,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             }
 
             //------------------- Проверка на выход за пределы СЛ ТП
-            Task.Run(() => SpRobot.CheckSLTPCross(currentPrice));
+            //Task.Run(() => SpRobot.CheckSLTPCross(currentPrice));
             //---------------- скидываем пики
             if ((LowPeak.Peak != 0 && SpRobot.Position != 0) ||
                 (SpRobot.SignalSellOrder.OrderId != 0 && !SpRobot.CheckTradingStatus(carrentCendle.OpenTime)))
@@ -219,8 +219,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             {
                 var stopPrice = HighPeak.Peak;
                 HighPeak.Peak = 0;//скидываем пики при открытии сделки
-
-                //SpRobot.CancelOrderAsync(SpRobot.SignalBuyOrder, "Cancel Signal Order");// снимаем возможный ордер по сигналу
+               
                 if (SpRobot.SignalBuyOrder.OrderId != 0)
                 {
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest

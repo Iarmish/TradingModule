@@ -135,6 +135,7 @@
                     <Button x:Name="BtnRobotBuy" Height="24" Background="LightGreen" VerticalAlignment="Top" Margin="130,5,0,0" HorizontalAlignment="Left" Width="60" Click="BtnRobotBuy_Click">Buy</Button>
                     <Button x:Name="BtnRobotCloseOrders" Height="24" Background="MintCream" VerticalAlignment="Top" Margin="200,5,0,0" HorizontalAlignment="Left" Width="100" Click="BtnRobotCloseOrders_Click">Cansel all orders</Button>
                     <Button x:Name="BtnRobotControl" Height="24" Background="MintCream" VerticalAlignment="Top" Margin="320,5,0,0" HorizontalAlignment="Left" Width="100" Click="BtnRobotControl_Click">Robot state</Button>
+                    <Button x:Name="BtnRobotInfo" Height="24" Background="MintCream" VerticalAlignment="Top" Margin="430,5,0,0" HorizontalAlignment="Left" Width="100" Click="BtnRobotInfo_Click" >Robot Info</Button>
 
 
                     <Grid x:Name="GridCandleChartPrice" Background="White" Margin="721,35,0,34" HorizontalAlignment="Left" Width="80"/>
@@ -150,8 +151,13 @@
                         <MVVM:LogVM x:Key="log_res"/>
                         <Converters:LogTypeConverter x:Key="logType_res"/>
                     </Grid.Resources>
-
-                    <ScrollViewer Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal" Height="35" VerticalAlignment="Top">
+                        <TextBlock x:Name="TBinfo" Background="Bisque" Foreground="Gray" Width="90" Height="25" Margin="5, 2" Padding="4" Text="Info" TextAlignment="Center" MouseDown="TBinfo_MouseDown"/>
+                        <TextBlock x:Name="TBerror" Background="Bisque" Foreground="Gray" Width="90" Height="25" Margin="5, 2" Padding="4" Text="Error" TextAlignment="Center" MouseDown="TBerror_MouseDown"/>
+                        <TextBlock x:Name="TBrobotstate" Background="Bisque" Foreground="Gray" Width="90" Height="25" Margin="5, 2" Padding="4" Text="RobotState" TextAlignment="Center" MouseDown="TBrobotstate_MouseDown"/>
+                        <TextBlock x:Name="Tbupdateorder" Background="Bisque" Foreground="Gray" Width="90" Height="25" Margin="5, 2" Padding="4" Text="UpdateOrder" TextAlignment="Center" MouseDown="Tbupdateorder_MouseDown"/>
+                    </StackPanel>
+                    <ScrollViewer Margin="0,36,0,10">
                         <ItemsControl ItemsSource="{Binding logs}" DataContext="{StaticResource log_res}"  >
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate >

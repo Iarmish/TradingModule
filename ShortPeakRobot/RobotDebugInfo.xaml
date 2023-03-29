@@ -1,0 +1,28 @@
+﻿<Window x:Class="ShortPeakRobot.RobotDebugInfo"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:MVVM="clr-namespace:ShortPeakRobot.ViewModel"
+        mc:Ignorable="d"
+        Title="RobotDebugInfo" Height="450" Width="800">
+    <Grid>
+        <Grid.Resources>
+            <MVVM:RobotInfoVM x:Key="robotInfo_res"/>
+
+        </Grid.Resources>
+
+        <ItemsControl ItemsSource="{Binding robotParams}" DataContext="{StaticResource robotInfo_res}" >
+            <ItemsControl.ItemTemplate>
+                <DataTemplate >
+                    <StackPanel Margin="0,2,0,0"  Height="24" Background="WhiteSmoke" Orientation="Horizontal">
+                        <TextBlock   Padding="10,5,0,0" Width="150"   Text="{Binding Title}"/>
+                        <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding Value}"/>
+
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+
+        </ItemsControl>
+    </Grid>
+</Window>

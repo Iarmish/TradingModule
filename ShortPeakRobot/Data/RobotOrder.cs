@@ -10,7 +10,7 @@ namespace ShortPeakRobot.Data
         public int RobotId { get; set; }
         public string Symbol { get; set; }
         public int Side { get; set; }
-        public int Type { get; set; }
+        public int Type { get; set; } = -1;
         public decimal Quantity { get; set; }
         public decimal Price { get; set; }
         public decimal? StopPrice { get; set; }

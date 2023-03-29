@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CryptoExchange.Net.CommonObjects;
 
 namespace ShortPeakRobot.Robots.Algorithms
 {
@@ -22,11 +23,15 @@ namespace ShortPeakRobot.Robots.Algorithms
 
 
         //----------------------------------------------
-        private List<DayPeaks> Peaks = new List<DayPeaks>();
-        private DayPeaks CurrentPeaks = new DayPeaks();
+        private List<CandlePeak> HighPeaks = new List<CandlePeak>();
+        private List<CandlePeak> LowPeaks = new List<CandlePeak>();
+        private CandlePeak CurrentHighPeak = new CandlePeak();
+        private CandlePeak CurrentLowPeak = new CandlePeak();
+
+
         public int HLDaysCount { get; set; } = 2;
         private bool NeedPeaksAnalyse { get; set; }
-        
+
 
         //private decimal SignalBuyPrice { get; set; }
         //private decimal SignalSellPrice { get; set; }
@@ -121,21 +126,22 @@ namespace ShortPeakRobot.Robots.Algorithms
             if (LastCandle.CloseTime < LastCompletedCendle.CloseTime)//новая свечка
             {
                 LastCandle = LastCompletedCendle;
-                PeaksAnalyse(candles);
-                //NewCandle(LastCandle, currentPrice);
+
+                if (HLRobot.Position == 0)
+                {
+                    CancelSignalOrders();
+                    PeaksAnalyse(candles);
+                }
+
+
+
+
             }
             //============================================
             //------------------- Проверка на выход за пределы СЛ ТП
-            Task.Run(()=> HLRobot.CheckSLTPCross(currentPrice));
-            //---------------- скидываем пики
-            if (CurrentPeaks.Low != 0 && HLRobot.Position != 0)
-            {
-                CurrentPeaks.Low = 0;
-            }
-            if (CurrentPeaks.High != 0 && HLRobot.Position != 0)
-            {
-                CurrentPeaks.High = 0;
-            }
+            //Task.Run(() => HLRobot.CheckSLTPCross(currentPrice));
+
+
             //----------- анализ графика после закрытия сделки ------------------------------
             if (!NeedPeaksAnalyse && HLRobot.Position != 0)
             {
@@ -145,89 +151,176 @@ namespace ShortPeakRobot.Robots.Algorithms
             if (NeedPeaksAnalyse && HLRobot.Position == 0)
             {
                 NeedPeaksAnalyse = false;
-                PeaksAnalyse(candles);
+
+                PeaksAnalyse(candles);   
             }
+            SetRobotInfo();
             //--------------- ордер по сигналу low peak
-
-            if (CurrentPeaks.Low != 0)
+            if (CurrentLowPeak.Price != 0)
             {
-                var stopPrice = CurrentPeaks.Low;
-
-                CurrentPeaks.Low = 0;
-
-                
-                
-
-                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
+                if (HLRobot.Position == 0)
                 {
-                    RobotId = RobotId,
-                    Symbol = HLRobot.Symbol,
-                    Side = (int)OrderSide.Sell,
-                    OrderType = (int)FuturesOrderType.StopMarket,
-                    Quantity = HLRobot.BaseSettings.Volume,
-                    Price = 0,
-                    StopPrice = stopPrice,
-                    robotOrderType = RobotOrderType.SignalSell,
-                    robotRequestType = RobotRequestType.PlaceOrder
-                });
+                    var stopPrice = CurrentLowPeak.Price;
 
+                    CurrentLowPeak.Price = 0;
 
-
+                    MarketData.MarketManager.AddRequestQueue(new BinanceRequest
+                    {
+                        RobotId = RobotId,
+                        Symbol = HLRobot.Symbol,
+                        Side = (int)OrderSide.Sell,
+                        OrderType = (int)FuturesOrderType.StopMarket,
+                        Quantity = HLRobot.BaseSettings.Volume,
+                        Price = 0,
+                        StopPrice = stopPrice,
+                        robotOrderType = RobotOrderType.SignalSell,
+                        robotRequestType = RobotRequestType.PlaceOrder
+                    });
+                }
+               
 
 
             }
 
-            //--------------- ордер по сигналу High peak
-            if (CurrentPeaks.High != 0)
+            //--------------- ордер по сигналу High peak            
+            if (CurrentHighPeak.Price != 0)
             {
-                var stopPrice = CurrentPeaks.High;
-                CurrentPeaks.High = 0;
+                if (HLRobot.Position == 0)
+                {
+                    var stopPrice = CurrentHighPeak.Price;
+                    CurrentHighPeak.Price = 0;
 
+                    MarketData.MarketManager.AddRequestQueue(new BinanceRequest
+                    {
+                        RobotId = RobotId,
+                        Symbol = HLRobot.Symbol,
+                        Side = (int)OrderSide.Buy,
+                        OrderType = (int)FuturesOrderType.StopMarket,
+                        Quantity = HLRobot.BaseSettings.Volume,
+                        Price = 0,
+                        StopPrice = stopPrice,
+                        robotOrderType = RobotOrderType.SignalBuy,
+                        robotRequestType = RobotRequestType.PlaceOrder
+                    });
+                }
                 
 
-                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
-                {
-                    RobotId = RobotId,
-                    Symbol = HLRobot.Symbol,
-                    Side = (int)OrderSide.Buy,
-                    OrderType = (int)FuturesOrderType.StopMarket,
-                    Quantity = HLRobot.BaseSettings.Volume,
-                    Price = 0,
-                    StopPrice = stopPrice,
-                    robotOrderType = RobotOrderType.SignalBuy,
-                    robotRequestType = RobotRequestType.PlaceOrder
-                });
-
             }
+
+           
+
+
         }
 
-        private void SaveDayHL(Candle candle, Candle currentCandle)
+        private void GetCurrenLowPeak()
         {
-            var dayPeaks = new DayPeaks { High = candle.HighPrice, Low = candle.LowPrice };
 
-            if (currentCandle.HighPrice > dayPeaks.High)
+            decimal currentLowPeak = 0;
+            //-------------------------            
+            foreach (var peak in LowPeaks)
             {
-                dayPeaks.High = 0;
+                if (!peak.Taken)
+                {
+                    if (currentLowPeak == 0)
+                    {
+                        currentLowPeak = peak.Price;
+                    }
+                    else
+                    {
+                        if (peak.Price > currentLowPeak)
+                        {
+                            currentLowPeak = peak.Price;
+                        }
+                    }
+
+                }
             }
 
-            if (currentCandle.LowPrice < dayPeaks.Low)
+            if (currentLowPeak != 0)
             {
-                dayPeaks.Low = 0;
+                for (int i = 0; i < LowPeaks.Count; i++)
+                {
+                    if (LowPeaks[i].Price == currentLowPeak)
+                    {
+                        LowPeaks[i].Taken = true;
+                    }
+                }
+            }
+
+            CurrentLowPeak.Price = currentLowPeak;
+
+        }
+
+        private void GetCurrenHighPeak()
+        {
+            decimal currentHighPeak = 0;
+            //-------------------------
+            foreach (var peak in HighPeaks)
+            {
+                if (!peak.Taken)
+                {
+                    if (currentHighPeak == 0)
+                    {
+                        currentHighPeak = peak.Price;
+                    }
+                    else
+                    {
+                        if (peak.Price < currentHighPeak)
+                        {
+                            currentHighPeak = peak.Price;
+                        }
+                    }
+
+                }
+            }
+
+            if (currentHighPeak != 0)
+            {
+                for (int i = 0; i < HighPeaks.Count; i++)
+                {
+                    if (HighPeaks[i].Price == currentHighPeak)
+                    {
+                        HighPeaks[i].Taken = true;
+                    }
+                }
             }
 
 
+            CurrentHighPeak.Price = currentHighPeak;
 
+        }
 
-            if (Peaks.Count < HLDaysCount)
+        private void SaveDayHL(Candle newCandle)
+        {            
+            var highPeak = new CandlePeak { Price = newCandle.HighPrice, Taken = false };
+            var lowPeak = new CandlePeak { Price = newCandle.LowPrice, Taken = false };
+
+            //----------------------------------------
+            if (HighPeaks.Count < HLDaysCount)
             {
-                Peaks.Add(dayPeaks);
+                HighPeaks.Add(highPeak);
             }
             else
             {
-                Peaks.RemoveAt(0);
-                Peaks.Add(dayPeaks);
+                HighPeaks.RemoveAt(0);
+                HighPeaks.Add(highPeak);
             }
+
+            if (LowPeaks.Count < HLDaysCount)
+            {
+                LowPeaks.Add(lowPeak);
+            }
+            else
+            {
+                LowPeaks.RemoveAt(0);
+                LowPeaks.Add(lowPeak);
+            }
+            //
+
+
         }
+
+
 
         public void SetRobotInfo()
         {
@@ -237,12 +330,105 @@ namespace ShortPeakRobot.Robots.Algorithms
                 {
                     RobotInfoVM.ClearParams();
 
-                    RobotInfoVM.AddParam("LastCandle", LastCandle.OpenTime.ToString("HH:mm"));
+                    RobotInfoVM.AddParam("CurrentHighPeak", CurrentHighPeak.Price.ToString());
+                    RobotInfoVM.AddParam("CurrentLowPeak", CurrentLowPeak.Price.ToString());
+
+                    foreach (var item in HighPeaks)
+                    {
+                        RobotInfoVM.AddParam("HighPeaks", item.Price + " " + item.Taken.ToString());
+                    }
+                    foreach (var item in LowPeaks)
+                    {
+                        RobotInfoVM.AddParam("LowPeaks", item.Price + " " + item.Taken.ToString());
+                    }
                 });
             }
         }
 
+        private void CheckPeacks(decimal currentPrice)
+        {
+            // high
+            for (int i = 0; i < HighPeaks.Count; i++)
+            {
+                if (currentPrice > HighPeaks[i].Price)
+                {
+                    HighPeaks[i].Taken = true;
+                }
+            }
+
+            // low
+            for (int i = 0; i < LowPeaks.Count; i++)
+            {
+                if (currentPrice < LowPeaks[i].Price)
+                {
+                    LowPeaks[i].Taken = true;
+                }
+            }
+        }
+
         private void PeaksAnalyse(List<Candle> candles)
+        {
+            CancelSignalOrders();
+            //----------------
+
+            for (int i = HLDaysCount + 1; i > 1; i--)
+            {
+                var candle = candles[^i];
+
+                SaveDayHL(candle);
+            }
+
+            var currentCandle = candles[^1];
+
+            // high
+            for (int i = 0; i < HighPeaks.Count; i++)
+            {
+                if (i > 0)
+                {
+                    for (int n = 0; n < i; n++)
+                    {
+                        if (HighPeaks[i].Price > HighPeaks[n].Price)
+                        {
+                            HighPeaks[n].Taken = true;
+                        }
+                    }
+                }
+
+
+                if (currentCandle.HighPrice > HighPeaks[i].Price)
+                {
+                    HighPeaks[i].Taken = true;
+                }
+            }
+
+            //----- low 
+            for (int i = 0; i < LowPeaks.Count; i++)
+            {
+                if (i > 0)
+                {
+                    for (int n = 0; n < i; n++)
+                    {
+                        if (LowPeaks[i].Price < LowPeaks[n].Price)
+                        {
+                            LowPeaks[n].Taken = true;
+                        }
+                    }
+                }
+
+
+                if (currentCandle.LowPrice < LowPeaks[i].Price)
+                {
+                    LowPeaks[i].Taken = true;
+                }
+            }
+
+            GetCurrenHighPeak();
+            GetCurrenLowPeak();
+
+        }
+
+
+        private void CancelSignalOrders()
         {
             var HLRobot = RobotVM.robots[RobotId];
             // снимаем ордера по сигналам
@@ -267,41 +453,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                     OrderId = HLRobot.SignalBuyOrder.OrderId
                 });
             }
-            //----------------
-            for (int i = HLDaysCount + 1; i > 1; i--)
-            {
-                var candle = candles[^i];
-                var currentCandle = candles[^1];
-                SaveDayHL(candle, currentCandle);
-            }
-
-
-            List<decimal> peaksHigh = Peaks.Where(x => x.High != 0).Select(x => x.High).ToList();
-            List<decimal> peaksLow = Peaks.Where(x => x.Low != 0).Select(x => x.Low).ToList();
-
-            if (peaksHigh.Count > 0)
-            {
-                CurrentPeaks.High = peaksHigh.Min(x => x);
-            }
-
-            if (peaksLow.Count > 0)
-            {
-                CurrentPeaks.Low = peaksLow.Max(x => x);
-            }
-
-            for (int i = 0; i < Peaks.Count; i++)
-            {
-                if (Peaks[i].High == CurrentPeaks.High)
-                {
-                    Peaks[i].High = 0;
-                }
-                if (Peaks[i].Low == CurrentPeaks.Low)
-                {
-                    Peaks[i].Low = 0;
-                }
-            }
         }
-        
 
         private void SetCurrentPrifit(decimal price)
         {

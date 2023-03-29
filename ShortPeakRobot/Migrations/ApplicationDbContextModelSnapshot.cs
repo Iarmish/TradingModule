@@ -187,6 +187,146 @@ namespace ShortPeakRobot.Migrations
 
                     b.ToTable("RobotTrades");
                 });
+
+            modelBuilder.Entity("ShortPeakRobot.Data.Test", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Algorithm")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("BuyAllowed")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Comission")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Deposit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("DrawDown")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("EndDate")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Interval")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsRevers")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsSlPercent")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsTpPercent")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVariabaleLot")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Offset")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Profit")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("ProfitFactor")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("RecoveryFactor")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("SellAllowed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("StartDate")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StopLoss")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TakeProfit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TradeHours")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tests");
+                });
+
+            modelBuilder.Entity("ShortPeakRobot.Data.TesterTrade", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ClientId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("Fee")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Result")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Side")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("StartDeposit")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("StartPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("StopDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("StopPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TestId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TesterTrades");
+                });
 #pragma warning restore 612, 618
         }
     }

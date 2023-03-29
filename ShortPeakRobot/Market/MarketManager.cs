@@ -44,7 +44,7 @@ namespace ShortPeakRobot.Market
         public WebCallResult<string> ListenKey;
 
         public int orderCount { get; set; }
-        
+
         public MarketManager()
         {
             _context = new ApplicationDbContext();
@@ -101,20 +101,20 @@ namespace ShortPeakRobot.Market
             {
                 if (FailRequestQueue.Count > 0)
                 {
-                    
+
                     foreach (var req in FailRequestQueue)
                     {
                         if (req.robotRequestType == RobotRequestType.PlaceOrder)
                         {
                             req.TryCount++;
                             if (req.TryCount < 6)
-                            {                                
+                            {
                                 Thread.Sleep(req.TryCount * 1000);
                                 PlaceBinanceOrder(req);
                             }
                             else
                             {
-                                RobotServices.ForceStopRobotAsync(req.RobotId);                                
+                                RobotServices.ForceStopRobotAsync(req.RobotId);
                             }
                         }
 
@@ -189,7 +189,18 @@ namespace ShortPeakRobot.Market
                 {
                     FailRequestQueue.Add(q);
                 }
-                RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Place order error" + result.Error.ToString());
+
+                var orderPrice = "";
+                if (q.StopPrice != 0)
+                {
+                    orderPrice = q.StopPrice.ToString();
+                }
+                else
+                {
+                    orderPrice = q.Price.ToString();
+                }
+                RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Place order error" + " id " + q.OrderId +
+                    q.robotOrderType.ToString() + " " + OrderTypes.Types[(int)q.OrderType] + " price " + orderPrice + " " + result.Error.ToString());
             }
         }
 
@@ -232,10 +243,23 @@ namespace ShortPeakRobot.Market
                 {
                     FailRequestQueue.Add(q);
                 }
-                RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Place order error" + order.Error.ToString());
+
+
+                var orderPrice = "";
+                if (q.StopPrice != 0)
+                {
+                    orderPrice = q.StopPrice.ToString();
+                }
+                else
+                {
+                    orderPrice = q.Price.ToString();
+                }
+
+                RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Place order error " + q.robotOrderType.ToString() + " " + OrderTypes.Types[(int)q.OrderType] + " price " + orderPrice + " " + order.Error.ToString());
+
+                
             }
         }
-
 
 
         private void SubscribtionController()
@@ -450,39 +474,7 @@ namespace ShortPeakRobot.Market
             return false;
         }
 
-        //private async void GetTrades()
-        //{
-        //    foreach (var symbol in SymbolInitialization.list)
-        //    {
-        //        var trades = await BinanceApi.client.UsdFuturesApi.Trading.GetUserTradesAsync(symbol,
-        //                                startTime: DateTime.UtcNow.AddDays(-1));
-        //        if (trades.Success)
-        //        {
-        //            MarketData.TradeDictionary[symbol].AddRange(BinTradeDTO.TradesDTO(trades));
-        //        }
-        //        else
-        //        {
-        //            //обработать
-        //        }
-        //    }
-        //}
 
-        //private async void GetOrders()
-        //{
-        //    foreach (var symbol in SymbolInitialization.list)
-        //    {
-        //        var orders = await BinanceApi.client.UsdFuturesApi.Trading.GetOrdersAsync(symbol,
-        //                startTime: DateTime.UtcNow.AddDays(-1));
-        //        if (orders.Success)
-        //        {
-        //            MarketData.OrderDictionary[symbol].AddRange(BinOrderDTO.OrdersDTO(orders));
-        //        }
-        //        else
-        //        {
-        //            //обработать
-        //        }
-        //    }
-        //}
 
         public void Log(LogType type, string message)
         {

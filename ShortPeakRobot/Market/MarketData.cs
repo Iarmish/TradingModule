@@ -19,8 +19,8 @@ namespace ShortPeakRobot.Market
         public static BinanceFuturesAccountBalance BalanceUSDT { get; set; } 
         public static MarketManager MarketManager { get; set; } = new MarketManager();
 
-       
 
+        public static List<int> LogTypeFilter { get; set; } = new List<int>();
     }
 
 }

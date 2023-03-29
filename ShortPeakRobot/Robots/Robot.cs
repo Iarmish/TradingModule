@@ -255,7 +255,6 @@ namespace ShortPeakRobot.Robots
                 Position = 0;
 
 
-
                 MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
                     RobotId = Id,

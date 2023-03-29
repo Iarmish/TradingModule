@@ -80,23 +80,11 @@ namespace ShortPeakRobot.Market
             {
                 var robotOrders =  GetRobotOrders(robotId, MarketData.Info.StartSessionDate);
                 var robotTrades = GetRobotTrades(robotId, MarketData.Info.StartSessionDate);
+                var robotLogs = GetRobotLogs(robotId, MarketData.Info.StartSessionDate);
                 MarketData.Info.SessionRobotProfit = GetTradesProfit(robotTrades);
                 RobotVM.robots[robotId].BaseSettings.Profit = MarketData.Info.SessionRobotProfit;
 
-                var robotLogs = new List<RobotLog>();
-                try
-                {
-                    lock (Locker)
-                    {
-                        robotLogs = _context.RobotLogs.Where(x => x.ClientId == RobotsInitialization.ClientId &&
-                                       x.RobotId == robotId && x.Date > MarketData.Info.StartSessionDate).ToList();
-                    }
-                }
-                catch (Exception)
-                {
-
-                    throw;
-                }
+               
 
 
 
@@ -110,9 +98,8 @@ namespace ShortPeakRobot.Market
                     RobotTradeVM.trades.Clear();
                     RobotTradeVM.AddRange(robotTrades);
 
-
-                    //LogVM.logs.Clear();
-                    //LogVM.AddRange(robotLogs);
+                    LogVM.logs.Clear();
+                    LogVM.AddRange(robotLogs);
                 });
                 //MarketData.OpenOrders = RobotOrderDTO.OrdersDTO(
                 //await BinanceApi.client.UsdFuturesApi.Trading.GetOpenOrdersAsync(RobotVM.robots[robotId].Symbol), robotId);
@@ -120,6 +107,29 @@ namespace ShortPeakRobot.Market
             }
 
 
+        }
+
+
+        public  static List<RobotLog> GetRobotLogs(int robotId, DateTime startDate)
+        {
+            var robotLogs = new List<RobotLog>();
+            
+            
+
+            try
+            {
+                lock (Locker)
+                {
+                    robotLogs = _context.RobotLogs.Where(x => x.ClientId == RobotsInitialization.ClientId && x.Date > startDate &&
+                                   x.RobotId == robotId && x.Date > MarketData.Info.StartSessionDate && MarketData.LogTypeFilter.Contains(x.Type)).ToList();
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            return robotLogs;
         }
 
         public async static Task<List<RobotOrder>> GetOpenOrders(int robotId)

@@ -147,7 +147,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 NewCandle(LastCandle);
             }
             //------------------- Проверка на выход за пределы СЛ ТП
-            Task.Run(() => VwapRobot.CheckSLTPCross(currentPrice));
+            //Task.Run(() => VwapRobot.CheckSLTPCross(currentPrice));
             //==============  пересечение vwap =======================================================
             if (VWAPStatus == -1 && currentPrice < VWAPcandles[^1].VWAP)
             {

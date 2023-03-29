@@ -106,7 +106,7 @@ namespace ShortPeakRobot
 
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
-        {
+        {            
             MessageBox.Show("Client Id " + RobotsInitialization.ClientId);
             await MarketServices.GetBalanceUSDTAsync();
 
@@ -345,9 +345,7 @@ namespace ShortPeakRobot
         {
             var robotIds = RobotVM.robots.Where(x => x.IsActivated).Select(x => x.Id).ToList();
             MarketData.MarketManager.RobotsRun(robotIds);
-
-            //var date = DateTime.UtcNow;
-            //MarketData.Info.StartSessionDate = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Utc);
+            
             MarketData.Info.IsSessionRun = true;
         }
 
@@ -549,6 +547,74 @@ namespace ShortPeakRobot
             string symbol = ((TextBlock)stack.Children[0]).Text;
 
             var cancelAllOrders = await BinanceApi.client.UsdFuturesApi.Trading.CancelAllOrdersAsync(symbol);
+        }
+
+        private void BtnRobotInfo_Click(object sender, RoutedEventArgs e)
+        {
+            var robotStateWindow = new RobotDebugInfo();
+            robotStateWindow.Owner = Application.Current.MainWindow;
+
+            robotStateWindow.Show();
+        }
+
+        private void TBinfo_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var TB = (TextBlock)sender;
+            if (TB.Foreground == Brushes.Gray)
+            {
+                TB.Foreground = Brushes.Green;
+                MarketData.LogTypeFilter.Add((int)LogType.Info);
+            }
+            else
+            {
+                TB.Foreground = Brushes.Gray;
+                MarketData.LogTypeFilter = MarketData.LogTypeFilter.Where(x=>x != (int)LogType.Info).ToList();
+            }
+        }
+
+        private void TBerror_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var TB = (TextBlock)sender;
+            if (TB.Foreground == Brushes.Gray)
+            {
+                TB.Foreground = Brushes.Green;
+                MarketData.LogTypeFilter.Add((int)LogType.Error);
+            }
+            else
+            {
+                TB.Foreground = Brushes.Gray;
+                MarketData.LogTypeFilter = MarketData.LogTypeFilter.Where(x => x != (int)LogType.Error).ToList();
+            }
+        }
+
+        private void TBrobotstate_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var TB = (TextBlock)sender;
+            if (TB.Foreground == Brushes.Gray)
+            {
+                TB.Foreground = Brushes.Green;
+                MarketData.LogTypeFilter.Add((int)LogType.RobotState);
+            }
+            else
+            {
+                TB.Foreground = Brushes.Gray;
+                MarketData.LogTypeFilter = MarketData.LogTypeFilter.Where(x => x != (int)LogType.RobotState).ToList();
+            }
+        }
+
+        private void Tbupdateorder_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var TB = (TextBlock)sender;
+            if (TB.Foreground == Brushes.Gray)
+            {
+                TB.Foreground = Brushes.Green;
+                MarketData.LogTypeFilter.Add((int)LogType.UpdateOrder);
+            }
+            else
+            {
+                TB.Foreground = Brushes.Gray;
+                MarketData.LogTypeFilter = MarketData.LogTypeFilter.Where(x => x != (int)LogType.UpdateOrder).ToList();
+            }
         }
     }
 }
