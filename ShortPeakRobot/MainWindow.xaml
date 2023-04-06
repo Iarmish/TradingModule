@@ -42,6 +42,10 @@
                                   VerticalAlignment="Top"  />
                         <Button x:Name="BtnSetSessionDate"  Padding="5,4"  Width="110" 
                                   VerticalAlignment="Top"  Cursor="Hand" Background="MintCream" Click="BtnSetSessionDate_Click" >Set Session Date</Button>
+                        <TextBox x:Name="TBDepo" Text="285"   Padding="5,4"  Width="86" Margin="5,0,5,0"
+                                  VerticalAlignment="Top"  />
+                        <Button x:Name="BtnSetDepo"  Padding="5,4"  Width="110" 
+                                  VerticalAlignment="Top"  Cursor="Hand" Background="MintCream" Click="BtnSetDepo_Click"  >Set Deposit</Button>
                     </StackPanel>
                     <StackPanel x:Name="StackInfo" Orientation="Horizontal" Margin="5,66,0,0" Background="AntiqueWhite" Height="25" VerticalAlignment="Top">
                         <TextBlock Text="Balance USDT"   Padding="5,4"  Width="88" 

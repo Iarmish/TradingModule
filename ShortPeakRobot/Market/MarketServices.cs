@@ -15,6 +15,10 @@ using Binance.Net.Enums;
 using Microsoft.Extensions.Options;
 using CryptoExchange.Net.Objects;
 using Binance.Net.Objects.Models.Futures;
+using Binance.Infrastructure.Constants;
+using System.Windows.Markup;
+using Binance.Net.Interfaces;
+using CryptoExchange.Net.Sockets;
 
 namespace ShortPeakRobot.Market
 {
@@ -54,13 +58,13 @@ namespace ShortPeakRobot.Market
 
             foreach (var robot in RobotVM.robots)//добавление id роботов в алгоритмы роботов
             {
-               var robotTrades = clientTrades.Where(x => x.RobotId == robot.Id).ToList();
-                 
+                var robotTrades = clientTrades.Where(x => x.RobotId == robot.Id).ToList();
+
                 robot.BaseSettings.Profit = MarketServices.GetTradesProfit(robotTrades);
             }
 
         }
-        
+
 
         public static decimal GetTradesProfit(List<RobotTrade> robotTrades)
         {
@@ -74,17 +78,17 @@ namespace ShortPeakRobot.Market
             return profit;
         }
 
-        public  static void GetRobotData(int robotId)
+        public static void GetRobotData(int robotId)
         {
             if (MarketData.Info.SelectedRobotId == robotId)
             {
-                var robotOrders =  GetRobotOrders(robotId, MarketData.Info.StartSessionDate);
+                var robotOrders = GetRobotOrders(robotId, MarketData.Info.StartSessionDate);
                 var robotTrades = GetRobotTrades(robotId, MarketData.Info.StartSessionDate);
                 var robotLogs = GetRobotLogs(robotId, MarketData.Info.StartSessionDate);
                 MarketData.Info.SessionRobotProfit = GetTradesProfit(robotTrades);
                 RobotVM.robots[robotId].BaseSettings.Profit = MarketData.Info.SessionRobotProfit;
 
-               
+
 
 
 
@@ -110,11 +114,11 @@ namespace ShortPeakRobot.Market
         }
 
 
-        public  static List<RobotLog> GetRobotLogs(int robotId, DateTime startDate)
+        public static List<RobotLog> GetRobotLogs(int robotId, DateTime startDate)
         {
             var robotLogs = new List<RobotLog>();
-            
-            
+
+
 
             try
             {
@@ -191,14 +195,14 @@ namespace ShortPeakRobot.Market
             }
         }
 
-        public  static List<RobotOrder> GetRobotOrders(int robotId, DateTime startDate)
+        public static List<RobotOrder> GetRobotOrders(int robotId, DateTime startDate)
         {
             var robotOrders = new List<RobotOrder>();
             lock (Locker)
             {
                 robotOrders = _context.RobotOrders
                    .Where(x => x.PlacedTime > startDate && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
-                   .OrderBy(x=>x.PlacedTime).ToList();
+                   .OrderBy(x => x.PlacedTime).ToList();
 
             }
 
@@ -305,6 +309,32 @@ namespace ShortPeakRobot.Market
             }
 
 
+
+        }
+
+        public static void SetRobotLotBySymbol(string symbol, decimal price)
+        {
+            foreach (Robot robot in RobotVM.robots)
+            {
+                if (robot.Symbol.Equals(symbol))
+                {
+                    SetRobotVariableLot(robot.Id, price);
+                }
+            }
+            
+        }
+
+        public static void SetRobotVariableLot(int robotId, decimal price)
+        {
+            if (RobotVM.robots[robotId].BaseSettings.IsVariableLot)
+            {
+                var robotPartDepo = MarketData.Info.Deposit / 100 * RobotVM.robots[robotId].BaseSettings.Deposit;
+                RobotVM.robots[robotId].BaseSettings.CurrentDeposit = robotPartDepo + RobotVM.robots[robotId].BaseSettings.Profit;
+                //variable lot
+                RobotVM.robots[robotId].BaseSettings.Volume =
+                    Math.Round(RobotVM.robots[robotId].BaseSettings.CurrentDeposit / price, SymbolIndexes.lot[RobotVM.robots[robotId].Symbol]);
+
+            }
 
         }
 

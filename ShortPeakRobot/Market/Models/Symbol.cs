@@ -17,6 +17,7 @@ namespace ShortPeakRobot.Market.Models
                 {
                     _Price = value;
                     OnPropertyChanged("Price");
+                    MarketServices.SetRobotLotBySymbol(Name, value);
                 }
             }
         }

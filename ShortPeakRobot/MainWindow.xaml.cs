@@ -57,8 +57,8 @@ namespace ShortPeakRobot
 
         }
 
+        IniManager ini = new();
 
-        
 
         public delegate void CandleChartDwawDelegate(List<Candle> candles, List<RobotTrade> deals,
             int timeFrame);
@@ -106,7 +106,10 @@ namespace ShortPeakRobot
 
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
-        {            
+        {
+            TBDepo.Text = ini.GetPrivateString("deposit", "value");
+            MarketData.Info.Deposit = (int)(decimal.Parse(TBDepo.Text.Replace(',', '.'), CultureInfo.InvariantCulture));
+
             MessageBox.Show("Client Id " + RobotsInitialization.ClientId);
             await MarketServices.GetBalanceUSDTAsync();
 
@@ -257,8 +260,13 @@ namespace ShortPeakRobot
             {
                 robot.BaseSettings.SaveSettings(robot.Id, robot.BaseSettings);
             }
-
+            ini.WritePrivateString("deposit", "value", TBDepo.Text);
             BinanceSocket.client.UnsubscribeAllAsync();
+
+            if (MessageBox.Show("Подтвердите закрытие программы", "Binance Robot", MessageBoxButton.YesNo, MessageBoxImage.Question).ToString() == "No")
+            {
+                e.Cancel = true;
+            }
         }
 
         private void SaveSettingsToFile_Click(object sender, RoutedEventArgs e)
@@ -615,6 +623,12 @@ namespace ShortPeakRobot
                 TB.Foreground = Brushes.Gray;
                 MarketData.LogTypeFilter = MarketData.LogTypeFilter.Where(x => x != (int)LogType.UpdateOrder).ToList();
             }
+        }
+
+        private void BtnSetDepo_Click(object sender, RoutedEventArgs e)
+        {            
+            MarketData.Info.Deposit = (int)(decimal.Parse(TBDepo.Text.Replace(',', '.'), CultureInfo.InvariantCulture));
+            ini.WritePrivateString("deposit", "value", TBDepo.Text);
         }
     }
 }

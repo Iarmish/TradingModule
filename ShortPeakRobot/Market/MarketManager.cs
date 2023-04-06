@@ -388,15 +388,16 @@ namespace ShortPeakRobot.Market
                 MarketServices.candleChartDwaw(MarketData.CandleDictionary[robotSymbol][robotIinterval], new List<RobotTrade>(),
                     selectedRobot.BaseSettings.TimeFrame);
 
-                if (selectedRobot.BaseSettings.IsVariableLot)
-                {
-                    //robot part deposit
-                    selectedRobot.BaseSettings.CurrentDeposit = selectedRobot.BaseSettings.Deposit + selectedRobot.BaseSettings.Profit;
-                    //variable lot
-                    selectedRobot.BaseSettings.Volume =
-                        Math.Round(selectedRobot.BaseSettings.CurrentDeposit / data.Data.Data.ClosePrice, SymbolIndexes.lot[robotSymbol]);
+                //if (selectedRobot.BaseSettings.IsVariableLot)
+                //{
+                //    //robot part deposit
+                //    var robotPartDepo = MarketData.Info.Deposit / 100 * selectedRobot.BaseSettings.Deposit;
+                //    selectedRobot.BaseSettings.CurrentDeposit = robotPartDepo + selectedRobot.BaseSettings.Profit;
+                //    //variable lot
+                //    selectedRobot.BaseSettings.Volume =
+                //        Math.Round(selectedRobot.BaseSettings.CurrentDeposit / data.Data.Data.ClosePrice, SymbolIndexes.lot[robotSymbol]);
 
-                }
+                //}
 
                 if (selectedRobot.BaseSettings.SLPercent)
                 {

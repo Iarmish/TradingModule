@@ -188,6 +188,127 @@ namespace ShortPeakRobot.Migrations
                     b.ToTable("RobotTrades");
                 });
 
+            modelBuilder.Entity("ShortPeakRobot.Data.Scan", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Algorithm")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Commission")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Date1")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Date2")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Deposit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("FlagBuy")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("FlagReverse")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("FlagSell")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsSlPercent")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsTpPercent")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SL1")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SL2")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StepSl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StepTp")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Stock")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TP1")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TP2")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TimeFrame")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TradeHours")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("VariableLot")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Scans");
+                });
+
+            modelBuilder.Entity("ShortPeakRobot.Data.ScanResult", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<double>("Drawdown")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("Index")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("Profit")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("ProfitFactor")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("RecoveryFactor")
+                        .HasColumnType("double precision");
+
+                    b.Property<long>("ScanId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ScanResults");
+                });
+
             modelBuilder.Entity("ShortPeakRobot.Data.Test", b =>
                 {
                     b.Property<long>("Id")

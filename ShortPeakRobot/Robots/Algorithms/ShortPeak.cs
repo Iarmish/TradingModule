@@ -6,6 +6,7 @@ using ShortPeakRobot.Robots.Algorithms.Models;
 using ShortPeakRobot.ViewModel;
 using System;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 
 namespace ShortPeakRobot.Robots.Algorithms
@@ -20,6 +21,8 @@ namespace ShortPeakRobot.Robots.Algorithms
         public Candle LastCandle { get; set; } = new Candle();
         public DateTime LastCandleTime { get; set; } = DateTime.UtcNow;
         public int RobotId { get; set; }
+        public bool NeedChartAnalyse { get; set; }
+        
 
 
         //----------------------------------------------
@@ -73,34 +76,18 @@ namespace ShortPeakRobot.Robots.Algorithms
                 if (candlesAnalyse == CandlesAnalyse.Required)
                 {
                     SpRobot.RobotState = new();
-                    await SpRobot.ResetRobotState();                    
+                    await SpRobot.ResetRobotState();
 
-                    var candlesForCheck = candles.Where(x => x.OpenTime != carrentCendle.OpenTime).ToList();
-
-                    foreach (var candle in candlesForCheck)
-                    {
-                        if (candle.OpenTime != carrentCendle.OpenTime)//кроме последней не закрытой свечи
-                        {
-                            NewCandle(candle);
-                        }
-                    }
-                    //-------- скидываем пики по последней свечке -------------------------------
-                    if (carrentCendle.HighPrice >= HighPeak.Peak)
-                    {
-                        HighPeak.Peak = 0;
-                    }
-                    if (carrentCendle.LowPrice <= LowPeak.Peak)
-                    {
-                        LowPeak.Peak = 0;
-                    }
+                    ChartAnalyse();
+                    
                 }
 
                 //------ выставление СЛ ТП после сбоя
-                 SpRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(SpRobot.RobotState.Position));
+                SpRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(SpRobot.RobotState.Position));
 
                 //-------------
                 IsReady = true;
-                
+
             }
 
             if (!IsReady)
@@ -118,7 +105,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: SpRobot.RobotState, robotId: RobotId,
                     SpRobot.SignalBuyOrder, SpRobot.SignalSellOrder, SpRobot.StopLossOrder, SpRobot.TakeProfitOrder);
                 //------ выставление СЛ ТП после сбоя
-                 SpRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(SpRobot.RobotState.Position));
+                SpRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(SpRobot.RobotState.Position));
 
                 SpRobot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
             }
@@ -134,25 +121,36 @@ namespace ShortPeakRobot.Robots.Algorithms
                 LastCandle = LastCompletedCendle;
                 NewCandle(LastCandle);
             }
+            //----------- анализ графика после закрытия сделки ------------------------------
+            if (!NeedChartAnalyse && SpRobot.Position != 0)
+            {
+                NeedChartAnalyse = true;
+            }
+            if (NeedChartAnalyse && SpRobot.Position == 0)
+            {
+                NeedChartAnalyse = false;
+                ChartAnalyse();
+            }
 
             //------------------- Проверка на выход за пределы СЛ ТП
             //Task.Run(() => SpRobot.CheckSLTPCross(currentPrice));
+
             //---------------- скидываем пики
             if ((LowPeak.Peak != 0 && SpRobot.Position != 0) ||
-                (SpRobot.SignalSellOrder.OrderId != 0 && !SpRobot.CheckTradingStatus(carrentCendle.OpenTime)))
+            (SpRobot.SignalSellOrder.OrderId != 0 && !SpRobot.CheckTradingStatus(carrentCendle.OpenTime)))
             {
                 if (SpRobot.SignalSellOrder.OrderId != 0)//снимаем ордер по сигналу если торговля запрещена 
                 {
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
                         RobotId = RobotId,
-                        Symbol = SpRobot.Symbol,                        
+                        Symbol = SpRobot.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
                         OrderId = SpRobot.SignalSellOrder.OrderId
                     });
                     SpRobot.RobotState.SignalSellOrderId = 0;
                     SpRobot.SignalSellOrder = new();
-                   
+
                 }
                 LowPeak.Peak = 0;
             }
@@ -166,13 +164,13 @@ namespace ShortPeakRobot.Robots.Algorithms
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
                         RobotId = RobotId,
-                        Symbol = SpRobot.Symbol,                        
+                        Symbol = SpRobot.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
                         OrderId = SpRobot.SignalBuyOrder.OrderId
                     });
                     SpRobot.RobotState.SignalBuyOrderId = 0;
                     SpRobot.SignalBuyOrder = new();
-                    
+
                 }
                 HighPeak.Peak = 0;
             }
@@ -188,7 +186,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
                         RobotId = RobotId,
-                        Symbol = SpRobot.Symbol,                        
+                        Symbol = SpRobot.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
                         OrderId = SpRobot.SignalSellOrder.OrderId
                     });
@@ -210,8 +208,8 @@ namespace ShortPeakRobot.Robots.Algorithms
                     robotRequestType = RobotRequestType.PlaceOrder
                 });
 
-                
-                
+
+
             }
 
             //--------------- ордер по сигналу High peak
@@ -219,13 +217,13 @@ namespace ShortPeakRobot.Robots.Algorithms
             {
                 var stopPrice = HighPeak.Peak;
                 HighPeak.Peak = 0;//скидываем пики при открытии сделки
-               
+
                 if (SpRobot.SignalBuyOrder.OrderId != 0)
                 {
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
                         RobotId = RobotId,
-                        Symbol = SpRobot.Symbol,                        
+                        Symbol = SpRobot.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
                         OrderId = SpRobot.SignalBuyOrder.OrderId
                     });
@@ -249,13 +247,36 @@ namespace ShortPeakRobot.Robots.Algorithms
                 });
 
 
-                
-                
+
+
 
             }
 
         }
 
+
+        public void ChartAnalyse()
+        {
+            var SpRobot = RobotVM.robots[RobotId];
+            var carrentCendle = MarketData.CandleDictionary[SpRobot.Symbol][SpRobot.BaseSettings.TimeFrame][^1];
+            var candles = MarketData.CandleDictionary[SpRobot.Symbol][SpRobot.BaseSettings.TimeFrame];
+
+            var candlesForCheck = candles.Where(x => x.OpenTime != carrentCendle.OpenTime).ToList();
+
+            foreach (var candle in candlesForCheck)
+            {
+                NewCandle(candle);
+            }
+            //-------- скидываем пики по последней свечке -------------------------------
+            if (carrentCendle.HighPrice >= HighPeak.Peak)
+            {
+                HighPeak.Peak = 0;
+            }
+            if (carrentCendle.LowPrice <= LowPeak.Peak)
+            {
+                LowPeak.Peak = 0;
+            }
+        }
 
         public void SetRobotInfo()
         {
