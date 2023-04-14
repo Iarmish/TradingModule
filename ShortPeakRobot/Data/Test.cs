@@ -23,6 +23,7 @@ namespace ShortPeakRobot.Data
         public bool IsVariabaleLot { get; set; }
         public bool IsSlPercent { get; set; }
         public bool IsTpPercent { get; set; }
+        public bool IsOffsetPercent { get; set; }
         public bool BuyAllowed { get; set; }
         public bool SellAllowed { get; set; }
         public bool IsRevers { get; set; }

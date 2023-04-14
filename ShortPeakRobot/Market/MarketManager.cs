@@ -199,7 +199,7 @@ namespace ShortPeakRobot.Market
                 {
                     orderPrice = q.Price.ToString();
                 }
-                RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Place order error" + " id " + q.OrderId +
+                RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Cancel order error" + " id " + q.OrderId +
                     q.robotOrderType.ToString() + " " + OrderTypes.Types[(int)q.OrderType] + " price " + orderPrice + " " + result.Error.ToString());
             }
         }
@@ -289,6 +289,7 @@ namespace ShortPeakRobot.Market
         public async void ActivateUserDataStream()
         {
             ListenKey = await BinanceApi.client.UsdFuturesApi.Account.StartUserStreamAsync();
+            
             if (!ListenKey.Success)
             {
                 Log(LogType.Error, "ListenKey   Update Error");

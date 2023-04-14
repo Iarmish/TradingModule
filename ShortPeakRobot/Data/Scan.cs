@@ -16,6 +16,7 @@ namespace ShortPeakRobot.Data
         public string Date1 { get; set; }
         public string Date2 { get; set; }
         public string Deposit { get; set; }
+        public string Offset { get; set; }
         public string Commission { get; set; }
         public string TradeHours { get; set; } = "";
         public bool FlagSell { get; set; }
@@ -24,6 +25,7 @@ namespace ShortPeakRobot.Data
         public bool VariableLot { get; set; }
         public bool IsSlPercent { get; set; }
         public bool IsTpPercent { get; set; }
+        public bool IsOffsetPercent { get; set; }
         public string SL1 { get; set; }
         public string SL2 { get; set; }
         public string TP1 { get; set; }
