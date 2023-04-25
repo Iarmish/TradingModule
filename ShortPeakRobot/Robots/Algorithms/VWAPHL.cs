@@ -95,21 +95,21 @@ namespace ShortPeakRobot.Robots.Algorithms
 
                 //проверка состояния предыдущей сессии 
                 VwapRobot.RobotState = RobotServices.LoadStateAsync(RobotId);
-                await VwapRobot.ResetRobotState();
+                await VwapRobot.SetRobotOrders();
 
 
-                candlesAnalyse = RobotStateProcessor.CheckStateAsync(VwapRobot.RobotState, RobotId,
+                candlesAnalyse =  RobotStateProcessor.CheckStateAsync(VwapRobot.RobotState, RobotId,
                     VwapRobot.SignalBuyOrder, VwapRobot.SignalSellOrder, VwapRobot.StopLossOrder, VwapRobot.TakeProfitOrder);
 
                 //--------- анализ графика ------------
                 if (candlesAnalyse == CandlesAnalyse.Required)
                 {
                     VwapRobot.RobotState = new();
-                    await VwapRobot.ResetRobotState();                                       
+                    await VwapRobot.SetRobotOrders();                                       
                 }
 
                 //------ выставление СЛ ТП после сбоя
-                 VwapRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(VwapRobot.RobotState.Position));
+                 VwapRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(VwapRobot.RobotState.Position), VwapRobot.SignalBuyOrder.OrderId, VwapRobot.SignalSellOrder.OrderId);
 
                 //-------------
                 IsReady = true;
@@ -127,10 +127,10 @@ namespace ShortPeakRobot.Robots.Algorithms
                 LastCandle.OpenPrice != 0)
             {
                 var lostTime = (carrentCendle.CloseTime - LastCandleTime.AddSeconds(VwapRobot.BaseSettings.TimeFrame)).TotalMinutes;
-                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: VwapRobot.RobotState, robotId: RobotId,
+                var candlesAnalyse =  RobotStateProcessor.CheckStateAsync(state: VwapRobot.RobotState, robotId: RobotId,
                     VwapRobot.StopLossOrder, VwapRobot.TakeProfitOrder, VwapRobot.StopLossOrder, VwapRobot.TakeProfitOrder);
                 //------ выставление СЛ ТП после сбоя
-                 VwapRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(VwapRobot.RobotState.Position));
+                 VwapRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(VwapRobot.RobotState.Position), VwapRobot.SignalBuyOrder.OrderId, VwapRobot.SignalSellOrder.OrderId);
 
                 VwapRobot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
             }

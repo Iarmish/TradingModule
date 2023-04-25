@@ -22,6 +22,68 @@ namespace ShortPeakRobot.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ShortPeakRobot.Data.RobotDeal", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ClientId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CloseOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("CloseOrderPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("ClosePrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CloseTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Fee")
+                        .HasColumnType("numeric");
+
+                    b.Property<long>("OpenOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OpenOrderPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("OpenPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("OpenTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Result")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("RobotId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Side")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("StartDeposit")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RobotDeals");
+                });
+
             modelBuilder.Entity("ShortPeakRobot.Data.RobotLog", b =>
                 {
                     b.Property<long>("Id")
@@ -74,6 +136,9 @@ namespace ShortPeakRobot.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
+                    b.Property<decimal>("PriceLastFilledTrade")
+                        .HasColumnType("numeric");
+
                     b.Property<decimal>("Quantity")
                         .HasColumnType("numeric");
 
@@ -82,6 +147,12 @@ namespace ShortPeakRobot.Migrations
 
                     b.Property<int>("Side")
                         .HasColumnType("integer");
+
+                    b.Property<long>("StartDealOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("StartDeposit")
+                        .HasColumnType("numeric");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -164,6 +235,9 @@ namespace ShortPeakRobot.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
+                    b.Property<decimal>("PriceLastFilledTrade")
+                        .HasColumnType("numeric");
+
                     b.Property<decimal>("Quantity")
                         .HasColumnType("numeric");
 
@@ -175,6 +249,12 @@ namespace ShortPeakRobot.Migrations
 
                     b.Property<int>("Side")
                         .HasColumnType("integer");
+
+                    b.Property<long>("StartDealOrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("StartDeposit")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("Symbol")
                         .IsRequired()

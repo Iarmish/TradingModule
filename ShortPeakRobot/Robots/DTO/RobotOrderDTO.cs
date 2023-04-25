@@ -8,7 +8,9 @@ using ShortPeakRobot.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Markup;
 
 namespace ShortPeakRobot.Robots.DTO
 {
@@ -16,13 +18,25 @@ namespace ShortPeakRobot.Robots.DTO
     {
         public static RobotOrder DTO(DataEvent<BinanceFuturesStreamOrderUpdate> data, int robotId)
         {
-            return new RobotOrder {
+            long startDealOrderId = 0;
+            var arrClientOrderId = data.Data.UpdateData.ClientOrderId.Split(':');
+
+            if (arrClientOrderId.Length > 2 && arrClientOrderId[0] == "robot")
+            {
+                startDealOrderId = Convert.ToInt64(arrClientOrderId[2]);
+            }
+
+
+            return new RobotOrder
+            {
                 OrderId = data.Data.UpdateData.OrderId,
                 ClientId = RobotsInitialization.ClientId,
                 RobotId = robotId,
+                StartDealOrderId = startDealOrderId,
                 StopPrice = data.Data.UpdateData.StopPrice,
                 Quantity = data.Data.UpdateData.Quantity,
                 Price = data.Data.UpdateData.Price,
+                PriceLastFilledTrade = data.Data.UpdateData.PriceLastFilledTrade,
                 Status = (int)data.Data.UpdateData.Status,
                 Side = (int)data.Data.UpdateData.Side,
                 Type = (int)data.Data.UpdateData.Type,
@@ -34,18 +48,27 @@ namespace ShortPeakRobot.Robots.DTO
 
         public static RobotOrder DTO(WebCallResult<BinanceFuturesOrder> order, int robotId)
         {
+            long startDealOrderId = 0;
+            var arrClientOrderId = order.Data.ClientOrderId.Split(':');
+            if (arrClientOrderId.Length > 2 && arrClientOrderId[0] == "robot")
+            {
+                startDealOrderId = Convert.ToInt64(arrClientOrderId[2]);
+            }
+
+
             return new RobotOrder
             {
                 OrderId = order.Data.Id,
-                ClientId = RobotsInitialization.ClientId,                
+                ClientId = RobotsInitialization.ClientId,
+                StartDealOrderId = startDealOrderId,
                 RobotId = robotId,
                 StopPrice = order.Data.StopPrice,
                 Quantity = order.Data.Quantity,
                 Price = order.Data.Price,
-                Status = (int)order.Data.Status,                
+                Status = (int)order.Data.Status,
                 Side = (int)order.Data.Side,
                 Type = (int)order.Data.Type,
-                PlacedTime = order.Data.UpdateTime,                
+                PlacedTime = order.Data.UpdateTime,
                 Symbol = order.Data.Symbol,
             };
         }
@@ -68,13 +91,14 @@ namespace ShortPeakRobot.Robots.DTO
             };
         }
 
-        public static RobotOrder DTO(WebCallResult<BinanceFuturesPlacedOrder> order, int robotId)
+        public static RobotOrder DTO(WebCallResult<BinanceFuturesPlacedOrder> order, int robotId, long startDealOrderId)
         {
             return new RobotOrder
             {
                 OrderId = order.Data.Id,
                 ClientId = RobotsInitialization.ClientId,
                 RobotId = robotId,
+                StartDealOrderId = startDealOrderId,
                 StopPrice = order.Data.StopPrice,
                 Quantity = order.Data.Quantity,
                 Price = order.Data.Price,
@@ -94,15 +118,18 @@ namespace ShortPeakRobot.Robots.DTO
             {
                 OrderId = order.OrderId,
                 ClientId = order.ClientId,
-                RobotId= order.RobotId,
+                StartDealOrderId = order.StartDealOrderId,
+                StartDeposit = order.StartDeposit,
+                RobotId = order.RobotId,
                 Symbol = order.Symbol,
                 Side = (int)order.Side,
                 Type = (int)order.Type,
                 Quantity = order.Quantity,
                 Price = order.Price,
+                PriceLastFilledTrade = order.PriceLastFilledTrade,
                 StopPrice = order.StopPrice,
                 Status = (int)order.Status,
-                Description= order.Description,
+                Description = order.Description,
                 PlacedTime = order.PlacedTime,
             };
         }

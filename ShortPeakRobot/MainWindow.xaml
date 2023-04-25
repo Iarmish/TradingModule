@@ -128,6 +128,8 @@
             <TabItem Header="Сделки">
                 <Grid >
                     <Button x:Name="testAction" Content="Test action" HorizontalAlignment="Left" Height="27" Margin="10,10,0,0" VerticalAlignment="Top" Width="107" Click="testAction_Click"/>
+                    <Button x:Name="startUserData" Content="startUserData" HorizontalAlignment="Left" Height="27" Margin="150,10,0,0" VerticalAlignment="Top" Width="107" Click="startUserData_Click"/>
+                    <Button x:Name="stopUserData" Content="stopUserData" HorizontalAlignment="Left" Height="27" Margin="300,10,0,0" VerticalAlignment="Top" Width="107" Click="stopUserData_Click" />
                 </Grid>
             </TabItem>
         </TabControl>
@@ -482,10 +484,9 @@
             <TabItem Header="Сделки робота">
                 <Grid >
                     <Grid.Resources>
-                        <MVVM:RobotTradeVM x:Key="robotTrade_res"/>
-                        <Converters:OrderStatusConverter x:Key="statusConverter_res"/>
+                        <MVVM:RobotTradeVM x:Key="robotTrade_res"/>                        
                         <Converters:OrderSideConverter x:Key="sideConverter_res"/>
-                        <Converters:OrderTypeConverter x:Key="typeConverter_res"/>
+                        
                     </Grid.Resources>
                     <StackPanel   Height="24" 
                                         Background="WhiteSmoke" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,0,10,0">
@@ -510,14 +511,67 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate >
                                     <StackPanel Margin="0,2,0,0"  Height="24" Background="WhiteSmoke" Orientation="Horizontal">
+                                        <TextBlock    Width="0"   Text="{Binding Id}"/>
                                         <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="10,5,0,0" Width="100" 
                                                    />
-                                        <TextBlock   Padding="10,5,0,0" Width="140"   Text="{Binding OrderId}"/>
+                                        <TextBox   Padding="10,5,0,0" Width="140"   Text="{Binding OrderId}" />
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Symbol}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Quantity}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Price}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="100"   Text="{Binding RealizedPnl}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="100"   Text="{Binding Fee}"/>
+                                        <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Side, Converter={StaticResource sideConverter_res}}"/>
+                                        <TextBox   Padding="10,5,0,0" Width="140"   Text="{Binding StartDealOrderId}" />
+                                        <Button x:Name="BtnSaveOrder" Click="BtnSaveOrder_Click" >Save</Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Сделки робота New">
+                <Grid >
+                    <Grid.Resources>
+                        <MVVM:RobotDealVM x:Key="robotDeals_res"/>
+                        <Converters:OrderStatusConverter x:Key="statusConverter_res"/>
+                        <Converters:OrderSideConverter x:Key="sideConverter_res"/>
+                        <Converters:OrderTypeConverter x:Key="typeConverter_res"/>
+                    </Grid.Resources>
+                    <StackPanel   Height="24" 
+                                        Background="WhiteSmoke" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,0,10,0">
+
+
+                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="Дата открытия"/>
+                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="Дата закрытия"/>                       
+                        
+                        <TextBlock   Padding="10,5,0,0" Width="60"   Text="Лот"/>
+                        <TextBlock   Padding="10,5,0,0" Width="70"   Text="Цена откр"/>
+                        <TextBlock   Padding="10,5,0,0" Width="70"   Text="Цена закр"/>
+                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="Результат"/>
+                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="Комиссия"/>
+                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="Напрвление"/>
+                    </StackPanel>
+                    <StackPanel x:Name="StackRobotProfit2" Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Left" Orientation="Horizontal">
+                        <Label Content="$Profit:"  Width="54"/>
+                        <Label Content="{Binding SessionRobotProfit}" Foreground="{Binding SessionRobotProfit, Converter={StaticResource numberColor_res}}" Height="30" Width="120" />
+                    </StackPanel>
+
+                    <ScrollViewer Margin="0,25,0,34" >
+                        <ItemsControl ItemsSource="{Binding deals}" DataContext="{StaticResource robotDeals_res}" >
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate >
+                                    <StackPanel Margin="0,2,0,0"  Height="24" Background="WhiteSmoke" Orientation="Horizontal">
+                                        <TextBlock Text="{Binding OpenTime, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="10,5,0,0" Width="100" 
+                                                   />
+                                        <TextBlock Text="{Binding CloseTime, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="10,5,0,0" Width="100" 
+                                                   />
+                                        <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Quantity}"/>
+                                        <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding OpenPrice,StringFormat={}{0:F4}}"/>
+                                        <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding ClosePrice,StringFormat={}{0:F4}}"/>
+                                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="{Binding Result,StringFormat={}{0:F4}}"  Foreground="{Binding Result, Converter={StaticResource numberColor_res}}"/>
+                                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="{Binding Fee,StringFormat={}{0:F4}}"/>                                        
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Side, Converter={StaticResource sideConverter_res}}"/>
 
                                     </StackPanel>

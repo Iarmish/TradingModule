@@ -48,13 +48,16 @@ namespace ShortPeakRobot
             //marketManager = new MarketManager();
             chartData = new ChartData();
 
-            BinanceApi.SetKeys("VY75xh1L9t0Ac5ICLtEkjGcH5qyW99RuwkqLouK0qdnGfm3YZCxUVJfGPapPPJ4T",
-                "ihEt9zyZgJzzNAxqXIFYtbNy5FdlwNWYXrWDmNDAQdHX7oomVnbLMtIJfxkLYYqE");
+            //BinanceApi.SetKeys("VY75xh1L9t0Ac5ICLtEkjGcH5qyW99RuwkqLouK0qdnGfm3YZCxUVJfGPapPPJ4T",
+            //    "ihEt9zyZgJzzNAxqXIFYtbNy5FdlwNWYXrWDmNDAQdHX7oomVnbLMtIJfxkLYYqE");
 
             //invest
             //BinanceApi.SetKeys("RIYpUuLyDlmxIyQhXx1YzBGl69GeURpIerPN70waLRn5O8kqTRGvvVwYRaygDYBt",
             //    "gdwNFak9F9MoGrVX8MZNLgSaSmbJPLGB3vPj07YlHIzHSGBTFgeA2qwxS5or1uQK");
 
+            //invest read only
+            BinanceApi.SetKeys("aRLgrQdQkprx2cu5534Gsh3ZP1ksv3IhZs7JBsVdOcWrWwsWOzU0qAH1zeKXzrqb",
+                "X0ewrjdRBMgOMjuQdFJ9mUP6VaI6mHqXPj368siQyBhi2AXI6BYYCWie299qCEfQ");
         }
 
         IniManager ini = new();
@@ -85,22 +88,31 @@ namespace ShortPeakRobot
         {
             //var position = await BinanceApi.client.UsdFuturesApi.Account.GetPositionInformationAsync("ETHUSDT");
 
+            var trades2 = await BinanceApi.client.UsdFuturesApi.Trading.GetUserTradesAsync("SOLUSDT", startTime: new DateTime(2023,04,21));
+
+            var orders = await BinanceApi.client.UsdFuturesApi.Trading.GetOrdersAsync("ETHUSDT",
+                startTime: new DateTime(2023, 04, 18));
+
+            var order2 = await RobotServices.GetBinOrderById(8389765593151522832,2);
+
+            var order = await BinanceApi.client.UsdFuturesApi.Trading.GetOrderAsync(
+                    symbol: "ETHUSDT",
+                    orderId: 8389765593151522832);
+
+            
+
             foreach (var symbol in SymbolInitialization.list)
             {
                 //снимаем ордера
                 //var cancelAllOrders = await BinanceApi.client.UsdFuturesApi.Trading.CancelAllOrdersAsync(symbol);
 
-                //MarketServices.CloseSymbolPositionAsync(symbol);
+                //MarketServices.CloseSymbolPositionAsync(symbol); 8389765593151522832
 
 
             }
 
 
-            var trades = await BinanceApi.client.UsdFuturesApi.Trading.GetUserTradesAsync("ETHUSDT",
-                startTime: DateTime.UtcNow.AddDays(-1));
 
-            var orders = await BinanceApi.client.UsdFuturesApi.Trading.GetOrdersAsync("ETHUSDT",
-                startTime: DateTime.UtcNow.AddDays(-1));
 
         }
 
@@ -152,6 +164,7 @@ namespace ShortPeakRobot
             CbTF.ItemsSource = TimeFrameInitialization.list;
             StackInfo.DataContext = MarketData.Info;
             StackRobotProfit.DataContext = MarketData.Info;
+            StackRobotProfit2.DataContext = MarketData.Info;
 
             //подписка на получение данных с биржы
             MarketData.MarketManager.ActivateSubscribe();
@@ -523,6 +536,9 @@ namespace ShortPeakRobot
         {
             var symbol = CbTradeSymbol.Text;
 
+            
+
+
             var trades = await BinanceApi.client.UsdFuturesApi.Trading.GetUserTradesAsync(symbol,
                 startTime: MarketData.Info.StartSessionDate);
 
@@ -629,6 +645,25 @@ namespace ShortPeakRobot
         {            
             MarketData.Info.Deposit = (int)(decimal.Parse(TBDepo.Text.Replace(',', '.'), CultureInfo.InvariantCulture));
             ini.WritePrivateString("deposit", "value", TBDepo.Text);
+        }
+
+        private void startUserData_Click(object sender, RoutedEventArgs e)
+        {
+           MarketServices.StartUserDataStream();
+        }
+
+        private void stopUserData_Click(object sender, RoutedEventArgs e)
+        {
+            MarketServices.StopUserDataStream();
+        }
+
+        private void BtnSaveOrder_Click(object sender, RoutedEventArgs e)
+        {
+            var stack = (StackPanel)((Button)sender).Parent;
+            var TradeId = Convert.ToInt64(((TextBlock)stack.Children[0]).Text);
+
+            var trade = RobotTradeVM.trades.Where(x=>x.Id == TradeId).First();
+            MarketData.MarketManager.UpdateRobotTrade(trade);
         }
     }
 }

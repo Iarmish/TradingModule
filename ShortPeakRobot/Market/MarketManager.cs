@@ -1,9 +1,6 @@
 ﻿using Binance.Infrastructure.Constants;
-using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Interfaces;
-using Binance.Net.Interfaces.Clients;
-using CryptoExchange.Net.CommonObjects;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.API;
@@ -14,15 +11,11 @@ using ShortPeakRobot.Robots.DTO;
 using ShortPeakRobot.Socket;
 using ShortPeakRobot.ViewModel;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Markup;
-using static ShortPeakRobot.MainWindow;
 
 namespace ShortPeakRobot.Market
 {
@@ -183,7 +176,11 @@ namespace ShortPeakRobot.Market
             }
 
             var result = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(q.Symbol, q.OrderId);
-            if (!result.Success)
+            if (result.Success)
+            {
+
+            }
+            else
             {
                 lock (FailRequestLocker)
                 {
@@ -210,7 +207,7 @@ namespace ShortPeakRobot.Market
             {
                 orderCount++;
             }
-            var order = await MarketServices.PlaceBinanceOrder(orderCount, q.RobotId, q.Symbol, (OrderSide)q.Side,
+            var order = await MarketServices.PlaceBinanceOrder(q.StartDealOrderId, orderCount, q.RobotId, q.Symbol, (OrderSide)q.Side,
                                 (FuturesOrderType)q.OrderType, q.Quantity, q.Price, q.StopPrice);
 
             if (order.Success)
@@ -218,20 +215,25 @@ namespace ShortPeakRobot.Market
                 switch (q.robotOrderType)
                 {
                     case RobotOrderType.SignalBuy:
-                        RobotVM.robots[q.RobotId].SignalBuyOrder = RobotOrderDTO.DTO(order, q.RobotId);
+                        RobotVM.robots[q.RobotId].SignalBuyOrder = RobotOrderDTO.DTO(order, q.RobotId, q.StartDealOrderId);
                         RobotVM.robots[q.RobotId].RobotState.SignalBuyOrderId = RobotVM.robots[q.RobotId].SignalBuyOrder.OrderId;
                         break;
                     case RobotOrderType.SignalSell:
-                        RobotVM.robots[q.RobotId].SignalSellOrder = RobotOrderDTO.DTO(order, q.RobotId);
+                        RobotVM.robots[q.RobotId].SignalSellOrder = RobotOrderDTO.DTO(order, q.RobotId, q.StartDealOrderId);
                         RobotVM.robots[q.RobotId].RobotState.SignalSellOrderId = RobotVM.robots[q.RobotId].SignalSellOrder.OrderId;
                         break;
                     case RobotOrderType.StopLoss:
-                        RobotVM.robots[q.RobotId].StopLossOrder = RobotOrderDTO.DTO(order, q.RobotId);
+                        RobotVM.robots[q.RobotId].StopLossOrder = RobotOrderDTO.DTO(order, q.RobotId, q.StartDealOrderId);
                         RobotVM.robots[q.RobotId].RobotState.StopLossOrderId = RobotVM.robots[q.RobotId].StopLossOrder.OrderId;
                         break;
                     case RobotOrderType.TakeProfit:
-                        RobotVM.robots[q.RobotId].TakeProfitOrder = RobotOrderDTO.DTO(order, q.RobotId);
+                        RobotVM.robots[q.RobotId].TakeProfitOrder = RobotOrderDTO.DTO(order, q.RobotId, q.StartDealOrderId);
                         RobotVM.robots[q.RobotId].RobotState.TakeProfitOrderId = RobotVM.robots[q.RobotId].TakeProfitOrder.OrderId;
+                        break;
+                    case RobotOrderType.ClosePosition:
+                        RobotVM.robots[q.RobotId].ResetRobotStateOrders();
+                        RobotVM.robots[q.RobotId].RobotState = new();
+                        RobotServices.GetRobotDealByOrderId(order.Data.Id, q.RobotId);//формируем сделку откр + закр 
                         break;
                     default:
                         break;
@@ -257,7 +259,7 @@ namespace ShortPeakRobot.Market
 
                 RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Place order error " + q.robotOrderType.ToString() + " " + OrderTypes.Types[(int)q.OrderType] + " price " + orderPrice + " " + order.Error.ToString());
 
-                
+
             }
         }
 
@@ -289,7 +291,7 @@ namespace ShortPeakRobot.Market
         public async void ActivateUserDataStream()
         {
             ListenKey = await BinanceApi.client.UsdFuturesApi.Account.StartUserStreamAsync();
-            
+
             if (!ListenKey.Success)
             {
                 Log(LogType.Error, "ListenKey   Update Error");
@@ -306,7 +308,8 @@ namespace ShortPeakRobot.Market
                 },
                 data =>
                 {
-                    // Handle margin update                    
+                    // Handle margin update
+                    
                 },
                 data =>
                 {
@@ -337,6 +340,7 @@ namespace ShortPeakRobot.Market
                                 data.Data.UpdateData.Status + " " +
                                 data.Data.UpdateData.Price + " " +
                                 data.Data.UpdateData.StopPrice + " " +
+                                data.Data.UpdateData.AveragePrice + " " +
                                 data.Data.UpdateData.Side);
 
 
@@ -345,6 +349,9 @@ namespace ShortPeakRobot.Market
                 {
                     // Handle listen key expired
                     Log(LogType.Info, "Handle listen key expired " + data.Data.Event);
+                    MarketServices.StopAllSubscribes();
+                    MarketServices.StartAllSubscribes();
+
                 });
         }
 
@@ -369,7 +376,7 @@ namespace ShortPeakRobot.Market
                     };
 
                     updateSubscriptions.Add(subscription);
-                    Thread.Sleep(50);
+                    Thread.Sleep(30);
                 }
             }
         }
@@ -498,5 +505,18 @@ namespace ShortPeakRobot.Market
 
 
         }
+
+        public void UpdateRobotTrade(RobotTrade trade)
+        {
+            
+            _context.RobotTrades.Update(trade);
+            _context.SaveChanges();
+
+            RobotServices.SaveCustomRobotDealByOrderId(trade.StartDealOrderId, trade.OrderId, trade.RobotId);
+
+        }
+
+
+
     }
 }

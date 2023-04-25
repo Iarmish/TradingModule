@@ -50,13 +50,15 @@ namespace ShortPeakRobot.Constants
         SignalSell,
         StopLoss,
         TakeProfit,
-        OrderId
+        OrderId,
+        ClosePosition
     }
 
     public enum RobotRequestType
     {
         PlaceOrder,
         CancelOrder
+        
     }
 
     public enum CandleInterval

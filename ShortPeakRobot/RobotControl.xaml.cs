@@ -83,8 +83,8 @@ namespace ShortPeakRobot
                 side = OrderSide.Sell;
             }
 
-            RobotVM.robots[RobotId].SetSLTP(side, Math.Abs(RobotVM.robots[RobotId].RobotState.Position),
-                RobotVM.robots[RobotId].RobotState.OpenPositionPrice);
+            //RobotVM.robots[RobotId].SetSLTP(side, Math.Abs(RobotVM.robots[RobotId].RobotState.Position),
+            //    RobotVM.robots[RobotId].RobotState.OpenPositionPrice);
         }
 
         private void BtnCloseSignalBuy_Click(object sender, RoutedEventArgs e)

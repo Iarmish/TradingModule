@@ -1,22 +1,14 @@
-﻿using Binance.Net.Enums;
-using Binance.Net.Objects.Models.Futures;
-using CryptoExchange.Net.Objects;
-using ShortPeakRobot.API;
+﻿using ShortPeakRobot.API;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
 using ShortPeakRobot.Market;
-using ShortPeakRobot.Migrations;
 using ShortPeakRobot.Robots.DTO;
-using ShortPeakRobot.Robots.Models;
 using ShortPeakRobot.ViewModel;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+
 
 namespace ShortPeakRobot.Robots
 {
@@ -40,31 +32,31 @@ namespace ShortPeakRobot.Robots
 
 
         public static async void ForceStopRobotAsync(int robotId)
-        {   
-                var openOrders = await MarketServices.GetOpenOrders(robotId);
+        {
+            var openOrders = await MarketServices.GetOpenOrders(robotId);
 
-                openOrders.ForEach(o =>
+            openOrders.ForEach(o =>
+            {
+                //RobotVM.robots[MarketData.Info.SelectedRobotId].CancelOrderAsync(o, "Cancel robot orders");
+                MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
-                    //RobotVM.robots[MarketData.Info.SelectedRobotId].CancelOrderAsync(o, "Cancel robot orders");
-                    MarketData.MarketManager.AddRequestQueue(new BinanceRequest
-                    {
-                        RobotId = robotId,
-                        Symbol = RobotVM.robots[robotId].Symbol,
-                        robotOrderType = RobotOrderType.OrderId,
-                        robotRequestType = RobotRequestType.CancelOrder,
-                        OrderId = o.OrderId
-                    });
+                    RobotId = robotId,
+                    Symbol = RobotVM.robots[robotId].Symbol,
+                    robotOrderType = RobotOrderType.OrderId,
+                    robotRequestType = RobotRequestType.CancelOrder,
+                    OrderId = o.OrderId
                 });
+            });
 
 
-                RobotVM.robots[robotId].ResetRobotStateOrders();
-                RobotVM.robots[robotId].RobotState.TakeProfitOrderId = 0;
-                RobotVM.robots[robotId].RobotState.StopLossOrderId = 0;
-                RobotVM.robots[robotId].RobotState.SignalSellOrderId = 0;
-                RobotVM.robots[robotId].RobotState.SignalBuyOrderId = 0;
+            RobotVM.robots[robotId].ResetRobotStateOrders();
+            RobotVM.robots[robotId].RobotState.TakeProfitOrderId = 0;
+            RobotVM.robots[robotId].RobotState.StopLossOrderId = 0;
+            RobotVM.robots[robotId].RobotState.SignalSellOrderId = 0;
+            RobotVM.robots[robotId].RobotState.SignalBuyOrderId = 0;
 
-                RobotVM.robots[robotId].Stop();
-            
+            RobotVM.robots[robotId].Stop();
+
         }
 
 
@@ -92,6 +84,73 @@ namespace ShortPeakRobot.Robots
 
         }
 
+        public static void GetRobotDealByOrderId(long orderId, int robotId)
+        {
+            Task.Run(async () =>
+            {
+                Thread.Sleep(4000);
+
+                var closeOrder = await BinanceApi.client.UsdFuturesApi.Trading.GetOrderAsync(
+                   symbol: RobotVM.robots[robotId].Symbol, orderId: orderId);
+
+
+
+                var arrClientOrderId = closeOrder.Data.ClientOrderId.Split(':');
+                long openDealOrderId = 0;
+
+                if (arrClientOrderId.Length > 2 && arrClientOrderId[0] == "robot")
+                {
+                    openDealOrderId = Convert.ToInt64(arrClientOrderId[2]);
+                }
+
+                //
+                var openOrder = await BinanceApi.client.UsdFuturesApi.Trading.GetOrderAsync(
+                        symbol: RobotVM.robots[robotId].Symbol, orderId: openDealOrderId);
+
+                var deal = new RobotDeal { CloseOrderId = orderId };
+
+                if (openOrder.Success && closeOrder.Success)
+                {
+                    deal = RobotDealDTO.DTO(robotId, openOrder, closeOrder);
+                }
+
+
+                SaveDeal(deal);
+            });
+
+        }
+
+
+        public static void SaveCustomRobotDealByOrderId(long openOrderId,long closeOrderId, int robotId)
+        {
+            Task.Run(async () =>
+            {
+                Thread.Sleep(400);
+
+                var closeOrder = await BinanceApi.client.UsdFuturesApi.Trading.GetOrderAsync(
+                   symbol: RobotVM.robots[robotId].Symbol, orderId: closeOrderId);
+
+
+
+               
+
+                //
+                var openOrder = await BinanceApi.client.UsdFuturesApi.Trading.GetOrderAsync(
+                        symbol: RobotVM.robots[robotId].Symbol, orderId: openOrderId);
+
+                var deal = new RobotDeal { CloseOrderId = closeOrderId };
+
+                if (openOrder.Success && closeOrder.Success)
+                {
+                    deal = RobotDealDTO.DTO(robotId, openOrder, closeOrder);
+                    deal.StartDeposit = deal.OpenPrice * deal.Quantity;
+                }
+
+
+                SaveDeal(deal);
+            });
+
+        }
 
 
         public static async Task<RobotOrder> GetBinOrderById(long orderId, int robotId)
@@ -103,7 +162,7 @@ namespace ShortPeakRobot.Robots
             if (!order.Success)
             {
                 RobotVM.robots[robotId].Log(LogType.Error, "Не удалось получить ордер " + orderId);
-                return null;
+                return new RobotOrder();
             }
             else
             {
@@ -112,22 +171,31 @@ namespace ShortPeakRobot.Robots
         }
 
 
-        public static void SaveOrder(int robotId, RobotOrder order, string desc)
+        public static void SaveOrder(RobotOrder order, string desc)
         {
 
-            lock (RobotVM.robots[robotId].Locker)
+            lock (RobotVM.robots[order.RobotId].Locker)
             {
                 order.Description = desc;
-                RobotVM.robots[robotId].RobotOrdersQueue.Add(order);
+                RobotVM.robots[order.RobotId].RobotOrdersQueue.Add(order);
             }
         }
 
-        public static void SaveTrade(RobotTrade trade, int robotId)
+        public static void SaveTrade(RobotTrade trade)
         {
 
-            lock (RobotVM.robots[robotId].Locker)
+            lock (RobotVM.robots[trade.RobotId].Locker)
             {
-                RobotVM.robots[robotId].RobotTradesQueue.Add(trade);
+                RobotVM.robots[trade.RobotId].RobotTradesQueue.Add(trade);
+            }
+
+        }
+        public static void SaveDeal(RobotDeal deal)
+        {
+
+            lock (RobotVM.robots[deal.RobotId].Locker)
+            {
+                RobotVM.robots[deal.RobotId].RobotDealQueue.Add(deal);
             }
 
         }

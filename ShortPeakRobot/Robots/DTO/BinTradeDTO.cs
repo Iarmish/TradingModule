@@ -20,6 +20,7 @@ namespace ShortPeakRobot.Robots.DTO
 
             tardes.Data.ToList().ForEach(trade =>
             {
+                
                 binOrders.Add(new BinTrade
                 {                    
                     OrderId = trade.OrderId,

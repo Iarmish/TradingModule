@@ -19,6 +19,7 @@ using Binance.Infrastructure.Constants;
 using System.Windows.Markup;
 using Binance.Net.Interfaces;
 using CryptoExchange.Net.Sockets;
+using ShortPeakRobot.Socket;
 
 namespace ShortPeakRobot.Market
 {
@@ -52,21 +53,33 @@ namespace ShortPeakRobot.Market
             MarketData.Info.SessionProfit = 0;
 
 
-            var clientTrades = GetClientTrades(MarketData.Info.StartSessionDate);
-            var profit = GetTradesProfit(clientTrades);
+            var clienDeals = GetClientDeals(MarketData.Info.StartSessionDate);
+            var profit = GetDealsProfit(clienDeals);
             MarketData.Info.SessionProfit = profit;
 
             foreach (var robot in RobotVM.robots)//добавление id роботов в алгоритмы роботов
             {
-                var robotTrades = clientTrades.Where(x => x.RobotId == robot.Id).ToList();
+                var robotTrades = clienDeals.Where(x => x.RobotId == robot.Id).ToList();
 
-                robot.BaseSettings.Profit = MarketServices.GetTradesProfit(robotTrades);
+                robot.BaseSettings.Profit = MarketServices.GetDealsProfit(robotTrades);
             }
 
         }
 
 
-        public static decimal GetTradesProfit(List<RobotTrade> robotTrades)
+        public static decimal GetDealsProfit(List<RobotDeal> robotDeals)
+        {
+            decimal profit = 0;
+
+            robotDeals.ForEach(x =>
+            {
+                profit += x.Result;
+                profit -= x.Fee;
+            });
+            return profit;
+        }
+
+        public static decimal GetTradesProfit2(List<RobotTrade> robotTrades)
         {
             decimal profit = 0;
 
@@ -84,8 +97,9 @@ namespace ShortPeakRobot.Market
             {
                 var robotOrders = GetRobotOrders(robotId, MarketData.Info.StartSessionDate);
                 var robotTrades = GetRobotTrades(robotId, MarketData.Info.StartSessionDate);
+                var robotDeals = GetRobotDeals(robotId, MarketData.Info.StartSessionDate);
                 var robotLogs = GetRobotLogs(robotId, MarketData.Info.StartSessionDate);
-                MarketData.Info.SessionRobotProfit = GetTradesProfit(robotTrades);
+                MarketData.Info.SessionRobotProfit = GetDealsProfit(robotDeals);
                 RobotVM.robots[robotId].BaseSettings.Profit = MarketData.Info.SessionRobotProfit;
 
 
@@ -101,6 +115,9 @@ namespace ShortPeakRobot.Market
 
                     RobotTradeVM.trades.Clear();
                     RobotTradeVM.AddRange(robotTrades);
+
+                    RobotDealVM.deals.Clear();
+                    RobotDealVM.AddRange(robotDeals);
 
                     LogVM.logs.Clear();
                     LogVM.AddRange(robotLogs);
@@ -217,6 +234,22 @@ namespace ShortPeakRobot.Market
             return robotOrders;
         }
 
+        public static List<RobotDeal> GetClientDeals(DateTime startDate)
+        {
+            var robotDeals = new List<RobotDeal>();
+            lock (Locker)
+            {
+                robotDeals = _context.RobotDeals
+                   .Where(x => x.OpenTime > startDate && x.ClientId == RobotsInitialization.ClientId).ToList();
+
+            }
+
+            //robotTrades = robotTrades.Where(x => ids.Contains(x.OrderId)).ToList();
+
+
+
+            return robotDeals;
+        }
 
         public static List<RobotTrade> GetClientTrades(DateTime startDate)
         {
@@ -243,14 +276,21 @@ namespace ShortPeakRobot.Market
                 robotTrades = _context.RobotTrades
                    .Where(x => x.Timestamp > startDate && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
                    .OrderBy(x => x.Timestamp).ToList();
-
             }
 
-            //robotTrades = robotTrades.Where(x => ids.Contains(x.OrderId)).ToList();
-
-
-
             return robotTrades;
+        }
+         public static List<RobotDeal> GetRobotDeals(int robotId, DateTime startDate)
+        {
+            var robotDeals = new List<RobotDeal>();
+            lock (Locker)
+            {
+                robotDeals = _context.RobotDeals
+                   .Where(x => x.OpenTime > startDate && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
+                   .OrderBy(x => x.OpenTime).ToList();
+            }
+
+            return robotDeals;
         }
 
 
@@ -278,9 +318,21 @@ namespace ShortPeakRobot.Market
         }
 
 
-        public async static Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceBinanceOrder(int orderCount, int robotId, string symbol, OrderSide side,
-            FuturesOrderType orderType, decimal quantity, decimal price = 0, decimal stopPrice = 0)
+        public async static Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceBinanceOrder(long startDealOrderId, int orderCount, int robotId, 
+            string symbol, OrderSide side, FuturesOrderType orderType, decimal quantity, decimal price = 0, decimal stopPrice = 0)
         {
+            if (orderType == FuturesOrderType.Market)
+            {
+                var placedOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
+                  symbol: symbol,
+                  side: side,
+                  type: orderType,
+                  quantity: quantity,                 
+                  newClientOrderId: "robot:" + robotId + ":" + startDealOrderId + ":" + orderCount);
+
+                return placedOrder;
+            }
+
             if (price != 0)
             {
                 var placedOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
@@ -290,7 +342,7 @@ namespace ShortPeakRobot.Market
                   quantity: quantity,
                   price: price,
                   timeInForce: TimeInForce.GoodTillCanceled,
-                  newClientOrderId: "robot:" + robotId + ":" + orderCount);
+                  newClientOrderId: "robot:" + robotId + ":" + startDealOrderId + ":" + orderCount);
 
                 return placedOrder;
             }
@@ -303,7 +355,7 @@ namespace ShortPeakRobot.Market
                    quantity: quantity,
                    stopPrice: stopPrice,
                    timeInForce: TimeInForce.GoodTillCanceled,
-                   newClientOrderId: "robot:" + robotId + ":" + orderCount);
+                   newClientOrderId: "robot:" + robotId + ":" + startDealOrderId + ":" + orderCount);
 
                 return placedOrder;
             }
@@ -321,7 +373,7 @@ namespace ShortPeakRobot.Market
                     SetRobotVariableLot(robot.Id, price);
                 }
             }
-            
+
         }
 
         public static void SetRobotVariableLot(int robotId, decimal price)
@@ -338,6 +390,27 @@ namespace ShortPeakRobot.Market
 
         }
 
+        public async static void StopAllSubscribes()
+        {
+            await BinanceSocket.client.UnsubscribeAllAsync();             
+        }
 
+        public async static void StopUserDataStream()
+        {           
+            var key = MarketData.MarketManager.ListenKey;
+            var res = await BinanceApi.client.UsdFuturesApi.Account.StopUserStreamAsync(key.Data);
+        }
+
+
+        public async static void StartUserDataStream()
+        {           
+            MarketData.MarketManager.ActivateUserDataStream();           
+        }
+
+        public async static void StartAllSubscribes()
+        {
+            MarketData.MarketManager.ActivateUserDataStream();
+            MarketData.MarketManager.ActivateSubscribe();
+        }
     }
 }
