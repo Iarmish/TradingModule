@@ -19,6 +19,7 @@ namespace ShortPeakRobot.Robots
     public class Robot : BaseVM
     {
         public int Id { get; set; }
+        public int Index { get; set; }
         public string Name { get; set; }
         public string AlgorithmName { get; set; }
 

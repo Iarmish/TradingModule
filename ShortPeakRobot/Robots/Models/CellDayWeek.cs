@@ -1,4 +1,5 @@
-﻿using ShortPeakRobot.ViewModel;
+﻿using ShortPeakRobot.Constants;
+using ShortPeakRobot.ViewModel;
 
 namespace ShortPeakRobot.Robots.Models
 {

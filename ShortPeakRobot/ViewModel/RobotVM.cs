@@ -18,11 +18,13 @@ namespace ShortPeakRobot.ViewModel
 
         public RobotVM()
         {
+            int cnt = 0;
             foreach (var robotIni in RobotsInitialization.dictionary)
             {
                 var robot = new Robot()
                 {
                     Id = robotIni.Value.Id,
+                    Index = cnt,
                     Name = robotIni.Value.Name,
                     Symbol = robotIni.Value.Symbol,
                     BaseSettings = new BaseRobotSettings(robotIni.Value.Id),
@@ -32,6 +34,7 @@ namespace ShortPeakRobot.ViewModel
                 Task.Run(() => robot.RunSilentMode());
 
                 robots.Add(robot);
+                cnt++;
             }
         }
     }

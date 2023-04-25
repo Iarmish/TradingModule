@@ -48,16 +48,16 @@ namespace ShortPeakRobot
             //marketManager = new MarketManager();
             chartData = new ChartData();
 
-            //BinanceApi.SetKeys("VY75xh1L9t0Ac5ICLtEkjGcH5qyW99RuwkqLouK0qdnGfm3YZCxUVJfGPapPPJ4T",
-            //    "ihEt9zyZgJzzNAxqXIFYtbNy5FdlwNWYXrWDmNDAQdHX7oomVnbLMtIJfxkLYYqE");
+            BinanceApi.SetKeys("VY75xh1L9t0Ac5ICLtEkjGcH5qyW99RuwkqLouK0qdnGfm3YZCxUVJfGPapPPJ4T",
+                "ihEt9zyZgJzzNAxqXIFYtbNy5FdlwNWYXrWDmNDAQdHX7oomVnbLMtIJfxkLYYqE");
 
             //invest
             //BinanceApi.SetKeys("RIYpUuLyDlmxIyQhXx1YzBGl69GeURpIerPN70waLRn5O8kqTRGvvVwYRaygDYBt",
             //    "gdwNFak9F9MoGrVX8MZNLgSaSmbJPLGB3vPj07YlHIzHSGBTFgeA2qwxS5or1uQK");
 
             //invest read only
-            BinanceApi.SetKeys("aRLgrQdQkprx2cu5534Gsh3ZP1ksv3IhZs7JBsVdOcWrWwsWOzU0qAH1zeKXzrqb",
-                "X0ewrjdRBMgOMjuQdFJ9mUP6VaI6mHqXPj368siQyBhi2AXI6BYYCWie299qCEfQ");
+            //BinanceApi.SetKeys("aRLgrQdQkprx2cu5534Gsh3ZP1ksv3IhZs7JBsVdOcWrWwsWOzU0qAH1zeKXzrqb",
+            //    "X0ewrjdRBMgOMjuQdFJ9mUP6VaI6mHqXPj368siQyBhi2AXI6BYYCWie299qCEfQ");
         }
 
         IniManager ini = new();
@@ -231,12 +231,10 @@ namespace ShortPeakRobot
             if (((TextBlock)sender).Background == Brushes.LightGreen)
             {
                 ((TextBlock)sender).Background = Brushes.LightSalmon;
-
             }
             else
             {
                 ((TextBlock)sender).Background = Brushes.LightGreen;
-
             }
 
         }
@@ -259,8 +257,6 @@ namespace ShortPeakRobot
             }
 
         }
-
-
 
         private void LoadSettings_Click(object sender, RoutedEventArgs e)
         {

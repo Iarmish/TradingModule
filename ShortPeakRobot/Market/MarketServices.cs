@@ -378,6 +378,8 @@ namespace ShortPeakRobot.Market
 
         public static void SetRobotVariableLot(int robotId, decimal price)
         {
+            
+
             if (RobotVM.robots[robotId].BaseSettings.IsVariableLot)
             {
                 var robotPartDepo = MarketData.Info.Deposit / 100 * RobotVM.robots[robotId].BaseSettings.Deposit;
