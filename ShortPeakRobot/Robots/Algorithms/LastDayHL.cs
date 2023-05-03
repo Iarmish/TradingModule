@@ -82,7 +82,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 await RobotInstance.SetRobotOrders();
 
 
-                candlesAnalyse =  RobotStateProcessor.CheckStateAsync(RobotInstance.RobotState, RobotIndex,
+                candlesAnalyse = RobotStateProcessor.CheckStateAsync(RobotInstance.RobotState, RobotIndex,
                     RobotInstance.SignalBuyOrder, RobotInstance.SignalSellOrder, RobotInstance.StopLossOrder, RobotInstance.TakeProfitOrder);
 
                 //--------- анализ графика ------------
@@ -113,7 +113,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 LastCandle.OpenPrice != 0)
             {
                 var lostTime = (carrentCendle.CloseTime - LastCandleTime.AddSeconds(RobotInstance.BaseSettings.TimeFrame)).TotalMinutes;
-                var candlesAnalyse =  RobotStateProcessor.CheckStateAsync(state: RobotInstance.RobotState, RobotIndex,
+                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: RobotInstance.RobotState, RobotIndex,
                     RobotInstance.SignalBuyOrder, RobotInstance.SignalSellOrder, RobotInstance.StopLossOrder, RobotInstance.TakeProfitOrder);
                 //------ выставление СЛ ТП после сбоя
                 RobotInstance.SetSLTPAfterFail(candlesAnalyse, Math.Abs(RobotInstance.RobotState.Position), RobotInstance.SignalBuyOrder.OrderId, RobotInstance.SignalSellOrder.OrderId);
@@ -139,7 +139,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
 
             }
-            
+
             //------------------- Проверка на выход за пределы СЛ ТП
             //Task.Run(() => HLRobot.CheckSLTPCross(currentPrice));
 
@@ -153,9 +153,9 @@ namespace ShortPeakRobot.Robots.Algorithms
             if (NeedPeaksAnalyse && RobotInstance.Position == 0)
             {
                 NeedPeaksAnalyse = false;
-                PeaksAnalyse(candles);   
+                PeaksAnalyse(candles);
             }
-            
+
             //--------------- ордер по сигналу low peak
             if (CurrentLowPeak.Price != 0)
             {
@@ -179,7 +179,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                         robotRequestType = RobotRequestType.PlaceOrder
                     });
                 }
-               
+
 
 
             }
@@ -206,11 +206,11 @@ namespace ShortPeakRobot.Robots.Algorithms
                         robotRequestType = RobotRequestType.PlaceOrder
                     });
                 }
-                
+
 
             }
 
-           
+
 
 
         }
@@ -250,7 +250,14 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
             }
 
-            CurrentLowPeak.Price = currentLowPeak - offset;
+            if (currentLowPeak != 0)
+            {
+                CurrentLowPeak.Price = currentLowPeak - offset;
+            }
+            else
+            {
+                CurrentLowPeak.Price = 0;
+            }
         }
 
         private void GetCurrenHighPeak(decimal offset)
@@ -287,13 +294,19 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
             }
 
-
-            CurrentHighPeak.Price = currentHighPeak + offset;
+            if (currentHighPeak != 0)
+            {
+                CurrentHighPeak.Price = currentHighPeak + offset;
+            }
+            else
+            {
+                CurrentHighPeak.Price = 0;
+            }
 
         }
 
         private void SaveDayHL(Candle newCandle)
-        {            
+        {
             var highPeak = new CandlePeak { Price = newCandle.HighPrice, Taken = false };
             var lowPeak = new CandlePeak { Price = newCandle.LowPrice, Taken = false };
 
@@ -347,7 +360,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             }
         }
 
-        
+
 
         private void PeaksAnalyse(List<Candle> candles)
         {
@@ -372,7 +385,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 {
                     for (int n = 0; n < i; n++)
                     {
-                        if (HighPeaks[i].Price > HighPeaks[n].Price - RobotInstance.BaseSettings.OffsetPercent)
+                        if (HighPeaks[i].Price > HighPeaks[n].Price + RobotInstance.BaseSettings.OffsetPercent)
                         {
                             HighPeaks[n].Taken = true;
                         }
@@ -380,7 +393,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
 
 
-                if (currentCandle.HighPrice > HighPeaks[i].Price - RobotInstance.BaseSettings.OffsetPercent)
+                if (currentCandle.HighPrice > HighPeaks[i].Price + RobotInstance.BaseSettings.OffsetPercent)
                 {
                     HighPeaks[i].Taken = true;
                 }
@@ -393,7 +406,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 {
                     for (int n = 0; n < i; n++)
                     {
-                        if (LowPeaks[i].Price < LowPeaks[n].Price + RobotInstance.BaseSettings.OffsetPercent)
+                        if (LowPeaks[i].Price < LowPeaks[n].Price - RobotInstance.BaseSettings.OffsetPercent)
                         {
                             LowPeaks[n].Taken = true;
                         }
@@ -401,7 +414,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
 
 
-                if (currentCandle.LowPrice < LowPeaks[i].Price + RobotInstance.BaseSettings.OffsetPercent)
+                if (currentCandle.LowPrice < LowPeaks[i].Price - RobotInstance.BaseSettings.OffsetPercent)
                 {
                     LowPeaks[i].Taken = true;
                 }

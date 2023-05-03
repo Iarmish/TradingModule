@@ -349,7 +349,7 @@ namespace ShortPeakRobot.Market
                     // Handle listen key expired
                     Log(LogType.Info, "Handle listen key expired " + data.Data.Event);
                     MarketServices.StopAllSubscribes();
-                    //MarketServices.StartAllSubscribes();
+                    MarketServices.StartAllSubscribes();
 
                 });
         }
