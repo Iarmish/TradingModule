@@ -9,18 +9,21 @@ namespace ShortPeakRobot.Robots.Algorithms
     {          
         public object Algo;
         public int RobotId { get; set; }
+        public int RobotIndex { get; set; }
         public string AlgorithmName { get; set; }
 
-        public Algorithm(string algorithm, int robotId)
+        public Algorithm(string algorithm, int robotId, int robotIndex)
         {
             RobotId = robotId;
+            RobotIndex = robotIndex;
             AlgorithmName = algorithm;
 
             switch (algorithm)
             {
-                case "ShortPeak": Algo = new ShortPeak(robotId); break;
-                case "VWAPHL": Algo = new VWAPHL(robotId); break;
-                case "LastDayHL": Algo = new LastDayHL(robotId); break;
+                case "ShortPeak": Algo = new ShortPeak(robotId, robotIndex); break;
+                case "VWAPHL": Algo = new VWAPHL(robotId, robotIndex); break;
+                case "LastDayHL": Algo = new LastDayHL(robotId, robotIndex); break;
+                case "SL3": Algo = new SL3(robotId, robotIndex); break;
             }
             
         }

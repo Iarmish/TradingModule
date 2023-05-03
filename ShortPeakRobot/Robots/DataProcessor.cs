@@ -8,26 +8,27 @@ namespace ShortPeakRobot.Robots
 {
     public static class DataProcessor
     {
-        public static void SetCellsVM(int robotId)
+        public static void SetCellsVM(int robotIndex)
         {
+            //var robotId = RobotServices.GetRobotId(robotIndex);
             CellDayMonthVM.cells.Clear();
             for (int i = 1; i <= 31; i++)
             {
-                CellDayMonthVM.cells.Add(new CellDayMonth() { Index = i, RobotId = robotId, State = RobotVM.robots[robotId].BaseSettings.AllowedDayMonth[i - 1] });
+                CellDayMonthVM.cells.Add(new CellDayMonth() { Index = i, RobotIndex = robotIndex, State = RobotVM.robots[robotIndex].BaseSettings.AllowedDayMonth[i - 1] });
 
             }
 
             CellDayWeekVM.cells.Clear();
             for (int i = 1; i <= 35; i++)
             {
-                CellDayWeekVM.cells.Add(new CellDayWeek() { Index = i, RobotId = robotId, State = RobotVM.robots[robotId].BaseSettings.AllowedDayWeek[i - 1] });
+                CellDayWeekVM.cells.Add(new CellDayWeek() { Index = i, RobotIndex = robotIndex, State = RobotVM.robots[robotIndex].BaseSettings.AllowedDayWeek[i - 1] });
 
             }
 
             CellHourVM.cells.Clear();
             for (int i = 0; i < 24; i++)
             {
-                CellHourVM.cells.Add(new CellHour() { Index = i, RobotId = robotId, State = RobotVM.robots[robotId].BaseSettings.AllowedHours[i] });
+                CellHourVM.cells.Add(new CellHour() { Index = i, RobotIndex = robotIndex, State = RobotVM.robots[robotIndex].BaseSettings.AllowedHours[i] });
 
             }
             

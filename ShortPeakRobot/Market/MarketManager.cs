@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Markup;
 
 namespace ShortPeakRobot.Market
 {
@@ -107,7 +106,7 @@ namespace ShortPeakRobot.Market
                             }
                             else
                             {
-                                RobotServices.ForceStopRobotAsync(req.RobotId);
+                                RobotServices.ForceStopRobotAsync(req.RobotIndex);
                             }
                         }
 
@@ -196,7 +195,7 @@ namespace ShortPeakRobot.Market
                 {
                     orderPrice = q.Price.ToString();
                 }
-                RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Cancel order error" + " id " + q.OrderId +
+                RobotVM.robots[q.RobotIndex].Log(LogType.Error, "try:" + q.TryCount + " Cancel order error" + " id " + q.OrderId +
                     q.robotOrderType.ToString() + " " + OrderTypes.Types[(int)q.OrderType] + " price " + orderPrice + " " + result.Error.ToString());
             }
         }
@@ -207,7 +206,7 @@ namespace ShortPeakRobot.Market
             {
                 orderCount++;
             }
-            var order = await MarketServices.PlaceBinanceOrder(q.StartDealOrderId, orderCount, q.RobotId, q.Symbol, (OrderSide)q.Side,
+            var order = await MarketServices.PlaceBinanceOrder(q.StartDealOrderId, orderCount, q.RobotIndex, q.Symbol, (OrderSide)q.Side,
                                 (FuturesOrderType)q.OrderType, q.Quantity, q.Price, q.StopPrice);
 
             if (order.Success)
@@ -215,25 +214,25 @@ namespace ShortPeakRobot.Market
                 switch (q.robotOrderType)
                 {
                     case RobotOrderType.SignalBuy:
-                        RobotVM.robots[q.RobotId].SignalBuyOrder = RobotOrderDTO.DTO(order, q.RobotId, q.StartDealOrderId);
-                        RobotVM.robots[q.RobotId].RobotState.SignalBuyOrderId = RobotVM.robots[q.RobotId].SignalBuyOrder.OrderId;
+                        RobotVM.robots[q.RobotIndex].SignalBuyOrder = RobotOrderDTO.DTO(order, q.RobotIndex, q.StartDealOrderId);
+                        RobotVM.robots[q.RobotIndex].RobotState.SignalBuyOrderId = RobotVM.robots[q.RobotIndex].SignalBuyOrder.OrderId;
                         break;
                     case RobotOrderType.SignalSell:
-                        RobotVM.robots[q.RobotId].SignalSellOrder = RobotOrderDTO.DTO(order, q.RobotId, q.StartDealOrderId);
-                        RobotVM.robots[q.RobotId].RobotState.SignalSellOrderId = RobotVM.robots[q.RobotId].SignalSellOrder.OrderId;
+                        RobotVM.robots[q.RobotIndex].SignalSellOrder = RobotOrderDTO.DTO(order, q.RobotIndex, q.StartDealOrderId);
+                        RobotVM.robots[q.RobotIndex].RobotState.SignalSellOrderId = RobotVM.robots[q.RobotIndex].SignalSellOrder.OrderId;
                         break;
                     case RobotOrderType.StopLoss:
-                        RobotVM.robots[q.RobotId].StopLossOrder = RobotOrderDTO.DTO(order, q.RobotId, q.StartDealOrderId);
-                        RobotVM.robots[q.RobotId].RobotState.StopLossOrderId = RobotVM.robots[q.RobotId].StopLossOrder.OrderId;
+                        RobotVM.robots[q.RobotIndex].StopLossOrder = RobotOrderDTO.DTO(order, q.RobotIndex, q.StartDealOrderId);
+                        RobotVM.robots[q.RobotIndex].RobotState.StopLossOrderId = RobotVM.robots[q.RobotIndex].StopLossOrder.OrderId;
                         break;
                     case RobotOrderType.TakeProfit:
-                        RobotVM.robots[q.RobotId].TakeProfitOrder = RobotOrderDTO.DTO(order, q.RobotId, q.StartDealOrderId);
-                        RobotVM.robots[q.RobotId].RobotState.TakeProfitOrderId = RobotVM.robots[q.RobotId].TakeProfitOrder.OrderId;
+                        RobotVM.robots[q.RobotIndex].TakeProfitOrder = RobotOrderDTO.DTO(order, q.RobotIndex, q.StartDealOrderId);
+                        RobotVM.robots[q.RobotIndex].RobotState.TakeProfitOrderId = RobotVM.robots[q.RobotIndex].TakeProfitOrder.OrderId;
                         break;
                     case RobotOrderType.ClosePosition:
-                        RobotVM.robots[q.RobotId].ResetRobotStateOrders();
-                        RobotVM.robots[q.RobotId].RobotState = new();
-                        RobotServices.GetRobotDealByOrderId(order.Data.Id, q.RobotId);//формируем сделку откр + закр 
+                        RobotVM.robots[q.RobotIndex].ResetRobotStateOrders();
+                        RobotVM.robots[q.RobotIndex].RobotState = new();
+                        RobotServices.GetRobotDealByOrderId(order.Data.Id, q.RobotIndex);//формируем сделку откр + закр 
                         break;
                     default:
                         break;
@@ -257,7 +256,7 @@ namespace ShortPeakRobot.Market
                     orderPrice = q.Price.ToString();
                 }
 
-                RobotVM.robots[q.RobotId].Log(LogType.Error, "try:" + q.TryCount + " Place order error " + q.robotOrderType.ToString() + " " + OrderTypes.Types[(int)q.OrderType] + " price " + orderPrice + " " + order.Error.ToString());
+                RobotVM.robots[q.RobotIndex].Log(LogType.Error, "try:" + q.TryCount + " Place order error " + q.robotOrderType.ToString() + " " + OrderTypes.Types[(int)q.OrderType] + " price " + orderPrice + " " + order.Error.ToString());
 
 
             }
@@ -350,7 +349,7 @@ namespace ShortPeakRobot.Market
                     // Handle listen key expired
                     Log(LogType.Info, "Handle listen key expired " + data.Data.Event);
                     MarketServices.StopAllSubscribes();
-                    MarketServices.StartAllSubscribes();
+                    //MarketServices.StartAllSubscribes();
 
                 });
         }
@@ -383,7 +382,7 @@ namespace ShortPeakRobot.Market
 
         public void SetKline(DataEvent<IBinanceStreamKlineData> data)
         {
-            var selectedRobot = RobotVM.robots[MarketData.Info.SelectedRobotId];
+            var selectedRobot = RobotVM.robots[MarketData.Info.SelectedRobotIndex];
 
             var klineIinterval = data.Data.Data.Interval;
             var klineSymbol = data.Data.Symbol;
@@ -396,16 +395,7 @@ namespace ShortPeakRobot.Market
                 MarketServices.candleChartDwaw(MarketData.CandleDictionary[robotSymbol][robotIinterval], new List<RobotTrade>(),
                     selectedRobot.BaseSettings.TimeFrame);
 
-                //if (selectedRobot.BaseSettings.IsVariableLot)
-                //{
-                //    //robot part deposit
-                //    var robotPartDepo = MarketData.Info.Deposit / 100 * selectedRobot.BaseSettings.Deposit;
-                //    selectedRobot.BaseSettings.CurrentDeposit = robotPartDepo + selectedRobot.BaseSettings.Profit;
-                //    //variable lot
-                //    selectedRobot.BaseSettings.Volume =
-                //        Math.Round(selectedRobot.BaseSettings.CurrentDeposit / data.Data.Data.ClosePrice, SymbolIndexes.lot[robotSymbol]);
-
-                //}
+               
 
                 if (selectedRobot.BaseSettings.SLPercent)
                 {
@@ -425,6 +415,16 @@ namespace ShortPeakRobot.Market
                 else
                 {
                     selectedRobot.BaseSettings.TakeProfitPercent = selectedRobot.BaseSettings.TakeProfit;
+                }
+                
+                if (selectedRobot.BaseSettings.IsOffsetPercent)
+                {
+                    selectedRobot.BaseSettings.OffsetPercent =
+                        Math.Round(data.Data.Data.ClosePrice / 100 * selectedRobot.BaseSettings.Offset, SymbolIndexes.price[robotSymbol]);
+                }
+                else
+                {
+                    selectedRobot.BaseSettings.OffsetPercent = selectedRobot.BaseSettings.Offset;
                 }
 
             }
@@ -458,19 +458,19 @@ namespace ShortPeakRobot.Market
 
         }
 
-        public void RobotsRun(List<int> robotIds)
+        public void RobotsRun(List<int> robotIndexes)
         {
-            foreach (var id in robotIds)
+            foreach (var index in robotIndexes)
             {
-                Task.Run(() => RobotVM.robots[id].Run());
+                Task.Run(() => RobotVM.robots[index].Run());
             }
         }
 
-        public void RobotsStop(List<int> robotIds)
+        public void RobotsStop(List<int> robotIndexes)
         {
-            foreach (var id in robotIds)
+            foreach (var index in robotIndexes)
             {
-                RobotVM.robots[id].Stop();
+                RobotVM.robots[index].Stop();
             }
         }
 
@@ -512,7 +512,7 @@ namespace ShortPeakRobot.Market
             _context.RobotTrades.Update(trade);
             _context.SaveChanges();
 
-            RobotServices.SaveCustomRobotDealByOrderId(trade.StartDealOrderId, trade.OrderId, trade.RobotId);
+            RobotServices.SaveCustomRobotDealByOrderId(trade.StartDealOrderId, trade.OrderId, RobotServices.GetRobotIndex(trade.RobotId));
 
         }
 

@@ -71,7 +71,7 @@ namespace ShortPeakRobot.Market.Models
             }
         }
 
-        public int SelectedRobotId { get; set; }
+        public int SelectedRobotIndex { get; set; }
         public decimal Deposit { get; set; }
         
        

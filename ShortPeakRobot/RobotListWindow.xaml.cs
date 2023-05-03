@@ -35,7 +35,7 @@ namespace ShortPeakRobot
                 text_robo.Text = robot.Name;
                 text_robo.HorizontalAlignment = HorizontalAlignment.Left;
                 text_robo.VerticalAlignment = VerticalAlignment.Top;
-                text_robo.ToolTip = robot.Id.ToString();
+                text_robo.ToolTip = robot.Index.ToString();
                 text_robo.MouseDown += Text_robo_MouseDown;
                 if (robot.IsActivated)
                     text_robo.Background = Brushes.LightGreen;

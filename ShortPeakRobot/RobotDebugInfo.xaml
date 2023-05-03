@@ -17,7 +17,7 @@
                 <DataTemplate >
                     <StackPanel Margin="0,2,0,0"  Height="24" Background="WhiteSmoke" Orientation="Horizontal">
                         <TextBlock   Padding="10,5,0,0" Width="150"   Text="{Binding Title}"/>
-                        <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding Value}"/>
+                        <TextBlock   Padding="10,5,0,0" Width="470"   Text="{Binding Value}"/>
 
                     </StackPanel>
                 </DataTemplate>

@@ -17,7 +17,7 @@ namespace ShortPeakRobot.Robots.DTO
         {
             return new BinanceRequest
             {
-                RobotId = request.RobotId,
+                RobotIndex = request.RobotIndex,
                 StartDealOrderId = request.StartDealOrderId,
                 Symbol = request.Symbol,
                 Side = request.Side,

@@ -9,66 +9,65 @@ using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
 using ShortPeakRobot.Market;
 using ShortPeakRobot.Market.Models;
+using ShortPeakRobot.Robots.Algorithms.Models;
 using ShortPeakRobot.Robots.DTO;
 using ShortPeakRobot.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ShortPeakRobot.Robots.Algorithms
 {
     public class VWAPHL
     {
-        
 
-        
-        
-        private bool IsReady { get; set; }
 
         public Candle LastCandle { get; set; } = new Candle();
         public DateTime LastCandleTime { get; set; } = DateTime.UtcNow;
-        public int RobotId { get; set; }        
+        public int RobotId { get; set; }
+        public int RobotIndex { get; set; }
 
         public List<CandleVWAP> VWAPcandles { get; set; } = new();
 
         private VWAP vwap { get; set; } = new VWAP();
 
         private int VWAPStatus { get; set; }
-        
+
         private int StartCandle { get; set; } = 3;
         private decimal DayHighPrice { get; set; }
         private decimal DayLowPrice { get; set; }
         private decimal SignalSellPrice { get; set; }
         private decimal SignalBuyPrice { get; set; }
-        
+
         private bool IsSignalSellOrderPlaced { get; set; }
         private bool IsSignalBuyOrderPlaced { get; set; }
 
 
-        private Robot VwapRobot { get; set; }
+        private Robot RobotInstance { get; set; }
         //-----------------------------
-        public VWAPHL(int robotId)
+        public VWAPHL(int robotId, int robotIndex)
         {
             RobotId = robotId;
-            
+            RobotIndex = robotIndex;
         }
 
-        
 
-        
+
+
 
 
         public async void NewTick(RobotCommands command)
         {
-            VwapRobot = RobotVM.robots[RobotId];
+            RobotInstance = RobotVM.robots[RobotIndex];
 
             switch (command)
             {
                 case RobotCommands.Nothing:
                     break;
                 case RobotCommands.SetRobotInfo:
-                    break;                
+                    break;
                 case RobotCommands.ResetCandleAnalyse:
                     LastCandle = new();
                     break;
@@ -76,12 +75,13 @@ namespace ShortPeakRobot.Robots.Algorithms
                     break;
             }
 
-            var currentPrice = MarketData.CandleDictionary[VwapRobot.Symbol][VwapRobot.BaseSettings.TimeFrame][^1].ClosePrice;
+            var currentPrice = MarketData.CandleDictionary[RobotInstance.Symbol][RobotInstance.BaseSettings.TimeFrame][^1].ClosePrice;
 
-            var carrentCendle = MarketData.CandleDictionary[VwapRobot.Symbol][VwapRobot.BaseSettings.TimeFrame][^1];
+            var carrentCendle = MarketData.CandleDictionary[RobotInstance.Symbol][RobotInstance.BaseSettings.TimeFrame][^1];
             //var candles = MarketData.CandleDictionary[VwapRobot.Symbol][VwapRobot.BaseSettings.TimeFrame];
-            var LastCompletedCendle = MarketData.CandleDictionary[VwapRobot.Symbol][VwapRobot.BaseSettings.TimeFrame][^2];
+            var LastCompletedCendle = MarketData.CandleDictionary[RobotInstance.Symbol][RobotInstance.BaseSettings.TimeFrame][^2];
 
+            SetCurrentPrifit(currentPrice);
             //Анализ графика
             if (LastCandle.OpenPrice == 0)
             {
@@ -90,52 +90,52 @@ namespace ShortPeakRobot.Robots.Algorithms
                 await GetVWAPCandles();
                 CalculateVWAP();
                 Take_status();
+                SetRobotInfo();
 
                 var candlesAnalyse = CandlesAnalyse.Required;
 
                 //проверка состояния предыдущей сессии 
-                VwapRobot.RobotState = RobotServices.LoadStateAsync(RobotId);
-                await VwapRobot.SetRobotOrders();
+                RobotInstance.RobotState = RobotServices.LoadStateAsync(RobotIndex);
+                await RobotInstance.SetRobotOrders();
 
 
-                candlesAnalyse =  RobotStateProcessor.CheckStateAsync(VwapRobot.RobotState, RobotId,
-                    VwapRobot.SignalBuyOrder, VwapRobot.SignalSellOrder, VwapRobot.StopLossOrder, VwapRobot.TakeProfitOrder);
+                candlesAnalyse = RobotStateProcessor.CheckStateAsync(RobotInstance.RobotState, RobotIndex,
+                    RobotInstance.SignalBuyOrder, RobotInstance.SignalSellOrder, RobotInstance.StopLossOrder, RobotInstance.TakeProfitOrder);
 
                 //--------- анализ графика ------------
                 if (candlesAnalyse == CandlesAnalyse.Required)
                 {
-                    VwapRobot.RobotState = new();
-                    await VwapRobot.SetRobotOrders();                                       
+                    RobotInstance.RobotState = new();
+                    await RobotInstance.SetRobotOrders();
                 }
 
                 //------ выставление СЛ ТП после сбоя
-                 VwapRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(VwapRobot.RobotState.Position), VwapRobot.SignalBuyOrder.OrderId, VwapRobot.SignalSellOrder.OrderId);
+                RobotInstance.SetSLTPAfterFail(candlesAnalyse, Math.Abs(RobotInstance.RobotState.Position), RobotInstance.SignalBuyOrder.OrderId, RobotInstance.SignalSellOrder.OrderId);
 
-                //-------------
-                IsReady = true;
-               
+                //-------------              
+
             }
 
 
-            if (!IsReady)
+            if (!RobotInstance.IsReady)
             {
                 return;
             }
             //-------------------------------------------
             //проверка на разрыв связи 
-            if (LastCandleTime.AddSeconds(VwapRobot.BaseSettings.TimeFrame) < carrentCendle.CloseTime &&
+            if (LastCandleTime.AddSeconds(RobotInstance.BaseSettings.TimeFrame) < carrentCendle.CloseTime &&
                 LastCandle.OpenPrice != 0)
             {
-                var lostTime = (carrentCendle.CloseTime - LastCandleTime.AddSeconds(VwapRobot.BaseSettings.TimeFrame)).TotalMinutes;
-                var candlesAnalyse =  RobotStateProcessor.CheckStateAsync(state: VwapRobot.RobotState, robotId: RobotId,
-                    VwapRobot.StopLossOrder, VwapRobot.TakeProfitOrder, VwapRobot.StopLossOrder, VwapRobot.TakeProfitOrder);
+                var lostTime = (carrentCendle.CloseTime - LastCandleTime.AddSeconds(RobotInstance.BaseSettings.TimeFrame)).TotalMinutes;
+                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: RobotInstance.RobotState, RobotIndex,
+                    RobotInstance.StopLossOrder, RobotInstance.TakeProfitOrder, RobotInstance.StopLossOrder, RobotInstance.TakeProfitOrder);
                 //------ выставление СЛ ТП после сбоя
-                 VwapRobot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(VwapRobot.RobotState.Position), VwapRobot.SignalBuyOrder.OrderId, VwapRobot.SignalSellOrder.OrderId);
+                RobotInstance.SetSLTPAfterFail(candlesAnalyse, Math.Abs(RobotInstance.RobotState.Position), RobotInstance.SignalBuyOrder.OrderId, RobotInstance.SignalSellOrder.OrderId);
 
-                VwapRobot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
+                RobotInstance.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
             }
             LastCandleTime = carrentCendle.CloseTime;
-
+            //-----------------------
             if (LastCandle.OpenPrice == 0)
             {
                 LastCandle = LastCompletedCendle;
@@ -144,7 +144,24 @@ namespace ShortPeakRobot.Robots.Algorithms
             if (LastCandle.CloseTime < LastCompletedCendle.CloseTime)//новая свечка
             {
                 LastCandle = LastCompletedCendle;
-                NewCandle(LastCandle);
+
+                if (LastCandle.CloseTime.Day != LastCompletedCendle.CloseTime.Day)//новый день - сброс vwap
+                {
+                    Thread.Sleep(500);
+
+                    vwap = new VWAP();
+                    MarketData.VWAPs.Clear();
+
+                    await GetVWAPCandles();
+                    CalculateVWAP();
+                    Take_status();
+                    SetRobotInfo();
+                }
+                else
+                {
+                    NewCandle(LastCandle);
+                }
+
             }
             //------------------- Проверка на выход за пределы СЛ ТП
             //Task.Run(() => VwapRobot.CheckSLTPCross(currentPrice));
@@ -159,166 +176,123 @@ namespace ShortPeakRobot.Robots.Algorithms
                 VWAPStatus = 0; // скидываем статус
             }
             //------------------- выставляем ордера ---------------------
-            if(VwapRobot.Position == 0 && VwapRobot.CheckTradingStatus(carrentCendle.OpenTime))
+            if (RobotInstance.Position == 0 && RobotInstance.CheckTradingStatus(carrentCendle.OpenTime))
             {
-                var vwap = Math.Round(VWAPcandles[^1].VWAP, SymbolIndexes.price[VwapRobot.Symbol]);
+                var vwapVolume = Math.Round(VWAPcandles[^1].VWAP, SymbolIndexes.price[RobotInstance.Symbol]);
                 //-------- sell ----------------
                 //------ выставляем ордера 
-                if (VWAPStatus == 1 && !IsSignalSellOrderPlaced)
+                if (VWAPStatus == -1 && !IsSignalSellOrderPlaced)
                 {
                     IsSignalSellOrderPlaced = true;
-                    SignalSellPrice = vwap;
+
+                    SignalSellPrice = RobotServices.GetSignalPrice(RobotInstance.BaseSettings.OffsetPercent, vwapVolume, 
+                        RobotOrderType.SignalSell, FuturesOrderType.StopMarket);
 
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
-                        RobotId = RobotId,
-                        Symbol = VwapRobot.Symbol,
+                        RobotIndex = RobotIndex,
+                        Symbol = RobotInstance.Symbol,
                         Side = (int)OrderSide.Sell,
-                        OrderType = (int)FuturesOrderType.Limit,
-                        Quantity = VwapRobot.BaseSettings.Volume,
-                        Price = vwap,
-                        StopPrice = 0,
+                        OrderType = (int)FuturesOrderType.StopMarket,
+                        Quantity = RobotInstance.BaseSettings.Volume,
+                        Price = 0,
+                        StopPrice = SignalSellPrice,
                         robotOrderType = RobotOrderType.SignalSell,
                         robotRequestType = RobotRequestType.PlaceOrder
                     });
 
-                    //var plasedOrder = await VwapRobot.PlaceSignalOrder( OrderSide.Sell, FuturesOrderType.Limit, vwap, null);
-                    //if (plasedOrder.Success)
-                    //{
-                    //    VwapRobot.SignalSellOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
-                    //    VwapRobot.RobotState.SignalSellOrderId = VwapRobot.SignalSellOrder.OrderId;
-                    //    RobotServices.SaveState(RobotId, VwapRobot.RobotState);
-
-                    //    //RobotServices.SaveOrder(RobotId, VwapRobot.SignalSellOrder, "Place Signal Sell Order");
-                    //}
-                    //else
-                    //{                        
-                    //    VwapRobot.Log(LogType.Error, " Signal Sell Error " + plasedOrder.Error.ToString());
-                    //}
 
                 }
                 //------------ заменяем ордера ------------
-                if (IsSignalSellOrderPlaced && SignalSellPrice != vwap)
+                if (IsSignalSellOrderPlaced && SignalSellPrice != RobotServices.GetSignalPrice(RobotInstance.BaseSettings.OffsetPercent, vwapVolume,
+                        RobotOrderType.SignalSell, FuturesOrderType.StopMarket))
                 {
-                    SignalSellPrice = vwap;
+                    SignalSellPrice = RobotServices.GetSignalPrice(RobotInstance.BaseSettings.OffsetPercent, vwapVolume,
+                        RobotOrderType.SignalSell, FuturesOrderType.StopMarket);
 
                     //VwapRobot.CancelOrderAsync(VwapRobot.SignalSellOrder, "Cancel Signal Sell Order");
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
-                        RobotId = RobotId,
-                        Symbol = VwapRobot.Symbol,                        
+                        RobotIndex = RobotIndex,
+                        Symbol = RobotInstance.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
-                        OrderId = VwapRobot.SignalSellOrder.OrderId
+                        OrderId = RobotInstance.SignalSellOrder.OrderId,
+                        OrderType = (int)FuturesOrderType.StopMarket
                     });
 
-                    VwapRobot.RobotState.SignalSellOrderId = 0;
-                    VwapRobot.SignalSellOrder = new();
+                    RobotInstance.RobotState.SignalSellOrderId = 0;
+                    RobotInstance.SignalSellOrder = new();
 
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
-                        RobotId = RobotId,
-                        Symbol = VwapRobot.Symbol,
+                        RobotIndex = RobotIndex,
+                        Symbol = RobotInstance.Symbol,
                         Side = (int)OrderSide.Sell,
-                        OrderType = (int)FuturesOrderType.Limit,
-                        Quantity = VwapRobot.BaseSettings.Volume,
-                        Price = vwap,
-                        StopPrice = 0,
+                        OrderType = (int)FuturesOrderType.StopMarket,
+                        Quantity = RobotInstance.BaseSettings.Volume,
+                        Price = 0,
+                        StopPrice = SignalSellPrice,
                         robotOrderType = RobotOrderType.SignalSell,
                         robotRequestType = RobotRequestType.PlaceOrder
                     });
 
-                    //var plasedOrder = await VwapRobot.PlaceSignalOrder(OrderSide.Sell, FuturesOrderType.Limit, vwap, null);
-                    //if (plasedOrder.Success)
-                    //{
-                    //    VwapRobot.SignalSellOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
-                    //    VwapRobot.RobotState.SignalSellOrderId = VwapRobot.SignalSellOrder.OrderId;
-                    //    RobotServices.SaveState(RobotId, VwapRobot.RobotState);
-
-                    //    //RobotServices.SaveOrder(RobotId, VwapRobot.SignalSellOrder, "Place Signal Sell Order");
-                    //}
-                    //else
-                    //{
-                    //    VwapRobot.Log(LogType.Error, " Signal Sell Error " + plasedOrder.Error.ToString());
-                    //}
-
+                    
 
                 }
 
                 //-------------- buy ---------------------
-                if (VWAPStatus == -1 && !IsSignalBuyOrderPlaced)
+                if (VWAPStatus == 1 && !IsSignalBuyOrderPlaced)
                 {
                     IsSignalBuyOrderPlaced = true;
-                    SignalBuyPrice = vwap;
+                    SignalBuyPrice = RobotServices.GetSignalPrice(RobotInstance.BaseSettings.OffsetPercent, vwapVolume,
+                        RobotOrderType.SignalBuy, FuturesOrderType.StopMarket);
 
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
-                        RobotId = RobotId,
-                        Symbol = VwapRobot.Symbol,
+                        RobotIndex = RobotIndex,
+                        Symbol = RobotInstance.Symbol,
                         Side = (int)OrderSide.Buy,
-                        OrderType = (int)FuturesOrderType.Limit,
-                        Quantity = VwapRobot.BaseSettings.Volume,
-                        Price = vwap,
-                        StopPrice = 0,
+                        OrderType = (int)FuturesOrderType.StopMarket,
+                        Quantity = RobotInstance.BaseSettings.Volume,
+                        Price = 0,
+                        StopPrice = SignalBuyPrice,
                         robotOrderType = RobotOrderType.SignalBuy,
                         robotRequestType = RobotRequestType.PlaceOrder
                     });
-
-                    //var plasedOrder = await VwapRobot.PlaceSignalOrder(OrderSide.Buy, FuturesOrderType.Limit, vwap, null);
-                    //if (plasedOrder.Success)
-                    //{
-                    //    VwapRobot.SignalBuyOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
-                    //    VwapRobot.RobotState.SignalBuyOrderId = VwapRobot.SignalBuyOrder.OrderId;
-
-                    //    //RobotServices.SaveOrder(RobotId, VwapRobot.SignalBuyOrder, "Place Signal Buy Order");
-                    //}
-                    //else
-                    //{
-                    //    VwapRobot.Log(LogType.Error, " Signal Buy Error " + plasedOrder.Error.ToString());
-                    //}
 
                 }
                 //------------ заменяем ордера ------------
-                if (IsSignalBuyOrderPlaced && SignalBuyPrice != vwap)
+                if (IsSignalBuyOrderPlaced && SignalBuyPrice != RobotServices.GetSignalPrice(RobotInstance.BaseSettings.OffsetPercent, vwapVolume,
+                        RobotOrderType.SignalBuy, FuturesOrderType.StopMarket))
                 {
-                    SignalBuyPrice = vwap;
+                    SignalBuyPrice = RobotServices.GetSignalPrice(RobotInstance.BaseSettings.OffsetPercent, vwapVolume,
+                        RobotOrderType.SignalBuy, FuturesOrderType.StopMarket);
                     //VwapRobot.CancelOrderAsync(VwapRobot.SignalBuyOrder, "Cancel Signal Buy Order");
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
-                        RobotId = RobotId,
-                        Symbol = VwapRobot.Symbol,
+                        RobotIndex = RobotIndex,
+                        Symbol = RobotInstance.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
-                        OrderId = VwapRobot.SignalBuyOrder.OrderId
+                        OrderId = RobotInstance.SignalBuyOrder.OrderId,
+                        OrderType = (int)FuturesOrderType.StopMarket
                     });
 
-                    VwapRobot.RobotState.SignalBuyOrderId = 0;
-                    VwapRobot.SignalBuyOrder = new();
+                    RobotInstance.RobotState.SignalBuyOrderId = 0;
+                    RobotInstance.SignalBuyOrder = new();
 
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
-                        RobotId = RobotId,
-                        Symbol = VwapRobot.Symbol,
+                        RobotIndex = RobotIndex,
+                        Symbol = RobotInstance.Symbol,
                         Side = (int)OrderSide.Buy,
-                        OrderType = (int)FuturesOrderType.Limit,
-                        Quantity = VwapRobot.BaseSettings.Volume,
-                        Price = vwap,
-                        StopPrice = 0,
+                        OrderType = (int)FuturesOrderType.StopMarket,
+                        Quantity = RobotInstance.BaseSettings.Volume,
+                        Price = 0,
+                        StopPrice = SignalBuyPrice,
                         robotOrderType = RobotOrderType.SignalBuy,
                         robotRequestType = RobotRequestType.PlaceOrder
                     });
 
-                    //var plasedOrder = await VwapRobot.PlaceSignalOrder(OrderSide.Buy, FuturesOrderType.Limit, vwap, null);
-                    //if (plasedOrder.Success)
-                    //{
-                    //    VwapRobot.SignalBuyOrder = RobotOrderDTO.DTO(plasedOrder, RobotId);
-                    //    VwapRobot.RobotState.SignalBuyOrderId = VwapRobot.SignalBuyOrder.OrderId;
-                    //    RobotServices.SaveState(RobotId, VwapRobot.RobotState);
-
-                    //    //RobotServices.SaveOrder(RobotId, VwapRobot.SignalBuyOrder, "Place Signal Buy Order");
-                    //}
-                    //else
-                    //{
-                    //    VwapRobot.Log(LogType.Error, " Signal Buy Error " + plasedOrder.Error.ToString());
-                    //}
 
 
                 }
@@ -327,40 +301,42 @@ namespace ShortPeakRobot.Robots.Algorithms
             else
             {
                 if (IsSignalSellOrderPlaced || IsSignalBuyOrderPlaced)
-                {
-                    //VwapRobot.CancelOrderAsync(VwapRobot.SignalBuyOrder, "Cancel Signal Buy Order");
-                    //VwapRobot.CancelOrderAsync(VwapRobot.SignalSellOrder, "Cancel Signal Sell Order");
+                {                    
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
-                        RobotId = RobotId,
-                        Symbol = VwapRobot.Symbol,
+                        RobotIndex = RobotIndex,
+                        Symbol = RobotInstance.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
-                        OrderId = VwapRobot.SignalSellOrder.OrderId
+                        OrderId = RobotInstance.SignalSellOrder.OrderId,
+                        OrderType = (int)FuturesOrderType.StopMarket
                     });
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
-                        RobotId = RobotId,
-                        Symbol = VwapRobot.Symbol,
+                        RobotIndex = RobotIndex,
+                        Symbol = RobotInstance.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
-                        OrderId = VwapRobot.SignalBuyOrder.OrderId
+                        OrderId = RobotInstance.SignalBuyOrder.OrderId,
+                        OrderType = (int)FuturesOrderType.StopMarket
                     });
 
                     IsSignalSellOrderPlaced = false;
                     IsSignalBuyOrderPlaced = false;
-                    
+
                 }
             }
             // ====================== Day high/low ======================
-            if (currentPrice > DayHighPrice)
+            if (currentPrice  > DayHighPrice)
             {
+                 var vwapVolume = VWAPcandles[^1].VWAP;
                 DayHighPrice = currentPrice;
-                if (VWAPStatus == 0 )
+                if (VWAPStatus == 0 && currentPrice - vwapVolume > RobotInstance.BaseSettings.OffsetPercent)
                     VWAPStatus = -1;
             }
             if (currentPrice < DayLowPrice)
             {
+                var vwapVolume = VWAPcandles[^1].VWAP;
                 DayLowPrice = currentPrice;
-                if (VWAPStatus == 0)
+                if (VWAPStatus == 0 && vwapVolume - currentPrice > RobotInstance.BaseSettings.OffsetPercent)
                     VWAPStatus = 1;
             }
 
@@ -376,14 +352,35 @@ namespace ShortPeakRobot.Robots.Algorithms
             VWAPcandles.Add(CandleVWAPDTO.DTO(candle, candleVWAP));
 
             MarketData.VWAPs.Add(new VWAP { Date = candle.OpenTime, Volume = candleVWAP });
+
+            SetRobotInfo();
         }
 
         //--------------------------------------
-        
 
+        public void SetRobotInfo()
+        {
+            if (MarketData.Info.SelectedRobotIndex == RobotIndex)
+            {
+                App.Current.Dispatcher.Invoke(() =>
+                {
+                    RobotInfoVM.ClearParams();
+                    RobotInfoVM.AddParam("VWAPs.Count", MarketData.VWAPs.Count.ToString());
+
+                    RobotInfoVM.AddParam("VWAP.Volume", Math.Round(VWAPcandles[^1].VWAP, SymbolIndexes.price[RobotInstance.Symbol]).ToString());
+                    RobotInfoVM.AddParam("VWAP.Position", VWAPStatus.ToString());
+                    RobotInfoVM.AddParam("VWAP.Date", MarketData.VWAPs[^1].Date.ToString());
+                    RobotInfoVM.AddParam("DayHighPrice", DayHighPrice.ToString());
+                    RobotInfoVM.AddParam("DayLowPrice", DayLowPrice.ToString());
+
+                });
+            }
+        }
 
         public void Take_status()
         {
+            RobotInstance = RobotVM.robots[RobotIndex];
+
             int candleCnt = 1;
             foreach (CandleVWAP candle in VWAPcandles)
             {
@@ -399,25 +396,25 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
 
                 //-----------------------------
-                if (VWAPStatus == -1 && candle.LowPrice <= candle.VWAP)
+                if (VWAPStatus == -1 && candle.LowPrice <= candle.VWAP + RobotInstance.BaseSettings.OffsetPercent)
                 {
                     VWAPStatus = 0;
                 }
 
-                if (VWAPStatus == 1 && candle.HighPrice >= candle.VWAP)
+                if (VWAPStatus == 1 && candle.HighPrice >= candle.VWAP - RobotInstance.BaseSettings.OffsetPercent)
                 {
                     VWAPStatus = 0;//////////////////////////////////////////
                 }
 
                 //------------------ hi low day 
-                if (candle.HighPrice > DayHighPrice)
+                if (candle.HighPrice > DayHighPrice && candle.HighPrice - candle.VWAP > RobotInstance.BaseSettings.OffsetPercent)
                 {
                     DayHighPrice = candle.HighPrice;
                     if (candleCnt > StartCandle)
                         VWAPStatus = -1;
 
                 }
-                if (candle.LowPrice < DayLowPrice)
+                if (candle.LowPrice < DayLowPrice && candle.VWAP - candle.LowPrice > RobotInstance.BaseSettings.OffsetPercent)
                 {
                     DayLowPrice = candle.LowPrice;
                     if (candleCnt > StartCandle)
@@ -426,24 +423,21 @@ namespace ShortPeakRobot.Robots.Algorithms
                 candleCnt++;
 
             }
-            //VWAPStatus = 1;
+            //VWAPStatus = -1;
         }
 
-        
 
-        
-
-        
 
 
         private async Task GetVWAPCandles()
         {
-            var startDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, 0, 0, 0, DateTimeKind.Utc);
-            var result = await BinanceApi.client.UsdFuturesApi.ExchangeData.GetKlinesAsync(VwapRobot.Symbol,
-                (KlineInterval)VwapRobot.BaseSettings.TimeFrame,
+            //var startDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, 0, 0, 0, DateTimeKind.Utc);
+            var result = await BinanceApi.client.UsdFuturesApi.ExchangeData.GetKlinesAsync(RobotInstance.Symbol,
+                (KlineInterval)RobotInstance.BaseSettings.TimeFrame,
                 limit: 1440);
             //startTime: startDate, endTime: DateTime.UtcNow);
-            VWAPcandles = result.Data.Select(x => new CandleVWAP
+            VWAPcandles = result.Data.Where(x=> x.OpenTime.Day == DateTime.UtcNow.Day)
+                .Select(x => new CandleVWAP
             {
                 OpenPrice = x.OpenPrice,
                 HighPrice = x.HighPrice,
@@ -454,6 +448,8 @@ namespace ShortPeakRobot.Robots.Algorithms
                 Symbol = RobotVM.robots[0].Symbol,
                 Volume = x.Volume
             }).ToList();
+
+            VWAPcandles.RemoveAt(VWAPcandles.Count - 1);//удаляем незакрытую свечу
         }
 
         private decimal CalculateCandleVWAP(CandleVWAP candle)
@@ -491,13 +487,30 @@ namespace ShortPeakRobot.Robots.Algorithms
             }
         }
 
-        
+
+        private void SetCurrentPrifit(decimal price)
+        {
+            RobotInstance = RobotVM.robots[RobotIndex];
+
+            if (RobotInstance.Position > 0)
+            {
+                RobotInstance.Profit = price - RobotInstance.OpenPositionPrice;
+                return;
+            }
+
+            if (RobotInstance.Position < 0)
+            {
+                RobotInstance.Profit = RobotInstance.OpenPositionPrice - price;
+                return;
+            }
+
+            RobotInstance.Profit = 0;
+        }
 
 
-        
 
-        
 
-        
+
+
     }
 }

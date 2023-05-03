@@ -10,7 +10,7 @@ namespace ShortPeakRobot.Constants
     {
         public static readonly List<int> list = new List<int>()
         {
-             60, 86400
+              60, 86400
         };
     }
 }

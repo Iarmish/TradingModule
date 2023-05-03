@@ -87,13 +87,16 @@ namespace ShortPeakRobot
         private async void testAction_Click(object sender, RoutedEventArgs e)
         {
             //var position = await BinanceApi.client.UsdFuturesApi.Account.GetPositionInformationAsync("ETHUSDT");
+            //var balances = await BinanceApi.client.UsdFuturesApi.Account.GetBalancesAsync();
+            var balances = await BinanceApi.client.UsdFuturesApi.Account.GetBalancesAsync();
+
 
             var trades2 = await BinanceApi.client.UsdFuturesApi.Trading.GetUserTradesAsync("SOLUSDT", startTime: new DateTime(2023,04,21));
 
             var orders = await BinanceApi.client.UsdFuturesApi.Trading.GetOrdersAsync("ETHUSDT",
                 startTime: new DateTime(2023, 04, 18));
 
-            var order2 = await RobotServices.GetBinOrderById(8389765593151522832,2);
+            
 
             var order = await BinanceApi.client.UsdFuturesApi.Trading.GetOrderAsync(
                     symbol: "ETHUSDT",
@@ -134,7 +137,9 @@ namespace ShortPeakRobot
 
             foreach (var robot in RobotVM.robots)//добавление id роботов в алгоритмы роботов
             {
-                robot.BaseSettings.LoadSettings(robot.Id);                
+                robot.BaseSettings.LoadSettings(robot.Index);
+                robot.RobotState = RobotServices.LoadStateAsync(robot.Index);
+                await robot.SetRobotOrders();
             }
 
 
@@ -180,9 +185,9 @@ namespace ShortPeakRobot
                     //-------------------
 
                     RobotVM.robots[0].Selected = true;
-                    MarketData.Info.SelectedRobotId = 0;
+                    MarketData.Info.SelectedRobotIndex = 0;
                     MonitorRobotName.Text = RobotVM.robots[0].Name;
-                    DataProcessor.SetCellsVM(MarketData.Info.SelectedRobotId);
+                    DataProcessor.SetCellsVM(MarketData.Info.SelectedRobotIndex);
                     Grid_baseSettings.DataContext = RobotVM.robots[0].BaseSettings;
                     LoadSettings.IsEnabled = true;
                     SaveSettingsToFile.IsEnabled = true;
@@ -204,8 +209,8 @@ namespace ShortPeakRobot
             var index = Convert.ToInt32(((TextBlock)sender).Text);
 
 
-            RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.AllowedDayMonth[index - 1] =
-                !RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.AllowedDayMonth[index - 1];
+            RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.AllowedDayMonth[index - 1] =
+                !RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.AllowedDayMonth[index - 1];
 
             if (((TextBlock)sender).Background == Brushes.LightGreen)
             {
@@ -225,8 +230,8 @@ namespace ShortPeakRobot
             var index = Convert.ToInt32(((TextBlock)sender).Text);
 
 
-            RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.AllowedDayWeek[index - 1] =
-                !RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.AllowedDayWeek[index - 1];
+            RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.AllowedDayWeek[index - 1] =
+                !RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.AllowedDayWeek[index - 1];
 
             if (((TextBlock)sender).Background == Brushes.LightGreen)
             {
@@ -244,8 +249,8 @@ namespace ShortPeakRobot
             var index = Convert.ToInt32(((TextBlock)sender).Text);
 
 
-            RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.AllowedHours[index] =
-                !RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.AllowedHours[index];
+            RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.AllowedHours[index] =
+                !RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.AllowedHours[index];
 
             if (((TextBlock)sender).Background == Brushes.LightGreen)
             {
@@ -260,7 +265,7 @@ namespace ShortPeakRobot
 
         private void LoadSettings_Click(object sender, RoutedEventArgs e)
         {
-            RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.LoadSettingsFromFile(MarketData.Info.SelectedRobotId);
+            RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.LoadSettingsFromFile(MarketData.Info.SelectedRobotIndex);
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -280,8 +285,10 @@ namespace ShortPeakRobot
 
         private void SaveSettingsToFile_Click(object sender, RoutedEventArgs e)
         {
-            var settings = RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings;
-            RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.SaveSettingsToFile(MarketData.Info.SelectedRobotId, settings);
+            var robotId = RobotServices.GetRobotId(MarketData.Info.SelectedRobotIndex);
+            var settings = RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings;
+            RobotVM.robots[MarketData.Info.SelectedRobotIndex]
+                .BaseSettings.SaveSettingsToFile(robotId, settings);
         }
 
         private void BtnRobotList_Click(object sender, RoutedEventArgs e)
@@ -295,20 +302,23 @@ namespace ShortPeakRobot
 
         private void BT_AllowSell_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.AllowSell =
-                !RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.AllowSell;
+            var robotIndex = MarketData.Info.SelectedRobotIndex;
+            RobotVM.robots[robotIndex].BaseSettings.AllowSell =
+                !RobotVM.robots[robotIndex].BaseSettings.AllowSell;
         }
 
         private void BT_AllowBuy_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.AllowBuy =
-                !RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.AllowBuy;
+            var robotIndex = MarketData.Info.SelectedRobotIndex;
+            RobotVM.robots[robotIndex].BaseSettings.AllowBuy =
+                !RobotVM.robots[robotIndex].BaseSettings.AllowBuy;
         }
 
         private void BT_Revers_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.Revers =
-                !RobotVM.robots[MarketData.Info.SelectedRobotId].BaseSettings.Revers;
+            var robotIndex = MarketData.Info.SelectedRobotIndex;
+            RobotVM.robots[robotIndex].BaseSettings.Revers =
+                !RobotVM.robots[robotIndex].BaseSettings.Revers;
         }
 
 
@@ -360,8 +370,8 @@ namespace ShortPeakRobot
 
         private void TB_RobotsRun_Click(object sender, RoutedEventArgs e)
         {
-            var robotIds = RobotVM.robots.Where(x => x.IsActivated).Select(x => x.Id).ToList();
-            MarketData.MarketManager.RobotsRun(robotIds);
+            var robotIndexes = RobotVM.robots.Where(x => x.IsActivated).Select(x => x.Index).ToList();
+            MarketData.MarketManager.RobotsRun(robotIndexes);
             
             MarketData.Info.IsSessionRun = true;
         }
@@ -369,21 +379,21 @@ namespace ShortPeakRobot
         private void ChangeState(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             var stack = (StackPanel)((TextBlock)sender).Parent;
-            int robotId = Convert.ToInt32(((TextBlock)stack.Children[0]).Text);
+            int robotIndex = Convert.ToInt32(((TextBlock)stack.Children[0]).Text);
 
-            if (!RobotVM.robots[robotId].IsRun)
+            if (!RobotVM.robots[robotIndex].IsRun)
             {
                 if (!MarketData.MarketManager.CheckRobotsState())
                 {
                     MarketData.Info.IsSessionRun = true;
                 }
 
-                MarketData.MarketManager.RobotsRun(new List<int> { robotId });
+                MarketData.MarketManager.RobotsRun(new List<int> { robotIndex });
 
             }
             else
             {
-                MarketData.MarketManager.RobotsStop(new List<int> { robotId });
+                MarketData.MarketManager.RobotsStop(new List<int> { robotIndex });
 
                 if (!MarketData.MarketManager.CheckRobotsState())
                 {
@@ -394,8 +404,8 @@ namespace ShortPeakRobot
 
         private async void BtnCloseAll_Click(object sender, RoutedEventArgs e)
         {
-            var robotIds = RobotVM.robots.Select(x => x.Id).ToList();
-            MarketData.MarketManager.RobotsStop(robotIds);
+            var robotIndexes = RobotVM.robots.Select(x => x.Index).ToList();
+            MarketData.MarketManager.RobotsStop(robotIndexes);
 
             MarketData.Info.IsSessionRun = false;
 
@@ -407,8 +417,6 @@ namespace ShortPeakRobot
                 var cancelAllOrders = await BinanceApi.client.UsdFuturesApi.Trading.CancelAllOrdersAsync(symbol);
 
                 MarketServices.CloseSymbolPositionAsync(symbol);
-
-
             }
 
         }
@@ -417,11 +425,11 @@ namespace ShortPeakRobot
         {
             var stackPanel = (StackPanel)((TextBlock)sender).Parent;
 
-            var robotId = Convert.ToInt32(((TextBlock)stackPanel.Children[0]).Text);
+            var robotIndex = Convert.ToInt32(((TextBlock)stackPanel.Children[0]).Text);
 
             foreach (var robot in RobotVM.robots)
             {
-                if (robot.Id != robotId)
+                if (robot.Index != robotIndex)
                 {
                     robot.Selected = false;
                 }
@@ -431,12 +439,12 @@ namespace ShortPeakRobot
                 }
             }
 
-            MarketData.Info.SelectedRobotId = robotId;
-            MonitorRobotName.Text = RobotVM.robots[robotId].Name;
-            DataProcessor.SetCellsVM(MarketData.Info.SelectedRobotId);
-            Grid_baseSettings.DataContext = RobotVM.robots[robotId].BaseSettings;
+            MarketData.Info.SelectedRobotIndex = robotIndex;
+            MonitorRobotName.Text = RobotVM.robots[robotIndex].Name;
+            DataProcessor.SetCellsVM(MarketData.Info.SelectedRobotIndex);
+            Grid_baseSettings.DataContext = RobotVM.robots[robotIndex].BaseSettings;
             //------------- robot data VM
-            MarketServices.GetRobotData(robotId);
+            MarketServices.GetRobotData(robotIndex);
 
 
 
@@ -459,9 +467,9 @@ namespace ShortPeakRobot
         private void BtnCloseRobot_Click(object sender, RoutedEventArgs e)
         {
             var stack = (StackPanel)((Button)sender).Parent;
-            int robotId = Convert.ToInt32(((TextBlock)stack.Children[0]).Text);
+            int robotIndex = Convert.ToInt32(((TextBlock)stack.Children[0]).Text);
 
-            Task.Run(() => { RobotVM.robots[robotId].CloseRobotPosition(); });
+            Task.Run(() => { RobotVM.robots[robotIndex].CloseRobotPosition(); });
 
         }
 
@@ -475,14 +483,14 @@ namespace ShortPeakRobot
         {
             var qty = decimal.Parse(TBChangeRobotQty.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
 
-            RobotVM.robots[MarketData.Info.SelectedRobotId].ChangeRobotPosition(OrderSide.Sell, qty);
+            RobotVM.robots[MarketData.Info.SelectedRobotIndex].ChangeRobotPosition(OrderSide.Sell, qty);
         }
 
         private void BtnRobotBuy_Click(object sender, RoutedEventArgs e)
         {
             var qty = decimal.Parse(TBChangeRobotQty.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
 
-            RobotVM.robots[MarketData.Info.SelectedRobotId].ChangeRobotPosition(OrderSide.Buy, qty);
+            RobotVM.robots[MarketData.Info.SelectedRobotIndex].ChangeRobotPosition(OrderSide.Buy, qty);
         }
 
         private void BtnSetSessionDate_Click(object sender, RoutedEventArgs e)
@@ -509,8 +517,8 @@ namespace ShortPeakRobot
                     //RobotVM.robots[MarketData.Info.SelectedRobotId].CancelOrderAsync(o, "Cancel robot orders");
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
-                        RobotId = MarketData.Info.SelectedRobotId,
-                        Symbol = RobotVM.robots[MarketData.Info.SelectedRobotId].Symbol,
+                        RobotIndex = MarketData.Info.SelectedRobotIndex,
+                        Symbol = RobotVM.robots[MarketData.Info.SelectedRobotIndex].Symbol,
                         robotOrderType = RobotOrderType.OrderId,
                         robotRequestType = RobotRequestType.CancelOrder,
                         OrderId = o.OrderId
@@ -518,11 +526,11 @@ namespace ShortPeakRobot
                 });
 
 
-                RobotVM.robots[MarketData.Info.SelectedRobotId].ResetRobotStateOrders();
-                RobotVM.robots[MarketData.Info.SelectedRobotId].RobotState.TakeProfitOrderId = 0;
-                RobotVM.robots[MarketData.Info.SelectedRobotId].RobotState.StopLossOrderId = 0;
-                RobotVM.robots[MarketData.Info.SelectedRobotId].RobotState.SignalSellOrderId = 0;
-                RobotVM.robots[MarketData.Info.SelectedRobotId].RobotState.SignalBuyOrderId = 0;                
+                RobotVM.robots[MarketData.Info.SelectedRobotIndex].ResetRobotStateOrders();
+                RobotVM.robots[MarketData.Info.SelectedRobotIndex].RobotState.TakeProfitOrderId = 0;
+                RobotVM.robots[MarketData.Info.SelectedRobotIndex].RobotState.StopLossOrderId = 0;
+                RobotVM.robots[MarketData.Info.SelectedRobotIndex].RobotState.SignalSellOrderId = 0;
+                RobotVM.robots[MarketData.Info.SelectedRobotIndex].RobotState.SignalBuyOrderId = 0;                
             });
             //MessageBox.Show("All orders canceled.");
 
@@ -555,7 +563,7 @@ namespace ShortPeakRobot
 
         private void BtnRobotControl_Click(object sender, RoutedEventArgs e)
         {
-            var robotStateWindow = new RobotControl(MarketData.Info.SelectedRobotId);
+            var robotStateWindow = new RobotControl(MarketData.Info.SelectedRobotIndex);
             robotStateWindow.Owner = Application.Current.MainWindow;
 
             robotStateWindow.Show();

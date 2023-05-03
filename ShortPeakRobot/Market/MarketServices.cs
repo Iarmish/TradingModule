@@ -20,6 +20,7 @@ using System.Windows.Markup;
 using Binance.Net.Interfaces;
 using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.Socket;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace ShortPeakRobot.Market
 {
@@ -79,34 +80,25 @@ namespace ShortPeakRobot.Market
             return profit;
         }
 
-        public static decimal GetTradesProfit2(List<RobotTrade> robotTrades)
-        {
-            decimal profit = 0;
+        
 
-            robotTrades.ForEach(x =>
-            {
-                profit += x.RealizedPnl;
-                profit -= x.Fee;
-            });
-            return profit;
-        }
-
-        public static void GetRobotData(int robotId)
+        public static void GetRobotData(int robotIndex)
         {
-            if (MarketData.Info.SelectedRobotId == robotId)
+            var robotId = RobotServices.GetRobotId(robotIndex);
+            if (MarketData.Info.SelectedRobotIndex == robotIndex)
             {
                 var robotOrders = GetRobotOrders(robotId, MarketData.Info.StartSessionDate);
                 var robotTrades = GetRobotTrades(robotId, MarketData.Info.StartSessionDate);
                 var robotDeals = GetRobotDeals(robotId, MarketData.Info.StartSessionDate);
                 var robotLogs = GetRobotLogs(robotId, MarketData.Info.StartSessionDate);
                 MarketData.Info.SessionRobotProfit = GetDealsProfit(robotDeals);
-                RobotVM.robots[robotId].BaseSettings.Profit = MarketData.Info.SessionRobotProfit;
+                RobotVM.robots[robotIndex].BaseSettings.Profit = MarketData.Info.SessionRobotProfit;
 
 
 
 
 
-                GetOpenOrders(robotId);
+                GetOpenOrders(robotIndex);
 
                 App.Current.Dispatcher.Invoke(() =>
                 {
@@ -153,13 +145,13 @@ namespace ShortPeakRobot.Market
             return robotLogs;
         }
 
-        public async static Task<List<RobotOrder>> GetOpenOrders(int robotId)
+        public async static Task<List<RobotOrder>> GetOpenOrders(int robotIndex)
         {
             var orders = RobotOrderDTO.OrdersDTO(
-            await BinanceApi.client.UsdFuturesApi.Trading.GetOpenOrdersAsync(RobotVM.robots[robotId].Symbol), robotId);
+            await BinanceApi.client.UsdFuturesApi.Trading.GetOpenOrdersAsync(RobotVM.robots[robotIndex].Symbol), robotIndex);
 
             MarketData.OpenOrders = orders;
-            RobotVM.robots[robotId].Orders = MarketData.OpenOrders.Count;
+            RobotVM.robots[robotIndex].Orders = MarketData.OpenOrders.Count;
             return orders;
 
         }
@@ -220,17 +212,7 @@ namespace ShortPeakRobot.Market
                 robotOrders = _context.RobotOrders
                    .Where(x => x.PlacedTime > startDate && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
                    .OrderBy(x => x.PlacedTime).ToList();
-
             }
-
-
-            //var ids = GetRobotOrderIds(robotId, startDate);
-            //var binOrders = await BinanceApi.client.UsdFuturesApi.Trading.GetOrdersAsync(RobotVM.robots[robotId].Symbol,
-            //    startTime: startDate);
-            //var robotOrders = RobotOrderDTO.OrdersDTO(binOrders, robotId);
-
-            //robotOrders = robotOrders.Where(x => ids.Contains(x.OrderId)).ToList();
-
             return robotOrders;
         }
 
@@ -318,9 +300,10 @@ namespace ShortPeakRobot.Market
         }
 
 
-        public async static Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceBinanceOrder(long startDealOrderId, int orderCount, int robotId, 
+        public async static Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceBinanceOrder(long startDealOrderId, int orderCount, int robotIndex, 
             string symbol, OrderSide side, FuturesOrderType orderType, decimal quantity, decimal price = 0, decimal stopPrice = 0)
         {
+            var robotId = RobotServices.GetRobotId(robotIndex);
             if (orderType == FuturesOrderType.Market)
             {
                 var placedOrder = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
@@ -370,23 +353,21 @@ namespace ShortPeakRobot.Market
             {
                 if (robot.Symbol.Equals(symbol))
                 {
-                    SetRobotVariableLot(robot.Id, price);
+                    SetRobotVariableLot(robot.Index, price);
                 }
             }
 
         }
 
-        public static void SetRobotVariableLot(int robotId, decimal price)
+        public static void SetRobotVariableLot(int robotIndex, decimal price)
         {
-            
-
-            if (RobotVM.robots[robotId].BaseSettings.IsVariableLot)
+            if (RobotVM.robots[robotIndex].BaseSettings.IsVariableLot)
             {
-                var robotPartDepo = MarketData.Info.Deposit / 100 * RobotVM.robots[robotId].BaseSettings.Deposit;
-                RobotVM.robots[robotId].BaseSettings.CurrentDeposit = robotPartDepo + RobotVM.robots[robotId].BaseSettings.Profit;
+                var robotPartDepo = MarketData.Info.Deposit / 100 * RobotVM.robots[robotIndex].BaseSettings.Deposit;
+                RobotVM.robots[robotIndex].BaseSettings.CurrentDeposit = robotPartDepo + RobotVM.robots[robotIndex].BaseSettings.Profit;
                 //variable lot
-                RobotVM.robots[robotId].BaseSettings.Volume =
-                    Math.Round(RobotVM.robots[robotId].BaseSettings.CurrentDeposit / price, SymbolIndexes.lot[RobotVM.robots[robotId].Symbol]);
+                RobotVM.robots[robotIndex].BaseSettings.Volume =
+                    Math.Round(RobotVM.robots[robotIndex].BaseSettings.CurrentDeposit / price, SymbolIndexes.lot[RobotVM.robots[robotIndex].Symbol]);
 
             }
 

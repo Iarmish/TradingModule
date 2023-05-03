@@ -37,7 +37,7 @@ namespace ShortPeakRobot.Robots
                 {
                     _Simbol = value;
                     OnPropertyChanged("Simbol");
-                    RobotVM.robots[RobotId].Symbol = _Simbol;
+                    RobotVM.robots[RobotServices.GetRobotIndex( RobotId)].Symbol = _Simbol;
                 }
             }
         }
@@ -114,6 +114,19 @@ namespace ShortPeakRobot.Robots
             }
         }
 
+        public decimal _OffsetPercent { get; set; }
+        public decimal OffsetPercent
+        {
+            get { return _OffsetPercent; }
+            set
+            {
+                if (_OffsetPercent != value)
+                {
+                    _OffsetPercent = value;
+                    OnPropertyChanged("OffsetPercent");
+                }
+            }
+        }
 
         public decimal _Slip { get; set; }
         public decimal Slip
@@ -267,6 +280,20 @@ namespace ShortPeakRobot.Robots
                 }
             }
         }
+         public bool _IsOffsetPercent { get; set; }
+        public bool IsOffsetPercent
+        {
+            get { return _IsOffsetPercent; }
+            set
+            {
+                if (_IsOffsetPercent != value)
+                {
+                    _IsOffsetPercent = value;
+                    OnPropertyChanged("IsOffsetPercent");
+
+                }
+            }
+        }
 
 
         public decimal Profit { get; set; }
@@ -339,8 +366,9 @@ namespace ShortPeakRobot.Robots
 
         }
 
-        public async void LoadSettings(int robotId)
+        public async void LoadSettings(int robotIndex)
         {
+            var robotId = RobotServices.GetRobotId(robotIndex);
             var fileName = robotId + "/" + robotId + ".json";
             if (Directory.Exists(robotId.ToString()) && File.Exists(fileName))
             {
@@ -350,15 +378,16 @@ namespace ShortPeakRobot.Robots
 
                     if (settings != null)
                     {
-                        RobotVM.robots[robotId].BaseSettings = settings;
-                        RobotVM.robots[robotId].IsActivated = settings.IsActivated;
+                        RobotVM.robots[robotIndex].BaseSettings = settings;
+                        RobotVM.robots[robotIndex].IsActivated = settings.IsActivated;
                     }
                 }
             }
         }
 
-        public async void LoadSettingsFromFile(int robotId)
+        public async void LoadSettingsFromFile(int robotIndex)
         {
+            var robotId = RobotServices.GetRobotId(robotIndex);
             OpenFileDialog dialog = new OpenFileDialog()
             {
                 CheckFileExists = false,
@@ -381,8 +410,8 @@ namespace ShortPeakRobot.Robots
                             MessageBox.Show("Id робота не соответствует загружаемым настройкам");
                             return;
                         }
-                        RobotVM.robots[robotId].BaseSettings = settings;
-                        DataProcessor.SetCellsVM(robotId);
+                        RobotVM.robots[robotIndex].BaseSettings = settings;
+                        DataProcessor.SetCellsVM(robotIndex);
                     }
 
                 }

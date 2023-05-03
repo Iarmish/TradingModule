@@ -14,8 +14,10 @@ namespace ShortPeakRobot.Robots.DTO
 {
     public static class RobotDealDTO
     {
-        public static RobotDeal DTO(int robotId, WebCallResult<BinanceFuturesOrder> openOrder, WebCallResult<BinanceFuturesOrder> closeOrder)
+        public static RobotDeal DTO(int robotIndex, WebCallResult<BinanceFuturesOrder> openOrder, WebCallResult<BinanceFuturesOrder> closeOrder)
         {
+            var robotId = RobotServices.GetRobotId(robotIndex);
+
             var openPrice = 0m;
             var openOrderPrice = 0m;
             var openFee = 0m;
@@ -62,7 +64,7 @@ namespace ShortPeakRobot.Robots.DTO
             }
             //
 
-            var CurrentDeposit = RobotVM.robots[robotId].BaseSettings.CurrentDeposit - result;
+            var CurrentDeposit = RobotVM.robots[robotIndex].BaseSettings.CurrentDeposit - result;
 
 
             return new RobotDeal

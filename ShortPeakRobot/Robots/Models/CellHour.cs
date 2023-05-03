@@ -5,7 +5,7 @@ namespace ShortPeakRobot.Robots.Models
 {
     public class CellHour : BaseVM
     {
-        public int RobotId { get; set; }
+        public int RobotIndex { get; set; }
 
 
         private int _Index;
@@ -21,7 +21,7 @@ namespace ShortPeakRobot.Robots.Models
                 {
                     _State = value;
                     OnPropertyChanged("State");
-                    RobotVM.robots[RobotId].BaseSettings.AllowedHours[Index] = value;
+                    RobotVM.robots[RobotIndex].BaseSettings.AllowedHours[Index] = value;
                 }
             }
         }

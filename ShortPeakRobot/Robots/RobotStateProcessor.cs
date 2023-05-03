@@ -17,79 +17,79 @@ namespace ShortPeakRobot.Robots
     {
 
 
-        public static  CandlesAnalyse CheckStateAsync(RobotState state, int robotId,
+        public static  CandlesAnalyse CheckStateAsync(RobotState state, int robotIndex,
             RobotOrder signalHighPeakOrder, RobotOrder signalLowPeakOrder, RobotOrder stopLossOrder, RobotOrder takeProfitOrder)
         {
 
-            RobotVM.robots[robotId].IsReady = false;
+            RobotVM.robots[robotIndex].IsReady = false;
             //----------------------------------
             var stateCase = GetStateCase(signalHighPeakOrder, signalLowPeakOrder, stopLossOrder, takeProfitOrder);
-            RobotVM.robots[robotId].Log(LogType.Info, "stateCase " + stateCase.ToString());
+            RobotVM.robots[robotIndex].Log(LogType.Info, "stateCase " + stateCase.ToString());
 
             switch (stateCase)
             {
                 case StateCase.Normal:
-                    RobotVM.robots[robotId].IsReady = true; return CandlesAnalyse.Required;
+                    RobotVM.robots[robotIndex].IsReady = true; return CandlesAnalyse.Required;
                 case StateCase.FilledOneSignalOrder:
-                    var analyse = CheckSLTPStutus(state, signalHighPeakOrder, signalLowPeakOrder, robotId);
+                    var analyse = CheckSLTPStutus(state, signalHighPeakOrder, signalLowPeakOrder, robotIndex);
                     if (analyse == CandlesAnalyse.SellSLTP || analyse == CandlesAnalyse.BuySLTP)
                     {
-                        RobotVM.robots[robotId].IsReady = true; return analyse;
+                        RobotVM.robots[robotIndex].IsReady = true; return analyse;
                     }
-                    RobotStateProcessor.FilledOneSignalOrderReaction(state, signalHighPeakOrder, signalLowPeakOrder, robotId);//IsReady true
+                    RobotStateProcessor.FilledOneSignalOrderReaction(state, signalHighPeakOrder, signalLowPeakOrder, robotIndex);//IsReady true
                     return CandlesAnalyse.Required;
                 case StateCase.FilledTwoSignalOrder:
-                    RobotStateProcessor.FilledTwoSignalOrderReaction(robotId);//IsReady true
+                    RobotStateProcessor.FilledTwoSignalOrderReaction(robotIndex);//IsReady true
                     return CandlesAnalyse.Required;
                 case StateCase.FilledOneSLPTOrder:
-                    RobotStateProcessor.FilledOneSLPTOrderReaction(stopLossOrder, takeProfitOrder, robotId);//IsReady true
+                    RobotStateProcessor.FilledOneSLPTOrderReaction(stopLossOrder, takeProfitOrder, robotIndex);//IsReady true
                     return CandlesAnalyse.Required;
                 case StateCase.FilledTwoSLPTOrder:
-                    RobotStateProcessor.FilledTwoSLPTOrderReaction(state, robotId);//IsReady true
+                    RobotStateProcessor.FilledTwoSLPTOrderReaction(state, robotIndex);//IsReady true
                     return CandlesAnalyse.Required;
                 case StateCase.PartiallyFilled:
-                    RobotStateProcessor.PartiallyFilledReaction(state, robotId);
+                    RobotStateProcessor.PartiallyFilledReaction(state, robotIndex);
                     return CandlesAnalyse.NotRequired;
                 case StateCase.PlacedSignalOrders:
-                    RobotVM.robots[robotId].IsReady = true;
-                    //await RobotStateProcessor.PlacedSignalOrdersReaction(signalHighPeakOrder, signalLowPeakOrder, robotId);
+                    RobotVM.robots[robotIndex].IsReady = true;
+                    
                     return CandlesAnalyse.Required;
                 case StateCase.PlacedSLTPOrders:
-                    RobotVM.robots[robotId].IsReady = true;
-                    //RobotStateProcessor.PlacedSLTPOrdersReaction(signalBuyOrder, signalSellOrder, robotId);
+                    RobotVM.robots[robotIndex].IsReady = true;
+                    
                     return CandlesAnalyse.NotRequired;
 
 
                 default:
-                    //RobotVM.robots[robotId].IsReady = true;
+                    
                     return CandlesAnalyse.Required;
             }
 
 
         }
 
-        private static CandlesAnalyse CheckSLTPStutus(RobotState state, RobotOrder signalHighPeakOrder, RobotOrder signalLowPeakOrder, int robotId)
+        private static CandlesAnalyse CheckSLTPStutus(RobotState state, RobotOrder signalHighPeakOrder, RobotOrder signalLowPeakOrder, int robotIndex)
         {
             CandlesAnalyse candlesAnalyse = CandlesAnalyse.Required;
 
             if (signalHighPeakOrder.Status != -1 && signalHighPeakOrder.Status == (int)OrderStatus.Filled)
             {
-                BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(RobotVM.robots[robotId].Symbol, signalLowPeakOrder.OrderId);
+                BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(RobotVM.robots[robotIndex].Symbol, signalLowPeakOrder.OrderId);
 
                 candlesAnalyse = CandlesAnalyse.BuySLTP;
 
-                var newCandles = MarketData.CandleDictionary[RobotVM.robots[robotId].Symbol]
-                    [RobotVM.robots[robotId].BaseSettings.TimeFrame]
+                var newCandles = MarketData.CandleDictionary[RobotVM.robots[robotIndex].Symbol]
+                    [RobotVM.robots[robotIndex].BaseSettings.TimeFrame]
                     .Where(x => x.CloseTime > signalHighPeakOrder.PlacedTime).ToList();
 
                 newCandles.ForEach(x =>
                 {
-                    if (x.HighPrice >= signalHighPeakOrder.StopPrice + RobotVM.robots[robotId].BaseSettings.TakeProfitPercent)
+                    if (x.HighPrice >= signalHighPeakOrder.StopPrice + RobotVM.robots[robotIndex].BaseSettings.TakeProfitPercent)
                     {
                         candlesAnalyse = CandlesAnalyse.Required;
                     }
 
-                    if (x.LowPrice <= signalHighPeakOrder.StopPrice - RobotVM.robots[robotId].BaseSettings.StopLossPercent)
+                    if (x.LowPrice <= signalHighPeakOrder.StopPrice - RobotVM.robots[robotIndex].BaseSettings.StopLossPercent)
                     {
                         candlesAnalyse = CandlesAnalyse.Required;
                     }
@@ -98,22 +98,22 @@ namespace ShortPeakRobot.Robots
 
             if (signalLowPeakOrder.Status != -1 && signalLowPeakOrder.Status == (int)OrderStatus.Filled)
             {
-                BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(RobotVM.robots[robotId].Symbol, signalHighPeakOrder.OrderId);
+                BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(RobotVM.robots[robotIndex].Symbol, signalHighPeakOrder.OrderId);
 
                 candlesAnalyse = CandlesAnalyse.SellSLTP;
 
-                var newCandles = MarketData.CandleDictionary[RobotVM.robots[robotId].Symbol]
-                    [RobotVM.robots[robotId].BaseSettings.TimeFrame]
+                var newCandles = MarketData.CandleDictionary[RobotVM.robots[robotIndex].Symbol]
+                    [RobotVM.robots[robotIndex].BaseSettings.TimeFrame]
                     .Where(x => x.CloseTime > signalLowPeakOrder.PlacedTime).ToList();
 
                 newCandles.ForEach(x =>
                 {
-                    if (x.LowPrice <= signalLowPeakOrder.StopPrice - RobotVM.robots[robotId].BaseSettings.TakeProfitPercent)
+                    if (x.LowPrice <= signalLowPeakOrder.StopPrice - RobotVM.robots[robotIndex].BaseSettings.TakeProfitPercent)
                     {
                         candlesAnalyse = CandlesAnalyse.Required;
                     }
 
-                    if (x.HighPrice >= signalLowPeakOrder.StopPrice + RobotVM.robots[robotId].BaseSettings.StopLossPercent)
+                    if (x.HighPrice >= signalLowPeakOrder.StopPrice + RobotVM.robots[robotIndex].BaseSettings.StopLossPercent)
                     {
                         candlesAnalyse = CandlesAnalyse.Required;
                     }
@@ -250,87 +250,87 @@ namespace ShortPeakRobot.Robots
 
 
 
-        public async static Task PlacedSignalOrdersReaction(RobotOrder signalHighPeakOrder, RobotOrder signalLowPeakOrder, int robotId)
+        public async static Task PlacedSignalOrdersReaction(RobotOrder signalHighPeakOrder, RobotOrder signalLowPeakOrder, int robotIndex)
         {
             if (signalLowPeakOrder.Status != -1 && signalLowPeakOrder.Status == (int)OrderStatus.New)
             {
                 var cancelResult = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(
-                                   symbol: RobotVM.robots[robotId].Symbol,
+                                   symbol: RobotVM.robots[robotIndex].Symbol,
                                    orderId: signalLowPeakOrder.OrderId);
 
                 if (cancelResult.Success)
                 {
-                    RobotVM.robots[robotId].Log(LogType.RobotState, "PlacedSignalOrdersReaction cansel other signal order after reconnect");
-                    //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel signal order");
-                    RobotVM.robots[robotId].SignalSellOrder = new();
-                    RobotVM.robots[robotId].RobotState.SignalSellOrderId = 0;
+                    RobotVM.robots[robotIndex].Log(LogType.RobotState, "PlacedSignalOrdersReaction cansel other signal order after reconnect");
+                    
+                    RobotVM.robots[robotIndex].SignalSellOrder = new();
+                    RobotVM.robots[robotIndex].RobotState.SignalSellOrderId = 0;
                 }
                 else
                 {
-                    RobotVM.robots[robotId].Log(LogType.Error, "PlacedSignalOrdersReaction cancel order Error " + cancelResult.Error.ToString());
+                    RobotVM.robots[robotIndex].Log(LogType.Error, "PlacedSignalOrdersReaction cancel order Error " + cancelResult.Error.ToString());
                 }
             }
 
             if (signalHighPeakOrder.Status != -1 && signalHighPeakOrder.Status == (int)OrderStatus.New)
             {
                 var cancelResult = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(
-                                   symbol: RobotVM.robots[robotId].Symbol,
+                                   symbol: RobotVM.robots[robotIndex].Symbol,
                                    orderId: signalHighPeakOrder.OrderId);
 
                 if (cancelResult.Success)
                 {
-                    RobotVM.robots[robotId].Log(LogType.RobotState, "PlacedSignalOrdersReaction cansel other signal order after reconnect");
-                    //RobotServices.SaveOrder(robotId, RobotOrderDTO.DTO(cancelResult, robotId), "Cansel signal order");
+                    RobotVM.robots[robotIndex].Log(LogType.RobotState, "PlacedSignalOrdersReaction cansel other signal order after reconnect");
+                    
                 }
                 else
                 {
-                    RobotVM.robots[robotId].Log(LogType.Error, "PlacedSignalOrdersReaction cancel order Error " + cancelResult.Error.ToString());
+                    RobotVM.robots[robotIndex].Log(LogType.Error, "PlacedSignalOrdersReaction cancel order Error " + cancelResult.Error.ToString());
                 }
             }
 
         }
 
-        public async static void FilledOneSignalOrderReaction(RobotState state, RobotOrder signalHighPeakOrder, RobotOrder signalLowPeakOrder, int robotId)
+        public async static void FilledOneSignalOrderReaction(RobotState state, RobotOrder signalHighPeakOrder, RobotOrder signalLowPeakOrder, int robotIndex)
         {
             var error = false;
             //закрываем позицию
             if (signalHighPeakOrder.Status != -1 && signalHighPeakOrder.Status == (int)OrderStatus.Filled)
             {
                 var placeOrderResult = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
-                symbol: RobotVM.robots[robotId].Symbol,
+                symbol: RobotVM.robots[robotIndex].Symbol,
                 side: OrderSide.Sell,
                 type: FuturesOrderType.Market,
                 quantity: signalHighPeakOrder.Quantity);
 
                 if (placeOrderResult.Success)
                 {
-                    RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSignalOrderReaction close position after reconnect");
-                    RobotVM.robots[robotId].SignalBuyOrder = new();
-                    RobotVM.robots[robotId].RobotState.SignalBuyOrderId = 0;
-                    RobotVM.robots[robotId].RobotState.Position = 0;
+                    RobotVM.robots[robotIndex].Log(LogType.RobotState, "FilledOneSignalOrderReaction close position after reconnect");
+                    RobotVM.robots[robotIndex].SignalBuyOrder = new();
+                    RobotVM.robots[robotIndex].RobotState.SignalBuyOrderId = 0;
+                    RobotVM.robots[robotIndex].RobotState.Position = 0;
                 }
                 else
                 {
-                    RobotVM.robots[robotId].Log(LogType.Error, "FilledOneSignalOrderReaction place order Error " + placeOrderResult.Error.ToString());
+                    RobotVM.robots[robotIndex].Log(LogType.Error, "FilledOneSignalOrderReaction place order Error " + placeOrderResult.Error.ToString());
                     error = true;
                 }
                 //
                 if (signalLowPeakOrder.Status != -1)
                 {
                     var cancelResult = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(
-                                       symbol: RobotVM.robots[robotId].Symbol,
+                                       symbol: RobotVM.robots[robotIndex].Symbol,
                                        orderId: signalLowPeakOrder.OrderId);
 
                     if (cancelResult.Success)
                     {
-                        RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSignalOrderReaction cansel other signal order after reconnect");
-                        RobotVM.robots[robotId].SignalSellOrder = new();
-                        RobotVM.robots[robotId].RobotState.SignalSellOrderId = 0;
+                        RobotVM.robots[robotIndex].Log(LogType.RobotState, "FilledOneSignalOrderReaction cansel other signal order after reconnect");
+                        RobotVM.robots[robotIndex].SignalSellOrder = new();
+                        RobotVM.robots[robotIndex].RobotState.SignalSellOrderId = 0;
                         
                     }
                     else
                     {
-                        RobotVM.robots[robotId].Log(LogType.Error, "FilledOneSignalOrderReaction cancel order Error " + cancelResult.Error.ToString());
+                        RobotVM.robots[robotIndex].Log(LogType.Error, "FilledOneSignalOrderReaction cancel order Error " + cancelResult.Error.ToString());
                         error = true;
                     }
                 }
@@ -340,21 +340,21 @@ namespace ShortPeakRobot.Robots
             if (signalLowPeakOrder.Status != -1 && signalLowPeakOrder.Status == (int)OrderStatus.Filled)
             {
                 var placeOrderResult = await BinanceApi.client.UsdFuturesApi.Trading.PlaceOrderAsync(
-                symbol: RobotVM.robots[robotId].Symbol,
+                symbol: RobotVM.robots[robotIndex].Symbol,
                 side: OrderSide.Buy,
                 type: FuturesOrderType.Market,
                 quantity: signalLowPeakOrder.Quantity);
 
                 if (placeOrderResult.Success)
                 {
-                    RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSignalOrderReaction after reconnect");
-                    RobotVM.robots[robotId].SignalSellOrder = new();
-                    RobotVM.robots[robotId].RobotState.SignalSellOrderId = 0;
-                    RobotVM.robots[robotId].RobotState.Position = 0;
+                    RobotVM.robots[robotIndex].Log(LogType.RobotState, "FilledOneSignalOrderReaction after reconnect");
+                    RobotVM.robots[robotIndex].SignalSellOrder = new();
+                    RobotVM.robots[robotIndex].RobotState.SignalSellOrderId = 0;
+                    RobotVM.robots[robotIndex].RobotState.Position = 0;
                 }
                 else
                 {
-                    RobotVM.robots[robotId].Log(LogType.Error, "FilledOneSignalOrderReaction place order Error " + placeOrderResult.Error.ToString());
+                    RobotVM.robots[robotIndex].Log(LogType.Error, "FilledOneSignalOrderReaction place order Error " + placeOrderResult.Error.ToString());
                     error = true;
                 }
 
@@ -362,19 +362,19 @@ namespace ShortPeakRobot.Robots
                 if (signalHighPeakOrder.Status != -1)
                 {
                     var cancelResult = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(
-                                       symbol: RobotVM.robots[robotId].Symbol,
+                                       symbol: RobotVM.robots[robotIndex].Symbol,
                                        orderId: signalHighPeakOrder.OrderId);
 
                     if (cancelResult.Success)
                     {
-                        RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSignalOrderReaction cansel other signal order after reconnect");
-                        RobotVM.robots[robotId].SignalBuyOrder = new();
-                        RobotVM.robots[robotId].RobotState.SignalBuyOrderId = 0;
+                        RobotVM.robots[robotIndex].Log(LogType.RobotState, "FilledOneSignalOrderReaction cansel other signal order after reconnect");
+                        RobotVM.robots[robotIndex].SignalBuyOrder = new();
+                        RobotVM.robots[robotIndex].RobotState.SignalBuyOrderId = 0;
                         
                     }
                     else
                     {
-                        RobotVM.robots[robotId].Log(LogType.Error, "FilledOneSignalOrderReaction cancel order Error " + cancelResult.Error.ToString());
+                        RobotVM.robots[robotIndex].Log(LogType.Error, "FilledOneSignalOrderReaction cancel order Error " + cancelResult.Error.ToString());
                         error = true;
                     }
                 }
@@ -383,18 +383,18 @@ namespace ShortPeakRobot.Robots
 
             if (!error)
             {
-                RobotVM.robots[robotId].IsReady = true;
+                RobotVM.robots[robotIndex].IsReady = true;
             }
 
         }
 
-        public static void FilledTwoSignalOrderReaction(int robotId)
+        public static void FilledTwoSignalOrderReaction(int robotIndex)
         {
-            RobotVM.robots[robotId].Log(LogType.RobotState, "FilledTwoSignalOrderReaction  ");
-            RobotVM.robots[robotId].IsReady = true;
+            RobotVM.robots[robotIndex].Log(LogType.RobotState, "FilledTwoSignalOrderReaction  ");
+            RobotVM.robots[robotIndex].IsReady = true;
         }
 
-        public async static void FilledOneSLPTOrderReaction(RobotOrder stopLossOrder, RobotOrder takeProfitOrder, int robotId)
+        public async static void FilledOneSLPTOrderReaction(RobotOrder stopLossOrder, RobotOrder takeProfitOrder, int robotIndex)
         {
             var error = false;
             //cancel second order
@@ -402,18 +402,18 @@ namespace ShortPeakRobot.Robots
             {
 
                 var cancelResult = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(
-                   symbol: RobotVM.robots[robotId].Symbol,
+                   symbol: RobotVM.robots[robotIndex].Symbol,
                    orderId: takeProfitOrder.OrderId);
 
                 if (cancelResult.Success)
                 {
-                    RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSLPTOrderReaction cansel SLTP order after reconnect");
-                    RobotVM.robots[robotId].ResetRobotStateOrders();                   
-                    RobotVM.robots[robotId].RobotState = new();
+                    RobotVM.robots[robotIndex].Log(LogType.RobotState, "FilledOneSLPTOrderReaction cansel SLTP order after reconnect");
+                    RobotVM.robots[robotIndex].ResetRobotStateOrders();                   
+                    RobotVM.robots[robotIndex].RobotState = new();
                 }
                 else
                 {
-                    RobotVM.robots[robotId].Log(LogType.Error, "FilledOneSLPTOrderReaction Error " + cancelResult.Error.ToString());
+                    RobotVM.robots[robotIndex].Log(LogType.Error, "FilledOneSLPTOrderReaction Error " + cancelResult.Error.ToString());
                     error = true;
                 }
             }
@@ -421,18 +421,18 @@ namespace ShortPeakRobot.Robots
             if (takeProfitOrder.Status == (int)OrderStatus.Filled)
             {
                 var cancelResult = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(
-                   symbol: RobotVM.robots[robotId].Symbol,
+                   symbol: RobotVM.robots[robotIndex].Symbol,
                    orderId: stopLossOrder.OrderId);
 
                 if (cancelResult.Success)
                 {
-                    RobotVM.robots[robotId].Log(LogType.RobotState, "FilledOneSLPTOrderReaction cansel SLTP order after reconnect");
-                    RobotVM.robots[robotId].ResetRobotStateOrders();
-                    RobotVM.robots[robotId].RobotState = new();                   
+                    RobotVM.robots[robotIndex].Log(LogType.RobotState, "FilledOneSLPTOrderReaction cansel SLTP order after reconnect");
+                    RobotVM.robots[robotIndex].ResetRobotStateOrders();
+                    RobotVM.robots[robotIndex].RobotState = new();                   
                 }
                 else
                 {
-                    RobotVM.robots[robotId].Log(LogType.Error, "FilledOneSLPTOrderReaction Error " + cancelResult.Error.ToString());
+                    RobotVM.robots[robotIndex].Log(LogType.Error, "FilledOneSLPTOrderReaction Error " + cancelResult.Error.ToString());
                     error = true;
                 }
             }
@@ -440,7 +440,7 @@ namespace ShortPeakRobot.Robots
 
             if (!error)
             {
-                RobotVM.robots[robotId].IsReady = true;
+                RobotVM.robots[robotIndex].IsReady = true;
             }
 
 
@@ -448,15 +448,15 @@ namespace ShortPeakRobot.Robots
         }
 
 
-        public async static void FilledTwoSLPTOrderReaction(RobotState state, int robotId)
+        public async static void FilledTwoSLPTOrderReaction(RobotState state, int robotIndex)
         {
             //закрываем позицию
             if (state.Position > 0)
             {
                 MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
-                    RobotId = robotId,
-                    Symbol = RobotVM.robots[robotId].Symbol,
+                    RobotIndex = robotIndex,
+                    Symbol = RobotVM.robots[robotIndex].Symbol,
                     Side = (int)OrderSide.Buy,
                     OrderType = (int)FuturesOrderType.Market,
                     Quantity = Math.Abs(state.Position),
@@ -473,8 +473,8 @@ namespace ShortPeakRobot.Robots
             {
                 MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
-                    RobotId = robotId,
-                    Symbol = RobotVM.robots[robotId].Symbol,
+                    RobotIndex = robotIndex,
+                    Symbol = RobotVM.robots[robotIndex].Symbol,
                     Side = (int)OrderSide.Sell,
                     OrderType = (int)FuturesOrderType.Market,
                     Quantity = Math.Abs(state.Position),
@@ -487,12 +487,12 @@ namespace ShortPeakRobot.Robots
                
             }
 
-            RobotVM.robots[robotId].IsReady = true;
+            RobotVM.robots[robotIndex].IsReady = true;
 
 
         }
 
-        public async static void PartiallyFilledReaction(RobotState state, int robotId)
+        public async static void PartiallyFilledReaction(RobotState state, int robotIndex)
         {
 
         }

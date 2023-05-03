@@ -76,7 +76,7 @@
                                     <DataTemplate>
                                         <StackPanel Margin="0,2,0,0" Visibility="{Binding IsActivated, Converter={StaticResource visibility_res}}"  Cursor="Hand"
                                                     Height="24" Background="{Binding Selected, Converter={StaticResource stackPanelColor_res}}" Orientation="Horizontal"  HorizontalAlignment="Left" >
-                                            <TextBlock    Width="0"   Text="{Binding Id}"/>
+                                            <TextBlock    Width="0"   Text="{Binding Index}"/>
                                             <TextBlock Text="{Binding Name}" Padding="5,3,5,0" Width="120" 
                                                 Background="{Binding IsRun, Converter={StaticResource state_res}}"  MouseDown="ChangeState" TextAlignment="Center" HorizontalAlignment="Left" />
                                             <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding Symbol}" MouseDown="RobotSelect_MouseDown"/>
@@ -114,7 +114,7 @@
                                                     Click="BtnCloseSymbolPosition_Click">Закрыть поз</Button>
                                             <Button x:Name="BtnCancelSymbolOrders" Height="22"  FontSize="10" Padding="8,0"  Background="MintCream" Click="BtnCancelSymbolOrders_Click"
                                                     >Снять ордера</Button>
-                                            
+
                                         </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -283,39 +283,43 @@
 
                     <Line X1="370" X2="700" Y1="250" Y2="250" Stroke="#FF8D979C"/>
 
-                    <Grid x:Name="Grid_baseSettings" Margin="0,263,20,0" HorizontalAlignment="Right" Width="391" Height="204" VerticalAlignment="Top">
+                    <Grid x:Name="Grid_baseSettings" Margin="0,263,20,0" HorizontalAlignment="Right" Width="391" Height="244" VerticalAlignment="Top">
 
 
-                        <Label Content="SL" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="0,34,0,0"/>
-                        <TextBox x:Name="BT_SL"  Width="60" Text="{Binding StopLoss}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="37,36,0,0" />
+                        <Label Content="SL" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="21,34,0,0"/>
+                        <TextBox x:Name="BT_SL"  Width="46" Text="{Binding StopLoss}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="51,36,0,0" />
 
-                        <Label Content="TP" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="0,63,0,0"/>
-                        <TextBox x:Name="BT_TP" Width="60" Text="{Binding TakeProfit}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="37,65,0,0" />
+                        <Label Content="TP" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="19,63,0,0"/>
+                        <TextBox x:Name="BT_TP" Width="46" Text="{Binding TakeProfit}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="51,65,0,0" />
 
-                        <Label Content="{Binding StopLossPercent}" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="60" Margin="196,34,0,0"/>
+                        <Label Content="{Binding StopLossPercent}" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="68" Margin="211,34,0,0"/>
 
-                        <Label Content="{Binding TakeProfitPercent}" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="68" Margin="196,63,0,0"/>
+                        <Label Content="{Binding TakeProfitPercent}" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="68" Margin="211,63,0,0"/>
 
                         <TextBlock x:Name="BT_AllowSell" Height="22" Width="50" Text="Sell" Padding="2" Background="{Binding AllowSell, Converter={StaticResource state_res}}" VerticalAlignment="Top" HorizontalAlignment="Left"  
-                            Margin="7,101,0,0" TextAlignment="Center" Cursor="Hand" MouseDown="BT_AllowSell_MouseDown" />
+                            Margin="7,120,0,0" TextAlignment="Center" Cursor="Hand" MouseDown="BT_AllowSell_MouseDown" />
                         <TextBlock x:Name="BT_AllowBuy" Height="22" Width="50" Text="Buy" Padding="2" Background="{Binding AllowBuy, Converter={StaticResource state_res}}" VerticalAlignment="Top" HorizontalAlignment="Left"  
-                            Margin="67,101,0,0" TextAlignment="Center"  Cursor="Hand" MouseDown="BT_AllowBuy_MouseDown" />
+                            Margin="67,120,0,0" TextAlignment="Center"  Cursor="Hand" MouseDown="BT_AllowBuy_MouseDown" />
 
                         <TextBlock x:Name="BT_Revers" Height="22" Width="50" Text="Revers" Padding="2" Background="{Binding Revers, Converter={StaticResource state_res}}" VerticalAlignment="Top" HorizontalAlignment="Left"  
-                            Margin="127,101,0,0" TextAlignment="Center"  Cursor="Hand" MouseDown="BT_Revers_MouseDown" />
-                        <ComboBox x:Name="CbSymbol" SelectedValue="{Binding Simbol}"  HorizontalAlignment="Left" Height="22" Margin="49,8,0,0" VerticalAlignment="Top" Width="77"/>
+                            Margin="127,120,0,0" TextAlignment="Center"  Cursor="Hand" MouseDown="BT_Revers_MouseDown" />
+                        <ComboBox  x:Name="CbSymbol" SelectedValue="{Binding Simbol}"  HorizontalAlignment="Left" Height="22" Margin="49,8,0,0" VerticalAlignment="Top" Width="77"/>
                         <ComboBox x:Name="CbTF" SelectedValue="{Binding TimeFrame}" HorizontalAlignment="Left" Height="22" Margin="180,8,0,0" VerticalAlignment="Top" Width="62"/>
                         <Label Content="Symbol" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="49" Margin="0,4,0,0"/>
                         <Label Content="TF" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="142,4,0,0"/>
-                        <Label Content="Lot" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="3,128,0,0"/>
-                        <TextBox x:Name="BT_Vol" Width="60" IsEnabled="{Binding IsVariableLot, Converter={StaticResource enableState_res}}" Text="{Binding Volume}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="39,130,0,0" />
-                        <Label Content="Depo" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="40" Margin="-5,156,0,0"/>
-                        <TextBox x:Name="BT_Depo" Width="60" IsEnabled="{Binding IsVariableLot}" Text="{Binding Deposit}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="39,159,0,0" />
-                        <CheckBox IsChecked="{Binding IsVariableLot}"  Content="Variable lot" Margin="119,132,134,0" Height="18" VerticalAlignment="Top"/>
+                        <Label Content="Lot" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="3,148,0,0"/>
+                        <TextBox x:Name="BT_Vol" Width="60" IsEnabled="{Binding IsVariableLot, Converter={StaticResource enableState_res}}" Text="{Binding Volume}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="39,150,0,0" />
+                        <Label Content="Depo" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="40" Margin="-5,176,0,0"/>
+                        <TextBox x:Name="BT_Depo" Width="60" IsEnabled="{Binding IsVariableLot}" Text="{Binding Deposit}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="39,179,0,0" />
+                        <CheckBox IsChecked="{Binding IsVariableLot}"  Content="Variable lot" Margin="119,152,134,0" Height="18" VerticalAlignment="Top"/>
 
-                        <CheckBox  IsChecked="{Binding SLPercent}"  Content="SL Percent" Margin="108,39,145,0" Height="18" VerticalAlignment="Top"/>
-                        <CheckBox  IsChecked="{Binding TPPercent}"  Content="TP Percent" Margin="108,67,119,0" Height="18" VerticalAlignment="Top"/>
-                        <Label Content="{Binding CurrentDeposit}" x:Name="LabCurrDepo" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="52" Margin="100,156,0,0"/>
+                        <CheckBox  IsChecked="{Binding SLPercent}"  Content="SL Percent" Margin="108,39,200,0" Height="18" VerticalAlignment="Top"/>
+                        <CheckBox  IsChecked="{Binding TPPercent}"  Content="TP Percent" Margin="108,67,200,0" Height="18" VerticalAlignment="Top"/>
+                        <Label Content="{Binding CurrentDeposit}" x:Name="LabCurrDepo" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="52" Margin="100,176,0,0"/>
+                        <TextBox x:Name="BT_Offset"  Width="46" Text="{Binding Offset}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="51,93,0,0" />
+                        <Label Content="Offset" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="45" Margin="2,90,0,0"/>
+                        <CheckBox  IsChecked="{Binding IsOffsetPercent}"  Content="Offset Percent" Margin="108,96,180,0" Height="18" VerticalAlignment="Top"/>
+                        <Label Content="{Binding OffsetPercent}" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="68" Margin="212,91,0,0"/>
                     </Grid>
 
 
@@ -484,9 +488,9 @@
             <TabItem Header="Сделки робота">
                 <Grid >
                     <Grid.Resources>
-                        <MVVM:RobotTradeVM x:Key="robotTrade_res"/>                        
+                        <MVVM:RobotTradeVM x:Key="robotTrade_res"/>
                         <Converters:OrderSideConverter x:Key="sideConverter_res"/>
-                        
+
                     </Grid.Resources>
                     <StackPanel   Height="24" 
                                         Background="WhiteSmoke" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,0,10,0">
@@ -544,8 +548,8 @@
 
 
                         <TextBlock   Padding="10,5,0,0" Width="100"   Text="Дата открытия"/>
-                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="Дата закрытия"/>                       
-                        
+                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="Дата закрытия"/>
+
                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="Лот"/>
                         <TextBlock   Padding="10,5,0,0" Width="70"   Text="Цена откр"/>
                         <TextBlock   Padding="10,5,0,0" Width="70"   Text="Цена закр"/>
@@ -571,7 +575,7 @@
                                         <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding OpenPrice,StringFormat={}{0:F4}}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding ClosePrice,StringFormat={}{0:F4}}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="100"   Text="{Binding Result,StringFormat={}{0:F4}}"  Foreground="{Binding Result, Converter={StaticResource numberColor_res}}"/>
-                                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="{Binding Fee,StringFormat={}{0:F4}}"/>                                        
+                                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="{Binding Fee,StringFormat={}{0:F4}}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Side, Converter={StaticResource sideConverter_res}}"/>
 
                                     </StackPanel>

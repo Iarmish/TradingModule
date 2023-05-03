@@ -18,6 +18,7 @@ namespace ShortPeakRobot.Robots.DTO
     {
         public static RobotOrder DTO(DataEvent<BinanceFuturesStreamOrderUpdate> data, int robotId)
         {
+            
             long startDealOrderId = 0;
             var arrClientOrderId = data.Data.UpdateData.ClientOrderId.Split(':');
 
@@ -134,9 +135,10 @@ namespace ShortPeakRobot.Robots.DTO
             };
         }
 
-        public static List<RobotOrder> OrdersDTO(WebCallResult<IEnumerable<BinanceFuturesOrder>> orders, int robotId)
+        public static List<RobotOrder> OrdersDTO(WebCallResult<IEnumerable<BinanceFuturesOrder>> orders, int robotIndex)
         {
             List<RobotOrder> robotOrders = new List<RobotOrder>();
+            var robotId = RobotServices.GetRobotId(robotIndex);
 
             orders.Data.ToList().ForEach(order =>
             {
