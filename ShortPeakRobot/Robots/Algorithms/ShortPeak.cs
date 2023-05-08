@@ -280,11 +280,11 @@ namespace ShortPeakRobot.Robots.Algorithms
                 NewCandle(candle);
             }
             //-------- скидываем пики по последней свечке -------------------------------
-            if (carrentCendle.HighPrice >= HighPeak.Peak)
+            if (HighPeak.Peak != 0 && carrentCendle.HighPrice >= HighPeak.Peak)
             {
                 HighPeak.Peak = 0;
             }
-            if (carrentCendle.LowPrice <= LowPeak.Peak)
+            if (LowPeak.Peak != 0 && carrentCendle.LowPrice <= LowPeak.Peak)
             {
                 LowPeak.Peak = 0;
             }
@@ -325,7 +325,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             //---------- добавление short hi или обновление high1 high2
             if (HighPeak.FirstCandle != 0 && HighPeak.SecondCandle != 0 && candle.HighPrice < HighPeak.SecondCandle)
             {
-                if (candle.HighPrice + RobotInstance.BaseSettings.OffsetPercent < HighPeak.SecondCandle)
+                if (candle.HighPrice - RobotInstance.BaseSettings.OffsetPercent < HighPeak.SecondCandle)
                 {
                     HighPeak.Peak = HighPeak.SecondCandle;
                 }
@@ -353,7 +353,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             //---------- добавление short low или обновление low1 low2
             if (LowPeak.FirstCandle != 0 && LowPeak.SecondCandle != 0 && candle.LowPrice > LowPeak.SecondCandle)
             {
-                if (candle.LowPrice - RobotInstance.BaseSettings.OffsetPercent > LowPeak.SecondCandle)
+                if (candle.LowPrice + RobotInstance.BaseSettings.OffsetPercent > LowPeak.SecondCandle)
                 {
                     LowPeak.Peak = LowPeak.SecondCandle;
                 }
@@ -366,9 +366,9 @@ namespace ShortPeakRobot.Robots.Algorithms
                 LowPeak.SecondCandle = candle.LowPrice;
             }
             //------- скидываем pick
-            if (HighPeak.Peak != 0 && candle.HighPrice > HighPeak.Peak)
+            if (HighPeak.Peak != 0 && candle.HighPrice - RobotInstance.BaseSettings.OffsetPercent >= HighPeak.Peak)
                 HighPeak.Peak = 0;
-            if (LowPeak.Peak != 0 && candle.LowPrice < LowPeak.Peak)
+            if (LowPeak.Peak != 0 && candle.LowPrice + RobotInstance.BaseSettings.OffsetPercent <= LowPeak.Peak)
                 LowPeak.Peak = 0;
 
             SetRobotInfo();//to UI

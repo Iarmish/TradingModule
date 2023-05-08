@@ -87,6 +87,9 @@ namespace ShortPeakRobot.Robots.Algorithms
             {
                 LastCandle = LastCompletedCendle;
 
+                vwap = new VWAP();
+                MarketData.VWAPs.Clear();
+
                 await GetVWAPCandles();
                 CalculateVWAP();
                 Take_status();
@@ -143,7 +146,6 @@ namespace ShortPeakRobot.Robots.Algorithms
 
             if (LastCandle.CloseTime < LastCompletedCendle.CloseTime)//новая свечка
             {
-                LastCandle = LastCompletedCendle;
 
                 if (LastCandle.CloseTime.Day != LastCompletedCendle.CloseTime.Day)//новый день - сброс vwap
                 {
@@ -159,8 +161,11 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
                 else
                 {
-                    NewCandle(LastCandle);
+                    NewCandle(LastCompletedCendle);
                 }
+
+
+                LastCandle = LastCompletedCendle;
 
             }
             //------------------- Проверка на выход за пределы СЛ ТП
@@ -351,7 +356,7 @@ namespace ShortPeakRobot.Robots.Algorithms
 
             VWAPcandles.Add(CandleVWAPDTO.DTO(candle, candleVWAP));
 
-            MarketData.VWAPs.Add(new VWAP { Date = candle.OpenTime, Volume = candleVWAP });
+            //MarketData.VWAPs.Add(new VWAP { Date = candle.OpenTime, Volume = candleVWAP });
 
             SetRobotInfo();
         }
@@ -369,7 +374,7 @@ namespace ShortPeakRobot.Robots.Algorithms
 
                     RobotInfoVM.AddParam("VWAP.Volume", Math.Round(VWAPcandles[^1].VWAP, SymbolIndexes.price[RobotInstance.Symbol]).ToString());
                     RobotInfoVM.AddParam("VWAP.Position", VWAPStatus.ToString());
-                    RobotInfoVM.AddParam("VWAP.Date", MarketData.VWAPs[^1].Date.ToString());
+                    //RobotInfoVM.AddParam("VWAP.Date", MarketData.VWAPs[^1].Date.ToString());
                     RobotInfoVM.AddParam("DayHighPrice", DayHighPrice.ToString());
                     RobotInfoVM.AddParam("DayLowPrice", DayLowPrice.ToString());
 
@@ -483,7 +488,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
                 VWAPcandles[i].VWAP = CalculateCandleVWAP(VWAPcandles[i]);
 
-                MarketData.VWAPs.Add(new VWAP { Date = VWAPcandles[i].OpenTime, Volume = VWAPcandles[i].VWAP });
+                //MarketData.VWAPs.Add(new VWAP { Date = VWAPcandles[i].OpenTime, Volume = VWAPcandles[i].VWAP });
             }
         }
 

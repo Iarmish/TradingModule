@@ -1,6 +1,7 @@
 ﻿using Binance.Net.Clients;
 using Binance.Net.Enums;
 using Binance.Net.Interfaces.Clients;
+using Binance.Net.Objects;
 using Binance.Net.Objects.Models.Futures;
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Objects;

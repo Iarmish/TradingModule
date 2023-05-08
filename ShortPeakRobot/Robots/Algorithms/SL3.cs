@@ -244,33 +244,33 @@ namespace ShortPeakRobot.Robots.Algorithms
                 SL3Services.CheckCrossLowLevelsSL3(LowLevels, candle.LowPrice, Robot.BaseSettings.TakeProfitPercent);
                 SL3Services.GetCurrentLowLevelSL3(LowLevels);
                 //----------------
-                decimal lowPeak = ShortPeakAnalyse.LowPeakAnalyse(LowShortPeak, candle.LowPrice);
-                decimal highPeak = ShortPeakAnalyse.HighPeakAnalyse(HighShortPeak, candle.HighPrice);
+                Peak lowPeak = ShortPeakAnalyse.LowPeakAnalyse(LowShortPeak, candle);
+                Peak highPeak = ShortPeakAnalyse.HighPeakAnalyse(HighShortPeak, candle);
                 //
                 if (HighData.ThirdPeak != 0)
                 {
-                    if (lowPeak != 0)
+                    if (lowPeak.Volume != 0)
                     {
-                         SL3Services.SetHighDataPeaksSL3(HighData, 0, lowPeak, Robot.BaseSettings.TakeProfitPercent, candle.OpenTime); //						
+                         SL3Services.SetHighDataPeaksSL3(HighData, 0, lowPeak.Volume, Robot.BaseSettings.TakeProfitPercent, candle.OpenTime); //						
                     }
                 }
 
-                if (highPeak != 0)
+                if (highPeak.Volume != 0)
                 {
-                     SL3Services.SetHighDataPeaksSL3(HighData, highPeak, 0, Robot.BaseSettings.TakeProfitPercent, candle.OpenTime); //first highPeak                                                                                         
+                     SL3Services.SetHighDataPeaksSL3(HighData, highPeak.Volume, 0, Robot.BaseSettings.TakeProfitPercent, candle.OpenTime); //first highPeak                                                                                         
                 }
                 //-----------------------------------------------------------					
                 if (LowData.ThirdPeak != 0)
                 {
-                    if (highPeak != 0)
+                    if (highPeak.Volume != 0)
                     {
-                       SL3Services.SetLowDataPeaksSL3(LowData, highPeak, 0, Robot.BaseSettings.TakeProfitPercent, candle.OpenTime); //							
+                       SL3Services.SetLowDataPeaksSL3(LowData, highPeak.Volume, 0, Robot.BaseSettings.TakeProfitPercent, candle.OpenTime); //							
                     }
                 }
 
-                if (lowPeak != 0)
+                if (lowPeak.Volume != 0)
                 {
-                     SL3Services.SetLowDataPeaksSL3(LowData, 0, lowPeak, Robot.BaseSettings.TakeProfitPercent, candle.OpenTime); //first highPeak                                                                                     
+                     SL3Services.SetLowDataPeaksSL3(LowData, 0, lowPeak.Volume, Robot.BaseSettings.TakeProfitPercent, candle.OpenTime); //first highPeak                                                                                     
                 }
                 //-----------------------------------------------------------
                 SL3Services.CheckLiveTimeLevelsSL3(LowLevels, HighLevels, candle.OpenTime, 50);

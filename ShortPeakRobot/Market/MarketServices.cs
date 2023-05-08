@@ -50,20 +50,27 @@ namespace ShortPeakRobot.Market
         }
 
         public static void GetSessioProfit()
-        {
-            MarketData.Info.SessionProfit = 0;
+        { 
 
 
-            var clienDeals = GetClientDeals(MarketData.Info.StartSessionDate);
+            var clienDeals = GetClientDeals(MarketData.Info.StartSessionDate, DateTime.UtcNow);
             var profit = GetDealsProfit(clienDeals);
-            MarketData.Info.SessionProfit = profit;
 
             foreach (var robot in RobotVM.robots)//добавление id роботов в алгоритмы роботов
             {
                 var robotTrades = clienDeals.Where(x => x.RobotId == robot.Id).ToList();
 
-                robot.BaseSettings.Profit = MarketServices.GetDealsProfit(robotTrades);
+                robot.SessionProfit = GetDealsProfit(robotTrades);
             }
+
+        }
+
+        public static void GetPeriodProfit()
+        {
+            var clienDeals = GetClientDeals(MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
+            var profit = GetDealsProfit(clienDeals);
+            
+            MarketData.Info.PeriodProfit = profit;            
 
         }
 
@@ -87,12 +94,12 @@ namespace ShortPeakRobot.Market
             var robotId = RobotServices.GetRobotId(robotIndex);
             if (MarketData.Info.SelectedRobotIndex == robotIndex)
             {
-                var robotOrders = GetRobotOrders(robotId, MarketData.Info.StartSessionDate);
-                var robotTrades = GetRobotTrades(robotId, MarketData.Info.StartSessionDate);
-                var robotDeals = GetRobotDeals(robotId, MarketData.Info.StartSessionDate);
-                var robotLogs = GetRobotLogs(robotId, MarketData.Info.StartSessionDate);
-                MarketData.Info.SessionRobotProfit = GetDealsProfit(robotDeals);
-                RobotVM.robots[robotIndex].BaseSettings.Profit = MarketData.Info.SessionRobotProfit;
+                var robotOrders = GetRobotOrders(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
+                var robotTrades = GetRobotTrades(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
+                var robotDeals = GetRobotDeals(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
+                var robotLogs = GetRobotLogs(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
+                MarketData.Info.PeriodRobotProfit = GetDealsProfit(robotDeals);
+                //RobotVM.robots[robotIndex].Profit = MarketData.Info.PeriodRobotProfit;
 
 
 
@@ -109,7 +116,7 @@ namespace ShortPeakRobot.Market
                     RobotTradeVM.AddRange(robotTrades);
 
                     RobotDealVM.deals.Clear();
-                    RobotDealVM.AddRange(robotDeals);
+                    RobotDealVM.AddRange(RobotDealModelDTO.DTO(robotDeals));
 
                     LogVM.logs.Clear();
                     LogVM.AddRange(robotLogs);
@@ -123,18 +130,16 @@ namespace ShortPeakRobot.Market
         }
 
 
-        public static List<RobotLog> GetRobotLogs(int robotId, DateTime startDate)
+        public static List<RobotLog> GetRobotLogs(int robotId, DateTime startDate, DateTime endDate)
         {
             var robotLogs = new List<RobotLog>();
-
-
-
             try
             {
                 lock (Locker)
                 {
-                    robotLogs = _context.RobotLogs.Where(x => x.ClientId == RobotsInitialization.ClientId && x.Date > startDate &&
-                                   x.RobotId == robotId && x.Date > MarketData.Info.StartSessionDate && MarketData.LogTypeFilter.Contains(x.Type)).ToList();
+                    robotLogs = _context.RobotLogs.Where(x => x.ClientId == RobotsInitialization.ClientId && 
+                    x.Date >= startDate && x.Date <= endDate.AddDays(1) &&
+                    x.RobotId == robotId && MarketData.LogTypeFilter.Contains(x.Type)).AsEnumerable().TakeLast(100).ToList();
                 }
             }
             catch (Exception)
@@ -164,7 +169,7 @@ namespace ShortPeakRobot.Market
                 if (item.Asset == "USDT")
                 {
                     MarketData.BalanceUSDT = item;
-                    MarketData.Info.BalanceUSDT = Math.Round(item.AvailableBalance, 2);
+                    MarketData.Info.BalanceUSDT = Math.Round(item.WalletBalance, 2);
                 }
             }
         }
@@ -204,31 +209,30 @@ namespace ShortPeakRobot.Market
             }
         }
 
-        public static List<RobotOrder> GetRobotOrders(int robotId, DateTime startDate)
+        public static List<RobotOrder> GetRobotOrders(int robotId, DateTime startDate, DateTime endDate)
         {
             var robotOrders = new List<RobotOrder>();
             lock (Locker)
             {
                 robotOrders = _context.RobotOrders
-                   .Where(x => x.PlacedTime > startDate && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
-                   .OrderBy(x => x.PlacedTime).ToList();
+                   .Where(x => x.PlacedTime >= startDate && x.PlacedTime <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
+                   .OrderBy(x => x.PlacedTime).AsEnumerable().TakeLast(100).ToList();
+
+                //robotOrders = robotOrders.TakeLast(100).ToList();
             }
             return robotOrders;
         }
 
-        public static List<RobotDeal> GetClientDeals(DateTime startDate)
+        public static List<RobotDeal> GetClientDeals(DateTime startDate, DateTime endDate)
         {
             var robotDeals = new List<RobotDeal>();
             lock (Locker)
             {
                 robotDeals = _context.RobotDeals
-                   .Where(x => x.OpenTime > startDate && x.ClientId == RobotsInitialization.ClientId).ToList();
+                   .Where(x => x.CloseTime >= startDate && x.CloseTime <= endDate.AddDays(1) && x.ClientId == RobotsInitialization.ClientId).ToList();
 
             }
-
-            //robotTrades = robotTrades.Where(x => ids.Contains(x.OrderId)).ToList();
-
-
+           
 
             return robotDeals;
         }
@@ -239,7 +243,8 @@ namespace ShortPeakRobot.Market
             lock (Locker)
             {
                 robotTrades = _context.RobotTrades
-                   .Where(x => x.Timestamp > startDate && x.ClientId == RobotsInitialization.ClientId).ToList();
+                   .Where(x => x.Timestamp > startDate && x.ClientId == RobotsInitialization.ClientId)
+                   .ToList();
 
             }
 
@@ -250,26 +255,26 @@ namespace ShortPeakRobot.Market
             return robotTrades;
         }
 
-        public static List<RobotTrade> GetRobotTrades(int robotId, DateTime startDate)
+        public static List<RobotTrade> GetRobotTrades(int robotId, DateTime startDate, DateTime endDate)
         {
             var robotTrades = new List<RobotTrade>();
             lock (Locker)
             {
                 robotTrades = _context.RobotTrades
-                   .Where(x => x.Timestamp > startDate && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
-                   .OrderBy(x => x.Timestamp).ToList();
+                   .Where(x => x.Timestamp >= startDate && x.Timestamp <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
+                   .OrderBy(x => x.Timestamp).AsEnumerable().TakeLast(100).ToList();
             }
 
             return robotTrades;
         }
-         public static List<RobotDeal> GetRobotDeals(int robotId, DateTime startDate)
+         public static List<RobotDeal> GetRobotDeals(int robotId, DateTime startDate, DateTime endDate)
         {
             var robotDeals = new List<RobotDeal>();
             lock (Locker)
             {
                 robotDeals = _context.RobotDeals
-                   .Where(x => x.OpenTime > startDate && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
-                   .OrderBy(x => x.OpenTime).ToList();
+                   .Where(x => x.CloseTime >= startDate && x.CloseTime <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
+                   .OrderBy(x => x.OpenTime).AsEnumerable().TakeLast(200).ToList();
             }
 
             return robotDeals;
@@ -364,7 +369,7 @@ namespace ShortPeakRobot.Market
             if (RobotVM.robots[robotIndex].BaseSettings.IsVariableLot)
             {
                 var robotPartDepo = MarketData.Info.Deposit / 100 * RobotVM.robots[robotIndex].BaseSettings.Deposit;
-                RobotVM.robots[robotIndex].BaseSettings.CurrentDeposit = robotPartDepo + RobotVM.robots[robotIndex].BaseSettings.Profit;
+                RobotVM.robots[robotIndex].BaseSettings.CurrentDeposit = robotPartDepo + RobotVM.robots[robotIndex].SessionProfit;
                 //variable lot
                 RobotVM.robots[robotIndex].BaseSettings.Volume =
                     Math.Round(RobotVM.robots[robotIndex].BaseSettings.CurrentDeposit / price, SymbolIndexes.lot[RobotVM.robots[robotIndex].Symbol]);

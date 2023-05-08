@@ -68,6 +68,8 @@ namespace ShortPeakRobot.Robots
             }
         }
 
+        public decimal SessionProfit { get; set; }
+       
 
         private decimal _Profit;
         public decimal Profit
@@ -366,7 +368,9 @@ namespace ShortPeakRobot.Robots
                     case "ShortPeak": ((ShortPeak)algorithm.Algo).NewTick(Command); break;
                     case "VWAPHL": ((VWAPHL)algorithm.Algo).NewTick(Command); break;
                     case "LastDayHL": ((LastDayHL)algorithm.Algo).NewTick(Command); break;
+                    case "LastDayHL10": ((LastDayHL10)algorithm.Algo).NewTick(Command); break;
                     case "SL3": ((SL3)algorithm.Algo).NewTick(Command); break;
+                    case "ShortPeakPlusTime": ((ShortPeakPlusTime)algorithm.Algo).NewTick(Command); break;
                 }
 
                 if (Command != RobotCommands.Nothing)
@@ -529,8 +533,7 @@ namespace ShortPeakRobot.Robots
 
                 Task.Run(() =>
                 {
-                    Thread.Sleep(1200);
-                    MarketServices.GetSessioProfit();
+                    Thread.Sleep(1200);                    
 
                 });
             }
@@ -565,7 +568,16 @@ namespace ShortPeakRobot.Robots
 
             if (needSaveContext)
             {
+                try
+                {
                 _context.SaveChanges();
+
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
             }
 
         }

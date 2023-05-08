@@ -297,6 +297,7 @@ namespace ShortPeakRobot.Robots
 
 
         public decimal Profit { get; set; }
+        
 
         public BaseRobotSettings(int robotId)
         {

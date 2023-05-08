@@ -23,34 +23,37 @@ namespace ShortPeakRobot.Market.Models
                 }
             }
         }
+
+        public DateTime StartStatisticPeriod { get; set; }
+        public DateTime EndStatisticPeriod { get; set; }
         public bool IsSessionRun { get; set; }
 
 
-        public decimal _SessionProfit { get; set; }
-        public decimal SessionProfit
+        public decimal _PeriodProfit { get; set; }
+        public decimal PeriodProfit
         {
-            get { return _SessionProfit; }
+            get { return _PeriodProfit; }
             set
             {
-                if (_SessionProfit != value)
+                if (_PeriodProfit != value)
                 {
-                    _SessionProfit = value;
-                    OnPropertyChanged("SessionProfit");
+                    _PeriodProfit = value;
+                    OnPropertyChanged("PeriodProfit");
                 }
             }
         }
 
 
-        public decimal _SessionRobotProfit { get; set; }
-        public decimal SessionRobotProfit
+        public decimal _PeriodRobotProfit { get; set; }
+        public decimal PeriodRobotProfit
         {
-            get { return _SessionRobotProfit; }
+            get { return _PeriodRobotProfit; }
             set
             {
-                if (_SessionRobotProfit != value)
+                if (_PeriodRobotProfit != value)
                 {
-                    _SessionRobotProfit = value;
-                    OnPropertyChanged("SessionRobotProfit");
+                    _PeriodRobotProfit = value;
+                    OnPropertyChanged("PeriodRobotProfit");
                 }
             }
         }

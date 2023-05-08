@@ -13,6 +13,8 @@ using ShortPeakRobot.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,6 +22,7 @@ namespace ShortPeakRobot.Market
 {
     public class MarketManager
     {
+        public HttpClient httpClient = new HttpClient();
         public ApplicationDbContext _context { get; set; }
         public Dictionary<string, Subscribe> subscribes { get; set; }
         public List<CallResult<UpdateSubscription>> updateSubscriptions { get; set; } = new List<CallResult<UpdateSubscription>>();
@@ -51,6 +54,10 @@ namespace ShortPeakRobot.Market
             Task.Run(() => Queue());
             Task.Run(() => BinanceFailRequestQueue());
 
+            //--
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            httpClient.BaseAddress = new Uri("http://nero-trade.ai/api/");
         }
 
         private void BinanceFailRequestQueue()
@@ -196,7 +203,7 @@ namespace ShortPeakRobot.Market
                     orderPrice = q.Price.ToString();
                 }
                 RobotVM.robots[q.RobotIndex].Log(LogType.Error, "try:" + q.TryCount + " Cancel order error" + " id " + q.OrderId +
-                    q.robotOrderType.ToString() + " " + OrderTypes.Types[(int)q.OrderType] + " price " + orderPrice + " " + result.Error.ToString());
+                    q.robotOrderType.ToString() + " " + " price " + orderPrice + " " + result.Error.ToString());
             }
         }
 

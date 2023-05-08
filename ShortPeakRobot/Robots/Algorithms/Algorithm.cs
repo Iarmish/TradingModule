@@ -23,7 +23,9 @@ namespace ShortPeakRobot.Robots.Algorithms
                 case "ShortPeak": Algo = new ShortPeak(robotId, robotIndex); break;
                 case "VWAPHL": Algo = new VWAPHL(robotId, robotIndex); break;
                 case "LastDayHL": Algo = new LastDayHL(robotId, robotIndex); break;
+                case "LastDayHL10": Algo = new LastDayHL10(robotId, robotIndex); break;
                 case "SL3": Algo = new SL3(robotId, robotIndex); break;
+                case "ShortPeakPlusTime": Algo = new ShortPeakPlusTime(robotId, robotIndex); break;
             }
             
         }

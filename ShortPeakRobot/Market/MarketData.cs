@@ -1,6 +1,7 @@
 ﻿using Binance.Net.Objects.Models.Futures;
 using ShortPeakRobot.Data;
 using ShortPeakRobot.Market.Models;
+using ShortPeakRobot.Market.Models.ApiModels;
 using System.Collections.Generic;
 
 namespace ShortPeakRobot.Market
@@ -18,6 +19,7 @@ namespace ShortPeakRobot.Market
         //public static RobotInfo RobotInfo { get; set; } = new RobotInfo();
         public static BinanceFuturesAccountBalance BalanceUSDT { get; set; } 
         public static MarketManager MarketManager { get; set; } = new MarketManager();
+        public static LoginResponseData Tokens { get; set; } = new LoginResponseData();
 
 
         public static List<int> LogTypeFilter { get; set; } = new List<int>();

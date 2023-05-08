@@ -3,14 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ShortPeakRobot"
-        xmlns:robots="clr-namespace:ShortPeakRobot.Robots"
-        xmlns:models="clr-namespace:ShortPeakRobot.Robots.Models"
         xmlns:MVVM="clr-namespace:ShortPeakRobot.ViewModel"
         xmlns:Converters="clr-namespace:ShortPeakRobot.VMConverters"
         mc:Ignorable="d"
         x:Name="Wind"
-        Title="MainWindow" Height="650" Width="1280" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="MainWindow" Height="688" Width="1348" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <MVVM:RobotVM x:Key="robot_res"/>
         <MVVM:CellDayMonthVM x:Key="cellDayMonth_res"/>
@@ -38,14 +35,15 @@
 
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Height="35" VerticalAlignment="Top" Margin="0,35,0,0">
-                        <TextBox x:Name="TBSessionDate" Text="01.03.2023"   Padding="5,4"  Width="86" Margin="5,0,5,0"
+                        <TextBox x:Name="TBStartStatisticPeriod" Text="01.03.2023"   Padding="5,4"  Width="86" Margin="5,0,5,0"
+                                  VerticalAlignment="Top"  />
+                        <TextBox x:Name="TBEndStatisticPeriod" Text="01.03.2023"   Padding="5,4"  Width="86" Margin="5,0,5,0"
                                   VerticalAlignment="Top"  />
                         <Button x:Name="BtnSetSessionDate"  Padding="5,4"  Width="110" 
                                   VerticalAlignment="Top"  Cursor="Hand" Background="MintCream" Click="BtnSetSessionDate_Click" >Set Session Date</Button>
-                        <TextBox x:Name="TBDepo" Text="285"   Padding="5,4"  Width="86" Margin="5,0,5,0"
+                        <TextBlock x:Name="TBDepo" Text="285"   Padding="5,4"  Width="86" Margin="15,0,5,0"
                                   VerticalAlignment="Top"  />
-                        <Button x:Name="BtnSetDepo"  Padding="5,4"  Width="110" 
-                                  VerticalAlignment="Top"  Cursor="Hand" Background="MintCream" Click="BtnSetDepo_Click"  >Set Deposit</Button>
+
                     </StackPanel>
                     <StackPanel x:Name="StackInfo" Orientation="Horizontal" Margin="5,66,0,0" Background="AntiqueWhite" Height="25" VerticalAlignment="Top">
                         <TextBlock Text="Balance USDT"   Padding="5,4"  Width="88" 
@@ -54,7 +52,7 @@
                                   VerticalAlignment="Top"  Cursor="Hand"  />
                         <TextBlock Text="Session Profit"   Padding="5,4"  Width="88" 
                                   VerticalAlignment="Top"  Cursor="Hand"  />
-                        <TextBlock Text="{Binding SessionProfit}"  Padding="5,4"  Width="96" 
+                        <TextBlock Text="{Binding PeriodProfit}"  Padding="5,4"  Width="96" 
                                   VerticalAlignment="Top"  Cursor="Hand"  />
 
                     </StackPanel>
@@ -144,7 +142,7 @@
                     <Button x:Name="BtnRobotInfo" Height="24" Background="MintCream" VerticalAlignment="Top" Margin="430,5,0,0" HorizontalAlignment="Left" Width="100" Click="BtnRobotInfo_Click" >Robot Info</Button>
 
 
-                    <Grid x:Name="GridCandleChartPrice" Background="White" Margin="721,35,0,34" HorizontalAlignment="Left" Width="80"/>
+                    <Grid x:Name="GridCandleChartPrice" Background="White" Margin="0,35,-4,34" HorizontalAlignment="Right" Width="80"/>
                     <Grid x:Name="GridCandleChart" Background="White" Margin="0,35,80,34"/>
                     <Grid x:Name="GridCandleChartDate" Background="White" Height="34" VerticalAlignment="Bottom"/>
 
@@ -507,7 +505,7 @@
                     </StackPanel>
                     <StackPanel x:Name="StackRobotProfit" Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Left" Orientation="Horizontal">
                         <Label Content="$Profit:"  Width="54"/>
-                        <Label Content="{Binding SessionRobotProfit}" Height="30" Width="120" />
+                        <Label Content="{Binding ReriodRobotProfit}" Height="30" Width="120" />
                     </StackPanel>
 
                     <ScrollViewer Margin="0,25,0,34" >
@@ -518,7 +516,7 @@
                                         <TextBlock    Width="0"   Text="{Binding Id}"/>
                                         <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="10,5,0,0" Width="100" 
                                                    />
-                                        <TextBox   Padding="10,5,0,0" Width="140"   Text="{Binding OrderId}" />
+                                        <TextBox   Padding="10,5,0,0" Width="140"   Text="{Binding OrderId}" ToolTip="{Binding RobotId}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Symbol}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Quantity}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Price}"/>
@@ -555,11 +553,12 @@
                         <TextBlock   Padding="10,5,0,0" Width="70"   Text="Цена закр"/>
                         <TextBlock   Padding="10,5,0,0" Width="100"   Text="Результат"/>
                         <TextBlock   Padding="10,5,0,0" Width="100"   Text="Комиссия"/>
-                        <TextBlock   Padding="10,5,0,0" Width="100"   Text="Напрвление"/>
+                        <TextBlock   Padding="5,5,0,0" Width="80"   Text="Напрвление"/>
+                        <TextBlock   Padding="10,5,0,0" Width="80"   Text="Slip"/>
                     </StackPanel>
                     <StackPanel x:Name="StackRobotProfit2" Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Left" Orientation="Horizontal">
                         <Label Content="$Profit:"  Width="54"/>
-                        <Label Content="{Binding SessionRobotProfit}" Foreground="{Binding SessionRobotProfit, Converter={StaticResource numberColor_res}}" Height="30" Width="120" />
+                        <Label Content="{Binding PeriodRobotProfit}" Foreground="{Binding PeriodRobotProfit, Converter={StaticResource numberColor_res}}" Height="30" Width="120" />
                     </StackPanel>
 
                     <ScrollViewer Margin="0,25,0,34" >
@@ -576,7 +575,8 @@
                                         <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding ClosePrice,StringFormat={}{0:F4}}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="100"   Text="{Binding Result,StringFormat={}{0:F4}}"  Foreground="{Binding Result, Converter={StaticResource numberColor_res}}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="100"   Text="{Binding Fee,StringFormat={}{0:F4}}"/>
-                                        <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Side, Converter={StaticResource sideConverter_res}}"/>
+                                        <TextBlock   Padding="10,5,0,0" Width="80"   Text="{Binding Side, Converter={StaticResource sideConverter_res}}"/>
+                                        <TextBlock   Padding="10,5,0,0" Width="80"   Text="{Binding Slip,StringFormat={}{0:F4}}"/>
 
                                     </StackPanel>
                                 </DataTemplate>
@@ -586,6 +586,20 @@
                 </Grid>
             </TabItem>
         </TabControl>
+        <Grid Background="White" x:Name="StackLogin" Visibility="Visible">
+                    <Label x:Name="LabelClientId"  Content="" Margin="30,10,30,0" Padding="3"/>
+            <Border BorderBrush="Gray" BorderThickness="1"  HorizontalAlignment="Center" VerticalAlignment="Center" Width="500" >
+                <StackPanel Orientation="Vertical"  Background="LightGray" >                   
+                    
+                    <Label Content="Login" Margin="30,10,30,0" Padding="3"/>
+                    <TextBox x:Name="TbLogin"  Text="magicom@yandex.ru" Margin="30,10,30,0" Padding="5"/>
+                    <Label Content="Password" Margin="30,10,30,0" Padding="3"/>
+                    <TextBox x:Name="TbPass" Text="q1w2e311" Margin="30,10" Padding="5"/>
+                    <Button x:Name="BtnLogin" Margin="30,30,30,30" Padding="5" Click="BtnLogin_Click">Log In</Button>
+
+                </StackPanel>
+            </Border>
+        </Grid>
 
     </Grid>
 </Window>

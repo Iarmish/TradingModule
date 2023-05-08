@@ -212,6 +212,10 @@ namespace ShortPeakRobot.Robots
         {
             decimal signalPrice = 0;
 
+            if (price == 0)
+            {
+                return 0;
+            }
 
 
             if (robotOrderType == RobotOrderType.SignalSell)

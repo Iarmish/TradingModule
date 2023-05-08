@@ -11,7 +11,7 @@ namespace ShortPeakRobot.Constants
     {
         public static readonly List<string> list =new List<string>()
         {
-            "ETHUSDT" ,"BTCUSDT" ,"BNBUSDT" ,"SOLUSDT" ,"XRPUSDT","ADAUSDT" ,"DOGEUSDT" ,"LTCUSDT"
+            "ETHUSDT" ,"BTCUSDT" ,"BNBUSDT" ,"XRPUSDT","ADAUSDT" ,"LTCUSDT","CHZUSDT"
         };
     }
 }

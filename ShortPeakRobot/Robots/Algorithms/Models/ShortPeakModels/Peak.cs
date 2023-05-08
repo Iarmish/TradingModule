@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace ShortPeakRobot.Robots.Algorithms.Models.ShortPeakModels
 {
-    public class ShortPeakModel
+    public class Peak
     {
-        public decimal FirstCandle { get; set; }
-        public decimal SecondCandle { get; set; }
-        public DateTime SecondCandleDate { get; set; }
+        public decimal Volume { get; set; }
+        public DateTime Date { get; set; }
     }
 }

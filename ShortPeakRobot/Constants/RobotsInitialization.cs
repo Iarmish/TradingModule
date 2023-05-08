@@ -35,30 +35,30 @@ namespace ShortPeakRobot.Constants
             //new RobotBaseModel { Id = 21, Name = "VWAPHL-BTC-D1", Symbol = "ETHUSDT", AlgorithmName = "VWAPHL" },
             //new RobotBaseModel { Id = 22, Name = "SL3-ETH-D1", Symbol = "ETHUSDT", AlgorithmName = "SL3" },
 
-            new RobotBaseModel{Id = 101, Name= "BNB(LDHL)", Symbol = "BNBUSDT", AlgorithmName = "LastDayHL"} ,
-            new RobotBaseModel{Id = 102, Name= "LTC(LDHL)", Symbol = "LTCUSDT", AlgorithmName = "LastDayHL"} ,
-            //new RobotBaseModel{Id = 103, Name= "XRP(LDHL+10)", Symbol = "XRPUSDT", AlgorithmName = "LastDayHL10"} ,
+            new RobotBaseModel{Id = 1, Name= "BNB(LDHL)", Symbol = "BNBUSDT", AlgorithmName = "LastDayHL"} ,
+            new RobotBaseModel{Id = 10, Name= "LTC(LDHL)", Symbol = "LTCUSDT", AlgorithmName = "LastDayHL"} ,
+            new RobotBaseModel{Id = 103, Name= "XRP(LDHL+10)", Symbol = "XRPUSDT", AlgorithmName = "LastDayHL10"} ,
             new RobotBaseModel{Id = 104, Name= "BNB(VWAP)", Symbol = "BNBUSDT", AlgorithmName = "VWAPHL"} ,
-            new RobotBaseModel{Id = 105, Name= "ETH(SP)", Symbol = "ETHUSDT", AlgorithmName = "ShortPeak"} ,
-            new RobotBaseModel{Id = 106, Name= "ETH(LDHL)", Symbol = "ETHUSDT", AlgorithmName = "LastDayHL"} ,
+            new RobotBaseModel{Id = 5, Name= "ETH(SP)", Symbol = "ETHUSDT", AlgorithmName = "ShortPeak"} ,
+            new RobotBaseModel{Id = 2, Name= "ETH(LDHL)", Symbol = "ETHUSDT", AlgorithmName = "LastDayHL"} ,
             new RobotBaseModel{Id = 107, Name= "ETH(SP)", Symbol = "ETHUSDT", AlgorithmName = "ShortPeak"} ,
-            //new RobotBaseModel{Id = 108, Name= "LTC(LDHL+10)", Symbol = "LTCUSDT", AlgorithmName = "LastDayHL10"} ,
-            new RobotBaseModel{Id = 109, Name= "ADA(SP)", Symbol = "ADAUSDT", AlgorithmName = "ShortPeak"} ,
-            new RobotBaseModel{Id = 110, Name= "BTC(SP)", Symbol = "BTCUSDT", AlgorithmName = "ShortPeak"} ,
-            new RobotBaseModel{Id = 111, Name= "BTC(SP)", Symbol = "BTCUSDT", AlgorithmName = "ShortPeak"} ,
-            //new RobotBaseModel{Id = 112, Name= "ETH(LDHL+10)", Symbol = "ETHUSDT", AlgorithmName = "LastDayHL10"} ,
-            new RobotBaseModel{Id = 113, Name= "ETH(SP)", Symbol = "ETHUSDT", AlgorithmName = "ShortPeak"} ,
-            new RobotBaseModel{Id = 114, Name= "BTC(SP)", Symbol = "BTCUSDT", AlgorithmName = "ShortPeak"} ,
-            new RobotBaseModel{Id = 115, Name= "XRP(SP)", Symbol = "XRPUSDT", AlgorithmName = "ShortPeak"} ,
-            //new RobotBaseModel{Id = 116, Name= "BNB(SL3)", Symbol = "BNBUSDT", AlgorithmName = "SL3"} ,
-            //new RobotBaseModel{Id = 117, Name= "BTC(LDHL+10)", Symbol = "BTCUSDT", AlgorithmName = "LastDayHL10"} ,
+            new RobotBaseModel{Id = 108, Name= "LTC(LDHL+10)", Symbol = "LTCUSDT", AlgorithmName = "LastDayHL10"} ,
+            new RobotBaseModel{Id = 17, Name= "ADA(SP)", Symbol = "ADAUSDT", AlgorithmName = "ShortPeak"} ,
+            new RobotBaseModel{Id = 4, Name= "BTC(SP)", Symbol = "BTCUSDT", AlgorithmName = "ShortPeak"} ,
+            new RobotBaseModel{Id = 15, Name= "BTC(SP)", Symbol = "BTCUSDT", AlgorithmName = "ShortPeak"} ,
+            new RobotBaseModel{Id = 112, Name= "ETH(LDHL+10)", Symbol = "ETHUSDT", AlgorithmName = "LastDayHL10"} ,
+            new RobotBaseModel{Id = 6, Name= "ETH(SP)", Symbol = "ETHUSDT", AlgorithmName = "ShortPeak"} ,
+            new RobotBaseModel{Id = 12, Name= "BTC(SP)", Symbol = "BTCUSDT", AlgorithmName = "ShortPeak"} ,
+            new RobotBaseModel{Id = 18, Name= "XRP(SP)", Symbol = "XRPUSDT", AlgorithmName = "ShortPeak"} ,
+            new RobotBaseModel{Id = 116, Name= "BNB(SL3)", Symbol = "BNBUSDT", AlgorithmName = "SL3"} ,
+            new RobotBaseModel{Id = 117, Name= "BTC(LDHL+10)", Symbol = "BTCUSDT", AlgorithmName = "LastDayHL10"} ,
             new RobotBaseModel{Id = 118, Name= "ADA(SL3)", Symbol = "ADAUSDT", AlgorithmName = "SL3"} ,
             new RobotBaseModel{Id = 119, Name= "CHZ(VWAP)", Symbol = "CHZUSDT", AlgorithmName = "VWAPHL"} ,
             new RobotBaseModel{Id = 120, Name= "LTC(VWAP)", Symbol = "LTCUSDT", AlgorithmName = "VWAPHL"} ,
-            //new RobotBaseModel{Id = 121, Name= "BTC(SP+Time)", Symbol = "BTCUSDT", AlgorithmName = "ShortPeakPlusTime"} ,
-            new RobotBaseModel{Id = 122, Name= "ADA(LDHL)", Symbol = "ADAUSDT", AlgorithmName = "LastDayHL"} ,
-            new RobotBaseModel{Id = 123, Name= "XRP(SP)", Symbol = "XRPUSDT", AlgorithmName = "ShortPeak"} ,
-            new RobotBaseModel{Id = 124, Name= "XRP(SP)", Symbol = "XRPUSDT", AlgorithmName = "ShortPeak"} ,
+            new RobotBaseModel{Id = 121, Name= "BTC(SP+Time)", Symbol = "BTCUSDT", AlgorithmName = "ShortPeakPlusTime"} ,
+            new RobotBaseModel{Id = 16, Name= "ADA(LDHL)", Symbol = "ADAUSDT", AlgorithmName = "LastDayHL"} ,
+            new RobotBaseModel{Id = 19, Name= "XRP(SP)", Symbol = "XRPUSDT", AlgorithmName = "ShortPeak"} ,
+            new RobotBaseModel{Id = 20, Name= "XRP(SP)", Symbol = "XRPUSDT", AlgorithmName = "ShortPeak"} ,
 
         };
 
@@ -66,6 +66,8 @@ namespace ShortPeakRobot.Constants
         
 
 
+        //public static int ClientId = 1;
         public static int ClientId = 3;
+        //public static int ClientId = 4;
     }
 }

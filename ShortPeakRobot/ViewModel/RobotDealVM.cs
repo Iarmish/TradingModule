@@ -1,4 +1,5 @@
 ﻿using ShortPeakRobot.Data;
+using ShortPeakRobot.Robots.Algorithms.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -10,17 +11,17 @@ namespace ShortPeakRobot.ViewModel
 {
     public class RobotDealVM
     {
-        public static ObservableCollection<RobotDeal> deals
+        public static ObservableCollection<RobotDealModel> deals
         {
             get; set;
-        } = new ObservableCollection<RobotDeal>();
+        } = new ObservableCollection<RobotDealModel>();
 
 
         public RobotDealVM()
         {
 
         }
-        public static void AddRange(List<RobotDeal> deals)
+        public static void AddRange(List<RobotDealModel> deals)
         {
             deals.ForEach(deal => RobotDealVM.deals.Add(deal));
         }

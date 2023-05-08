@@ -1,4 +1,5 @@
 ﻿
+using ShortPeakRobot.Market.Models;
 using ShortPeakRobot.Robots.Algorithms.Models;
 using ShortPeakRobot.Robots.Algorithms.Models.ShortPeakModels;
 
@@ -6,61 +7,67 @@ namespace ShortPeakRobot.Robots.Algorithms.Services
 {
     public static class ShortPeakAnalyse
     {
-        public static decimal HighPeakAnalyse(ShortPeakModel highPeak, decimal price)
+        public static Peak HighPeakAnalyse(ShortPeakModel highPeak, Candle candle)
         {
-            decimal peak = 0;
+            Peak peak = new();
             //------------инициализация high1------------
-            if (highPeak.FirstCandle == 0 && price != 0) { highPeak.FirstCandle = price; }
+            if (highPeak.FirstCandle == 0 && candle.HighPrice != 0) { highPeak.FirstCandle = candle.HighPrice; }
             //--------------добавление high2 или обновление high1 ---------------------					
-            if (highPeak.FirstCandle != 0 && highPeak.SecondCandle == 0 && price > highPeak.FirstCandle)
+            if (highPeak.FirstCandle != 0 && highPeak.SecondCandle == 0 && candle.HighPrice > highPeak.FirstCandle)
             {
-                highPeak.SecondCandle = price;
+                highPeak.SecondCandle = candle.HighPrice;
+                highPeak.SecondCandleDate = candle.OpenTime;
             }
-            if (highPeak.FirstCandle != 0 && highPeak.SecondCandle == 0 && price < highPeak.FirstCandle)
+            if (highPeak.FirstCandle != 0 && highPeak.SecondCandle == 0 && candle.HighPrice < highPeak.FirstCandle)
             {
-                highPeak.FirstCandle = price;
+                highPeak.FirstCandle = candle.HighPrice;
             }
             //---------- добавление short hi или обновление high1 high2
-            if (highPeak.FirstCandle != 0 && highPeak.SecondCandle != 0 && price < highPeak.SecondCandle)
+            if (highPeak.FirstCandle != 0 && highPeak.SecondCandle != 0 && candle.HighPrice < highPeak.SecondCandle)
             {
-                peak = highPeak.SecondCandle;
-                highPeak.FirstCandle = price;
+                peak.Volume = highPeak.SecondCandle;
+                peak.Date = highPeak.SecondCandleDate;
+                highPeak.FirstCandle = candle.HighPrice;
                 highPeak.SecondCandle = 0;
             }
-            if (highPeak.FirstCandle != 0 && highPeak.SecondCandle != 0 && price > highPeak.SecondCandle)
+            if (highPeak.FirstCandle != 0 && highPeak.SecondCandle != 0 && candle.HighPrice > highPeak.SecondCandle)
             {
                 highPeak.FirstCandle = highPeak.SecondCandle;
-                highPeak.SecondCandle = price;
+                highPeak.SecondCandle = candle.HighPrice;
+                highPeak.SecondCandleDate = candle.OpenTime;
             }
 
             return peak;
         }
 
-        public static decimal LowPeakAnalyse(ShortPeakModel lowPeak, decimal price)
+        public static Peak LowPeakAnalyse(ShortPeakModel lowPeak, Candle candle)
         {
-            decimal peak = 0;
+            Peak peak = new();
             //------------инициализация lowPeak------------
-            if (lowPeak.FirstCandle == 0 && price != 0) { lowPeak.FirstCandle = price; }
+            if (lowPeak.FirstCandle == 0 && candle.LowPrice != 0) { lowPeak.FirstCandle = candle.LowPrice; }
             //--------------добавление low2 или обновление low1 ---------------------
-            if (lowPeak.FirstCandle != 0 && lowPeak.SecondCandle == 0 && price < lowPeak.FirstCandle)
+            if (lowPeak.FirstCandle != 0 && lowPeak.SecondCandle == 0 && candle.LowPrice < lowPeak.FirstCandle)
             {
-                lowPeak.SecondCandle = price;
+                lowPeak.SecondCandle = candle.LowPrice;
+                lowPeak.SecondCandleDate = candle.OpenTime;
             }
-            if (lowPeak.FirstCandle != 0 && lowPeak.SecondCandle == 0 && price > lowPeak.FirstCandle)
+            if (lowPeak.FirstCandle != 0 && lowPeak.SecondCandle == 0 && candle.LowPrice > lowPeak.FirstCandle)
             {
-                lowPeak.FirstCandle = price;
+                lowPeak.FirstCandle = candle.LowPrice;
             }
             //---------- добавление short low или обновление low1 low2
-            if (lowPeak.FirstCandle != 0 && lowPeak.SecondCandle != 0 && price > lowPeak.SecondCandle)
+            if (lowPeak.FirstCandle != 0 && lowPeak.SecondCandle != 0 && candle.LowPrice > lowPeak.SecondCandle)
             {
-                peak = lowPeak.SecondCandle;
-                lowPeak.FirstCandle = price;
+                peak.Volume = lowPeak.SecondCandle;
+                peak.Date = lowPeak.SecondCandleDate;
+                lowPeak.FirstCandle = candle.LowPrice;
                 lowPeak.SecondCandle = 0;
             }
-            if (lowPeak.FirstCandle != 0 && lowPeak.SecondCandle != 0 && price < lowPeak.SecondCandle)
+            if (lowPeak.FirstCandle != 0 && lowPeak.SecondCandle != 0 && candle.LowPrice < lowPeak.SecondCandle)
             {
                 lowPeak.FirstCandle = lowPeak.SecondCandle;
-                lowPeak.SecondCandle = price;
+                lowPeak.SecondCandle = candle.LowPrice;
+                lowPeak.SecondCandleDate = candle.OpenTime;
             }
             return peak;
         }
