@@ -7,20 +7,13 @@ using ShortPeakRobot.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using static ShortPeakRobot.MainWindow;
 using Binance.Net.Enums;
-using Microsoft.Extensions.Options;
 using CryptoExchange.Net.Objects;
 using Binance.Net.Objects.Models.Futures;
 using Binance.Infrastructure.Constants;
-using System.Windows.Markup;
-using Binance.Net.Interfaces;
-using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.Socket;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace ShortPeakRobot.Market
 {
@@ -50,9 +43,7 @@ namespace ShortPeakRobot.Market
         }
 
         public static void GetSessioProfit()
-        { 
-
-
+        {
             var clienDeals = GetClientDeals(MarketData.Info.StartSessionDate, DateTime.UtcNow);
             var profit = GetDealsProfit(clienDeals);
 
@@ -69,8 +60,8 @@ namespace ShortPeakRobot.Market
         {
             var clienDeals = GetClientDeals(MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
             var profit = GetDealsProfit(clienDeals);
-            
-            MarketData.Info.PeriodProfit = profit;            
+
+            MarketData.Info.PeriodProfit = profit;
 
         }
 
@@ -87,42 +78,55 @@ namespace ShortPeakRobot.Market
             return profit;
         }
 
-        
 
-        public static void GetRobotData(int robotIndex)
+
+        public async static void GetRobotMarketData(int robotIndex)
         {
             var robotId = RobotServices.GetRobotId(robotIndex);
             if (MarketData.Info.SelectedRobotIndex == robotIndex)
             {
-                var robotOrders = GetRobotOrders(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
-                var robotTrades = GetRobotTrades(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
-                var robotDeals = GetRobotDeals(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
-                var robotLogs = GetRobotLogs(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
-                MarketData.Info.PeriodRobotProfit = GetDealsProfit(robotDeals);
-                //RobotVM.robots[robotIndex].Profit = MarketData.Info.PeriodRobotProfit;
+                var robotOrdersRespose = await ApiServices.GetOrders(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
+                var robotTradesRespose = await ApiServices.GetTrades(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
+                var robotDealsRespose = await ApiServices.GetDeals(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
+                var robotLogsRespose = await ApiServices.GetLogs(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
 
-
-
-
+                if (robotDealsRespose.success)
+                {
+                    MarketData.Info.PeriodRobotProfit = GetDealsProfit(robotDealsRespose.data);
+                }
 
                 GetOpenOrders(robotIndex);
 
+
                 App.Current.Dispatcher.Invoke(() =>
                 {
-                    RobotOrderVM.orders.Clear();
-                    RobotOrderVM.AddRange(robotOrders);
+                    if (robotOrdersRespose.success)
+                    {
+                        RobotOrderVM.orders.Clear();
+                        RobotOrderVM.AddRange(robotOrdersRespose.data);
+                    }
 
-                    RobotTradeVM.trades.Clear();
-                    RobotTradeVM.AddRange(robotTrades);
 
-                    RobotDealVM.deals.Clear();
-                    RobotDealVM.AddRange(RobotDealModelDTO.DTO(robotDeals));
+                    if (robotTradesRespose.success)
+                    {
+                        RobotTradeVM.trades.Clear();
+                        RobotTradeVM.AddRange(robotTradesRespose.data);
+                    }
 
-                    LogVM.logs.Clear();
-                    LogVM.AddRange(robotLogs);
+
+                    if (robotDealsRespose.success)
+                    {
+                        RobotDealVM.deals.Clear();
+                        RobotDealVM.AddRange(RobotDealModelDTO.DTO(robotDealsRespose.data));
+                    }
+
+                    if (robotLogsRespose.success)
+                    {
+                        LogVM.logs.Clear();
+                        LogVM.AddRange(robotLogsRespose.data);
+                    }
                 });
-                //MarketData.OpenOrders = RobotOrderDTO.OrdersDTO(
-                //await BinanceApi.client.UsdFuturesApi.Trading.GetOpenOrdersAsync(RobotVM.robots[robotId].Symbol), robotId);
+
 
             }
 
@@ -130,25 +134,7 @@ namespace ShortPeakRobot.Market
         }
 
 
-        public static List<RobotLog> GetRobotLogs(int robotId, DateTime startDate, DateTime endDate)
-        {
-            var robotLogs = new List<RobotLog>();
-            try
-            {
-                lock (Locker)
-                {
-                    robotLogs = _context.RobotLogs.Where(x => x.ClientId == RobotsInitialization.ClientId && 
-                    x.Date >= startDate && x.Date <= endDate.AddDays(1) &&
-                    x.RobotId == robotId && MarketData.LogTypeFilter.Contains(x.Type)).AsEnumerable().TakeLast(100).ToList();
-                }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
 
-            return robotLogs;
-        }
 
         public async static Task<List<RobotOrder>> GetOpenOrders(int robotIndex)
         {
@@ -168,7 +154,6 @@ namespace ShortPeakRobot.Market
             {
                 if (item.Asset == "USDT")
                 {
-                    MarketData.BalanceUSDT = item;
                     MarketData.Info.BalanceUSDT = Math.Round(item.WalletBalance, 2);
                 }
             }
@@ -232,7 +217,7 @@ namespace ShortPeakRobot.Market
                    .Where(x => x.CloseTime >= startDate && x.CloseTime <= endDate.AddDays(1) && x.ClientId == RobotsInitialization.ClientId).ToList();
 
             }
-           
+
 
             return robotDeals;
         }
@@ -267,7 +252,7 @@ namespace ShortPeakRobot.Market
 
             return robotTrades;
         }
-         public static List<RobotDeal> GetRobotDeals(int robotId, DateTime startDate, DateTime endDate)
+        public static List<RobotDeal> GetRobotDeals(int robotId, DateTime startDate, DateTime endDate)
         {
             var robotDeals = new List<RobotDeal>();
             lock (Locker)
@@ -305,7 +290,7 @@ namespace ShortPeakRobot.Market
         }
 
 
-        public async static Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceBinanceOrder(long startDealOrderId, int orderCount, int robotIndex, 
+        public async static Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceBinanceOrder(long startDealOrderId, int orderCount, int robotIndex,
             string symbol, OrderSide side, FuturesOrderType orderType, decimal quantity, decimal price = 0, decimal stopPrice = 0)
         {
             var robotId = RobotServices.GetRobotId(robotIndex);
@@ -315,7 +300,7 @@ namespace ShortPeakRobot.Market
                   symbol: symbol,
                   side: side,
                   type: orderType,
-                  quantity: quantity,                 
+                  quantity: quantity,
                   newClientOrderId: "robot:" + robotId + ":" + startDealOrderId + ":" + orderCount);
 
                 return placedOrder;
@@ -380,19 +365,19 @@ namespace ShortPeakRobot.Market
 
         public async static void StopAllSubscribes()
         {
-            await BinanceSocket.client.UnsubscribeAllAsync();             
+            await BinanceSocket.client.UnsubscribeAllAsync();
         }
 
         public async static void StopUserDataStream()
-        {           
+        {
             var key = MarketData.MarketManager.ListenKey;
             var res = await BinanceApi.client.UsdFuturesApi.Account.StopUserStreamAsync(key.Data);
         }
 
 
         public async static void StartUserDataStream()
-        {           
-            MarketData.MarketManager.ActivateUserDataStream();           
+        {
+            MarketData.MarketManager.ActivateUserDataStream();
         }
 
         public async static void StartAllSubscribes()

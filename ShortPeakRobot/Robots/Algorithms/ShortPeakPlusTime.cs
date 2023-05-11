@@ -76,9 +76,8 @@ namespace ShortPeakRobot.Robots.Algorithms
                 LastCandle = LastCompletedCendle;
                 var candlesAnalyse = CandlesAnalyse.Required;
 
-                //проверка состояния предыдущей сессии 
-                robot.RobotState = RobotServices.LoadStateAsync(RobotIndex);
-                await robot.SetRobotOrders();
+               
+                await robot.SetRobotData();
 
 
                 candlesAnalyse = RobotStateProcessor.CheckStateAsync(robot.RobotState, RobotIndex,
@@ -89,7 +88,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 if (candlesAnalyse == CandlesAnalyse.Required)
                 {
                     robot.RobotState = new();
-                    await robot.SetRobotOrders();
+                    await robot.SetRobotData();
 
                     ChartAnalyse();
 

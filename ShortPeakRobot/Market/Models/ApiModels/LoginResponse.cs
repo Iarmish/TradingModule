@@ -10,11 +10,11 @@ namespace ShortPeakRobot.Market.Models.ApiModels
     {
         public bool success { get; set; }
         public string message { get; set; }
-        public LoginResponseData data { get; set; } = new LoginResponseData();
+        public Tokens data { get; set; } = new Tokens();
     }
 
 
-    public class LoginResponseData
+    public class Tokens
     {
         public string access_token { get; set; }
         public string refresh_token { get; set; }

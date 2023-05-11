@@ -24,67 +24,151 @@ namespace ShortPeakRobot
     /// </summary>
     public partial class RobotControl : Window
     {
-        int RobotId { get; set; }
-        public RobotControl(int robotId)
+        int RobotIindex { get; set; }
+        public RobotControl(int robotIndex)
         {
             InitializeComponent();
-            RobotId= robotId;
+            RobotIindex = robotIndex;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            TBSignalBuyID.Text = RobotVM.robots[RobotId].RobotState.SignalBuyOrderId.ToString();
-            TBSignalSellID.Text = RobotVM.robots[RobotId].RobotState.SignalSellOrderId.ToString();
-            TBTakeProfitID.Text = RobotVM.robots[RobotId].RobotState.TakeProfitOrderId.ToString();
-            TBStopLossID.Text = RobotVM.robots[RobotId].RobotState.StopLossOrderId.ToString();
-            TBPosition.Text = RobotVM.robots[RobotId].RobotState.Position.ToString();
-            TBOpenPositionPrice.Text = RobotVM.robots[RobotId].RobotState.OpenPositionPrice.ToString();
+            TBSignalBuyID.Text = RobotVM.robots[RobotIindex].RobotState.SignalBuyOrderId.ToString();
+            TBSignalSellID.Text = RobotVM.robots[RobotIindex].RobotState.SignalSellOrderId.ToString();
+            TBTakeProfitID.Text = RobotVM.robots[RobotIindex].RobotState.TakeProfitOrderId.ToString();
+            TBStopLossID.Text = RobotVM.robots[RobotIindex].RobotState.StopLossOrderId.ToString();
+            TBPosition.Text = RobotVM.robots[RobotIindex].RobotState.Position.ToString();
+            TBOpenPositionPrice.Text = RobotVM.robots[RobotIindex].RobotState.OpenPositionPrice.ToString();
         }
 
         private void BtnSaveState_Click(object sender, RoutedEventArgs e)
         {
-            RobotVM.robots[RobotId].RobotState.SignalBuyOrderId = long.Parse(TBSignalBuyID.Text); 
-            RobotVM.robots[RobotId].RobotState.SignalSellOrderId = long.Parse(TBSignalSellID.Text);
-            RobotVM.robots[RobotId].RobotState.TakeProfitOrderId = long.Parse(TBTakeProfitID.Text);
-            RobotVM.robots[RobotId].RobotState.StopLossOrderId = long.Parse(TBStopLossID.Text);
-            
-            RobotVM.robots[RobotId].RobotState.Position = decimal.Parse(TBPosition.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
-            RobotVM.robots[RobotId].Position = RobotVM.robots[RobotId].RobotState.Position;
+            var robot = RobotVM.robots[RobotIindex];
 
-            RobotVM.robots[RobotId].RobotState.OpenPositionPrice = decimal.Parse(TBOpenPositionPrice.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
-                        
+            if (!long.TryParse(TBSignalBuyID.Text, out var signalBuy))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
+
+            if (!long.TryParse(TBSignalSellID.Text, out var signalSell))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
+
+            if (!long.TryParse(TBTakeProfitID.Text, out var takeProfit))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
+
+            if (!long.TryParse(TBStopLossID.Text, out var stopLoss))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
+
+            if (!decimal.TryParse(TBPosition.Text.Replace(',', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var position))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
+
+            if (!decimal.TryParse(TBOpenPositionPrice.Text.Replace(',', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var positionPrice))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
+
+
+            robot.RobotState.SignalBuyOrderId = signalBuy;
+            robot.RobotState.SignalBuyOrderId = signalSell;
+
+            robot.RobotState.TakeProfitOrderId = takeProfit;
+            robot.RobotState.StopLossOrderId = stopLoss;
+
+            robot.RobotState.Position = position;
+            robot.Position = robot.RobotState.Position;
+
+            robot.RobotState.OpenPositionPrice = positionPrice;
+
             MessageBox.Show("Изменения сохранены.");
         }
 
-        private void BtnResetSLTP_Click(object sender, RoutedEventArgs e)
+        private async void BtnResetSLTP_Click(object sender, RoutedEventArgs e)
         {
-            
+            var robot = RobotVM.robots[RobotIindex];
 
-            RobotVM.robots[RobotId].RobotState.SignalBuyOrderId = long.Parse(TBSignalBuyID.Text);
-            RobotVM.robots[RobotId].RobotState.SignalSellOrderId = long.Parse(TBSignalSellID.Text);
-            RobotVM.robots[RobotId].RobotState.TakeProfitOrderId = long.Parse(TBTakeProfitID.Text);
-            RobotVM.robots[RobotId].RobotState.StopLossOrderId = long.Parse(TBStopLossID.Text);
-            
-            RobotVM.robots[RobotId].RobotState.Position = decimal.Parse(TBPosition.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
-            RobotVM.robots[RobotId].Position = RobotVM.robots[RobotId].RobotState.Position;
+            if (!long.TryParse(TBSignalBuyID.Text, out var signalBuy))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
 
-            RobotVM.robots[RobotId].RobotState.OpenPositionPrice = decimal.Parse(TBOpenPositionPrice.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
+            if (!long.TryParse(TBSignalSellID.Text, out var signalSell))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
+
+            if (!long.TryParse(TBTakeProfitID.Text, out var takeProfit))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
+
+            if (!long.TryParse(TBStopLossID.Text, out var stopLoss))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
+
+            if (!decimal.TryParse(TBPosition.Text.Replace(',', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var position))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
+
+            if (!decimal.TryParse(TBOpenPositionPrice.Text.Replace(',', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var positionPrice))
+            { MessageBox.Show("Введено не корректное значение! "); return; }
 
 
-            if (RobotVM.robots[RobotId].RobotState.Position == 0)
+            robot.RobotState.SignalBuyOrderId = signalBuy;
+            robot.RobotState.SignalBuyOrderId = signalSell;
+
+            robot.RobotState.TakeProfitOrderId = takeProfit;
+            robot.RobotState.StopLossOrderId = stopLoss;
+
+            robot.RobotState.Position = position;
+            robot.Position = robot.RobotState.Position;
+
+            robot.RobotState.OpenPositionPrice = positionPrice;
+
+
+            if (robot.RobotState.Position == 0)
             {
                 MessageBox.Show("Позиция не открыта!");
                 return;
             }
 
-            var side = OrderSide.Buy;
-            if (RobotVM.robots[RobotId].RobotState.Position < 0)
+            long signalOrderId = 0;
+            OrderSide side = new();
+
+            if (robot.RobotState.Position > 0)
             {
+                if (robot.SignalBuyOrder.OrderId != 0)
+                {
+                    signalOrderId = robot.SignalBuyOrder.OrderId;
+                }
+                else
+                {
+                    signalOrderId = robot.RobotState.SignalBuyOrderId;
+                }
+                side = OrderSide.Buy;
+            }
+
+            if (robot.RobotState.Position < 0)
+            {
+                if (robot.SignalSellOrder.OrderId != 0)
+                {
+                    signalOrderId = robot.SignalSellOrder.OrderId;
+                }
+                else
+                {
+                    signalOrderId = robot.RobotState.SignalSellOrderId;
+                }
                 side = OrderSide.Sell;
             }
 
-            //RobotVM.robots[RobotId].SetSLTP(side, Math.Abs(RobotVM.robots[RobotId].RobotState.Position),
-            //    RobotVM.robots[RobotId].RobotState.OpenPositionPrice);
+            var signalOrder = await RobotServices.GetBinOrderById(signalOrderId, RobotServices.GetRobotIndex(RobotIindex));
+            //-----
+            if (signalOrder.OrderId == 0)
+            {
+                MessageBox.Show("Не найден ордер id" + signalOrder.OrderId);
+                return;
+            }
+            else
+            {
+                if (side == OrderSide.Buy)
+                {
+                    robot.SignalBuyOrder = signalOrder;
+                }
+                else
+                {
+                    robot.SignalSellOrder = signalOrder;
+                }
+            }
+
+
+            robot.SetSLTP(side, Math.Abs(robot.RobotState.Position), robot.RobotState.OpenPositionPrice, signalOrderId);
         }
 
         private void BtnCloseSignalBuy_Click(object sender, RoutedEventArgs e)
@@ -94,8 +178,8 @@ namespace ShortPeakRobot
             {
                 return;
             }
-            RobotVM.robots[RobotId].CancelOrderByIdAsync(orderId, "Cancel SignalBuy Order");
-            RobotVM.robots[RobotId].RobotState.SignalBuyOrderId = 0;
+            RobotVM.robots[RobotIindex].CancelOrderByIdAsync(orderId, "Cancel SignalBuy Order");
+            RobotVM.robots[RobotIindex].RobotState.SignalBuyOrderId = 0;
 
             TBSignalBuyID.Text = "0";
         }
@@ -107,8 +191,8 @@ namespace ShortPeakRobot
             {
                 return;
             }
-            RobotVM.robots[RobotId].CancelOrderByIdAsync(orderId, "Cancel SignalSell Order");
-            RobotVM.robots[RobotId].RobotState.SignalSellOrderId = 0;
+            RobotVM.robots[RobotIindex].CancelOrderByIdAsync(orderId, "Cancel SignalSell Order");
+            RobotVM.robots[RobotIindex].RobotState.SignalSellOrderId = 0;
 
             TBSignalSellID.Text = "0";
         }
@@ -120,9 +204,9 @@ namespace ShortPeakRobot
             {
                 return;
             }
-            RobotVM.robots[RobotId].CancelOrderByIdAsync(orderId, "Cancel StopLoss Order");
+            RobotVM.robots[RobotIindex].CancelOrderByIdAsync(orderId, "Cancel StopLoss Order");
 
-            RobotVM.robots[RobotId].RobotState.StopLossOrderId = 0;
+            RobotVM.robots[RobotIindex].RobotState.StopLossOrderId = 0;
 
             TBStopLossID.Text = "0";
         }
@@ -134,9 +218,9 @@ namespace ShortPeakRobot
             {
                 return;
             }
-            RobotVM.robots[RobotId].CancelOrderByIdAsync(orderId, "Cancel TakeProfit Order");
+            RobotVM.robots[RobotIindex].CancelOrderByIdAsync(orderId, "Cancel TakeProfit Order");
 
-            RobotVM.robots[RobotId].RobotState.TakeProfitOrderId = 0;
+            RobotVM.robots[RobotIindex].RobotState.TakeProfitOrderId = 0;
 
             TBTakeProfitID.Text = "0";
         }

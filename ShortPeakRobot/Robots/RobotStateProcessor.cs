@@ -408,7 +408,7 @@ namespace ShortPeakRobot.Robots
                 if (cancelResult.Success)
                 {
                     RobotVM.robots[robotIndex].Log(LogType.RobotState, "FilledOneSLPTOrderReaction cansel SLTP order after reconnect");
-                    RobotVM.robots[robotIndex].ResetRobotStateOrders();                   
+                    RobotVM.robots[robotIndex].ResetRobotData();                   
                     RobotVM.robots[robotIndex].RobotState = new();
                 }
                 else
@@ -427,7 +427,7 @@ namespace ShortPeakRobot.Robots
                 if (cancelResult.Success)
                 {
                     RobotVM.robots[robotIndex].Log(LogType.RobotState, "FilledOneSLPTOrderReaction cansel SLTP order after reconnect");
-                    RobotVM.robots[robotIndex].ResetRobotStateOrders();
+                    RobotVM.robots[robotIndex].ResetRobotData();
                     RobotVM.robots[robotIndex].RobotState = new();                   
                 }
                 else

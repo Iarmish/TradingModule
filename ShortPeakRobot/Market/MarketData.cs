@@ -16,10 +16,9 @@ namespace ShortPeakRobot.Market
         public static List<VWAP> VWAPs { get; set; } = new List<VWAP>();
         
         public static MarketInfo Info { get; set; } = new MarketInfo();
-        //public static RobotInfo RobotInfo { get; set; } = new RobotInfo();
-        public static BinanceFuturesAccountBalance BalanceUSDT { get; set; } 
+        
         public static MarketManager MarketManager { get; set; } = new MarketManager();
-        public static LoginResponseData Tokens { get; set; } = new LoginResponseData();
+        
 
 
         public static List<int> LogTypeFilter { get; set; } = new List<int>();

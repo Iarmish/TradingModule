@@ -55,7 +55,7 @@ namespace ShortPeakRobot.Robots
             });
 
 
-            RobotVM.robots[robotIndex].ResetRobotStateOrders();
+            RobotVM.robots[robotIndex].ResetRobotData();
             RobotVM.robots[robotIndex].RobotState.TakeProfitOrderId = 0;
             RobotVM.robots[robotIndex].RobotState.StopLossOrderId = 0;
             RobotVM.robots[robotIndex].RobotState.SignalSellOrderId = 0;
@@ -66,30 +66,24 @@ namespace ShortPeakRobot.Robots
         }
 
 
-        public static RobotState LoadStateAsync(int robotIndex)
-        {
-            var robotId = GetRobotId(robotIndex);
-            lock (RobotVM.robots[robotIndex].Locker)
-            {
-                var state = RobotVM.robots[robotIndex]._context.RobotStates
-                                .Where(x => x.ClientId == RobotsInitialization.ClientId && x.RobotId == robotId).FirstOrDefault();
+        //public async static Task<RobotState> LoadStateAsync(int robotIndex)
+        //{
+        //    var robotId = GetRobotId(robotIndex);
+            
+        //        var stateResponse = await ApiServices.GetRobotStateAsync(robotId);
 
-                if (state != null)
-                {
-                    return state;
-                }
-                else
-                {
-                    state = new RobotState { RobotId = robotId };
-                    RobotVM.robots[robotIndex]._context.RobotStates.Add(state);
-                    RobotVM.robots[robotIndex]._context.SaveChanges();
-
-                    return state;
-                }
-            }
+        //        if (stateResponse.success)
+        //        {
+        //            return stateResponse.state;
+        //        }
+        //        else
+        //        {
+        //            return new RobotState { RobotId = robotId };
+        //        }
+            
 
 
-        }
+        //}
 
         public static void GetRobotDealByOrderId(long orderId, int robotIndex)
         {

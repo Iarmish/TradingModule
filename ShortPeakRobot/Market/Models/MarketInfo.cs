@@ -26,7 +26,7 @@ namespace ShortPeakRobot.Market.Models
 
         public DateTime StartStatisticPeriod { get; set; }
         public DateTime EndStatisticPeriod { get; set; }
-        public bool IsSessionRun { get; set; }
+        
 
 
         public decimal _PeriodProfit { get; set; }

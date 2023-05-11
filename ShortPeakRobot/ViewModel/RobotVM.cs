@@ -1,5 +1,6 @@
 ﻿
 using ShortPeakRobot.Constants;
+using ShortPeakRobot.Market;
 using ShortPeakRobot.Robots;
 using ShortPeakRobot.Robots.Algorithms;
 using System.Collections.ObjectModel;
@@ -15,8 +16,10 @@ namespace ShortPeakRobot.ViewModel
             get; set;
         } = new ObservableCollection<Robot>();
 
-        public RobotVM()
+        public  RobotVM()
         {
+            
+
             int cnt = 0;
             foreach (var robotIni in RobotsInitialization.Robots)
             {
@@ -28,7 +31,7 @@ namespace ShortPeakRobot.ViewModel
                     Symbol = robotIni.Symbol,
                     BaseSettings = new BaseRobotSettings(robotIni.Id),
                     algorithm = new Algorithm(robotIni.AlgorithmName, robotIni.Id, cnt),
-                    AlgorithmName = robotIni.AlgorithmName
+                    AlgorithmName = robotIni.AlgorithmName,                    
                 };
                 Task.Run(() => robot.RunSilentMode());
 

@@ -39,8 +39,8 @@
                                   VerticalAlignment="Top"  />
                         <TextBox x:Name="TBEndStatisticPeriod" Text="01.03.2023"   Padding="5,4"  Width="86" Margin="5,0,5,0"
                                   VerticalAlignment="Top"  />
-                        <Button x:Name="BtnSetSessionDate"  Padding="5,4"  Width="110" 
-                                  VerticalAlignment="Top"  Cursor="Hand" Background="MintCream" Click="BtnSetSessionDate_Click" >Set Session Date</Button>
+                        <Button x:Name="BtnPeriodDate"  Padding="5,4"  Width="110" 
+                                  VerticalAlignment="Top"  Cursor="Hand" Background="MintCream" Click="BtnPeriodDate_Click" >Set Period</Button>
                         <TextBlock x:Name="TBDepo" Text="285"   Padding="5,4"  Width="86" Margin="15,0,5,0"
                                   VerticalAlignment="Top"  />
 
@@ -75,7 +75,7 @@
                                         <StackPanel Margin="0,2,0,0" Visibility="{Binding IsActivated, Converter={StaticResource visibility_res}}"  Cursor="Hand"
                                                     Height="24" Background="{Binding Selected, Converter={StaticResource stackPanelColor_res}}" Orientation="Horizontal"  HorizontalAlignment="Left" >
                                             <TextBlock    Width="0"   Text="{Binding Index}"/>
-                                            <TextBlock Text="{Binding Name}" Padding="5,3,5,0" Width="120" 
+                                            <TextBlock Text="{Binding Name}" Padding="5,3,5,0" Width="120" ToolTip="{Binding Index}"
                                                 Background="{Binding IsRun, Converter={StaticResource state_res}}"  MouseDown="ChangeState" TextAlignment="Center" HorizontalAlignment="Left" />
                                             <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding Symbol}" MouseDown="RobotSelect_MouseDown"/>
                                             <TextBlock Foreground="{Binding Position, Converter={StaticResource numberColor_res}}" MouseDown="RobotSelect_MouseDown"  Padding="5,5,0,0" Width="50"   Text="{Binding Position}"/>
@@ -281,7 +281,7 @@
 
                     <Line X1="370" X2="700" Y1="250" Y2="250" Stroke="#FF8D979C"/>
 
-                    <Grid x:Name="Grid_baseSettings" Margin="0,263,20,0" HorizontalAlignment="Right" Width="391" Height="244" VerticalAlignment="Top">
+                    <Grid x:Name="Grid_baseSettings" Margin="371,263,0,0" Height="244" VerticalAlignment="Top" HorizontalAlignment="Left" Width="391">
 
 
                         <Label Content="SL" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="21,34,0,0"/>
@@ -322,19 +322,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-                    <Button x:Name="LoadSettings" IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin=" 0,0 ,20,20" Padding="3" Click="LoadSettings_Click">Загрузить настройки из файла</Button>
-                    <Button x:Name="SaveSettingsToFile" IsEnabled="False" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin=" 0,0 ,210,20" Padding="3" Click="SaveSettingsToFile_Click">Сохранить настройки в файл</Button>
-
                 </Grid>
             </TabItem>
             <TabItem Header="Сделки">
@@ -369,7 +356,7 @@
                                         <StackPanel Margin="0,2,0,0"  Height="24" Background="WhiteSmoke" Orientation="Horizontal">
                                             <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="10,5,0,0" Width="120" 
                                                    />
-                                            <TextBlock   Padding="10,5,0,0" Width="140"   Text="{Binding OrderId}"/>
+                                            <TextBox   Padding="10,5,0,0" Width="140"   Text="{Binding OrderId}"/>
                                             <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Symbol}"/>
                                             <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Quantity}"/>
                                             <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Price}"/>
@@ -419,7 +406,7 @@
                                         <StackPanel Margin="0,2,0,0"  Height="24" Background="WhiteSmoke" Orientation="Horizontal">
                                             <TextBlock Text="{Binding UpdateTime, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="10,5,0,0" Width="120" 
                                                    />
-                                            <TextBlock   Padding="5,5,0,0" Width="140"   Text="{Binding OrderId}"/>
+                                            <TextBox   Padding="5,5,0,0" Width="140"   Text="{Binding OrderId}"/>
                                             <TextBlock   Padding="5,5,0,0" Width="60"   Text="{Binding Symbol}"/>
                                             <TextBlock   Padding="5,5,0,0" Width="60"   Text="{Binding Quantity}"/>
                                             <TextBlock   Padding="5,5,0,0" Width="60"   Text="{Binding Price}"/>
@@ -466,7 +453,7 @@
                                         <TextBlock Text="{Binding PlacedTime, StringFormat='{}{0:dd.MM HH:mm:ss}'}" Padding="5,3,5,0" Width="100" 
                                                  Margin="0,0,0,0" />
 
-                                        <TextBlock   Padding="10,5,0,0" Width="140"   Text="{Binding OrderId}"/>
+                                        <TextBox  Padding="10,5,0,0" Width="140"   Text="{Binding OrderId}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="60"   Text="{Binding Symbol}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="80"   Text="{Binding StopPrice}"/>
                                         <TextBlock   Padding="10,5,0,0" Width="80"   Text="{Binding Price}"/>
@@ -587,10 +574,10 @@
             </TabItem>
         </TabControl>
         <Grid Background="White" x:Name="StackLogin" Visibility="Visible">
-                    <Label x:Name="LabelClientId"  Content="" Margin="30,10,30,0" Padding="3"/>
+            <Label x:Name="LabelClientId"  Content="" Margin="30,10,30,0" Padding="3"/>
             <Border BorderBrush="Gray" BorderThickness="1"  HorizontalAlignment="Center" VerticalAlignment="Center" Width="500" >
-                <StackPanel Orientation="Vertical"  Background="LightGray" >                   
-                    
+                <StackPanel Orientation="Vertical"  Background="LightGray" >
+
                     <Label Content="Login" Margin="30,10,30,0" Padding="3"/>
                     <TextBox x:Name="TbLogin"  Text="magicom@yandex.ru" Margin="30,10,30,0" Padding="5"/>
                     <Label Content="Password" Margin="30,10,30,0" Padding="3"/>

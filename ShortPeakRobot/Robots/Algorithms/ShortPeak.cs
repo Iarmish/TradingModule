@@ -24,8 +24,7 @@ namespace ShortPeakRobot.Robots.Algorithms
         public int RobotIndex { get; set; }
         public bool NeedChartAnalyse { get; set; }
 
-        private Robot RobotInstance { get; set; }
-
+        
         //----------------------------------------------
         public ShortPeak(int robotId, int robotIndex)
         {
@@ -35,7 +34,7 @@ namespace ShortPeakRobot.Robots.Algorithms
 
         public async void NewTick(RobotCommands command)
         {
-            RobotInstance = RobotVM.robots[RobotIndex];
+            var robot = RobotVM.robots[RobotIndex];
 
             switch (command)
             {
@@ -53,46 +52,41 @@ namespace ShortPeakRobot.Robots.Algorithms
                     break;
             }
 
-            var currentPrice = MarketData.CandleDictionary[RobotInstance.Symbol][RobotInstance.BaseSettings.TimeFrame][^1].ClosePrice;
+            var currentPrice = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1].ClosePrice;
 
-            var carrentCendle = MarketData.CandleDictionary[RobotInstance.Symbol][RobotInstance.BaseSettings.TimeFrame][^1];
+            var carrentCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1];
             //var candles = MarketData.CandleDictionary[Robot.Symbol][Robot.BaseSettings.TimeFrame];
-            var LastCompletedCendle = MarketData.CandleDictionary[RobotInstance.Symbol][RobotInstance.BaseSettings.TimeFrame][^2];
+            var LastCompletedCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^2];
             SetCurrentPrifit(currentPrice);
 
             //Анализ графика
             if (LastCandle.OpenPrice == 0)
             {
-                LastCandle = LastCompletedCendle;
-                var candlesAnalyse = CandlesAnalyse.Required;
+                LastCandle = LastCompletedCendle;               
+               
+                await robot.SetRobotData();
 
-                //проверка состояния предыдущей сессии 
-                RobotInstance.RobotState = RobotServices.LoadStateAsync(RobotIndex);
-                await RobotInstance.SetRobotOrders();
-
-
-                candlesAnalyse = RobotStateProcessor.CheckStateAsync(RobotInstance.RobotState, RobotIndex,
-                    RobotInstance.SignalBuyOrder, RobotInstance.SignalSellOrder, RobotInstance.StopLossOrder, RobotInstance.TakeProfitOrder);
+                CandlesAnalyse candlesAnalyse = RobotStateProcessor.CheckStateAsync(robot.RobotState, RobotIndex,
+                    robot.SignalBuyOrder, robot.SignalSellOrder, robot.StopLossOrder, robot.TakeProfitOrder);
 
 
                 //--------- анализ графика ------------
                 if (candlesAnalyse == CandlesAnalyse.Required)
                 {
-                    RobotInstance.RobotState = new();
-                    await RobotInstance.SetRobotOrders();
+                    robot.RobotState = new();
+                    await robot.SetRobotData();
 
                     ChartAnalyse();
-
                 }
 
                 //------ выставление СЛ ТП после сбоя
 
-                RobotInstance.SetSLTPAfterFail(candlesAnalyse, Math.Abs(RobotInstance.RobotState.Position), RobotInstance.SignalBuyOrder.OrderId, RobotInstance.SignalSellOrder.OrderId);
+                robot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(robot.RobotState.Position), robot.SignalBuyOrder.OrderId, robot.SignalSellOrder.OrderId);
 
 
             }
 
-            if (!RobotInstance.IsReady)
+            if (!robot.IsReady)
             {
                 return;
             }
@@ -100,16 +94,16 @@ namespace ShortPeakRobot.Robots.Algorithms
 
 
             //проверка на разрыв связи 
-            if (LastCandleTime.AddSeconds(RobotInstance.BaseSettings.TimeFrame) < carrentCendle.CloseTime &&
+            if (LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame) < carrentCendle.CloseTime &&
                 LastCandle.OpenPrice != 0)
             {
-                var lostTime = (carrentCendle.CloseTime - LastCandleTime.AddSeconds(RobotInstance.BaseSettings.TimeFrame)).TotalMinutes;
-                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: RobotInstance.RobotState, RobotIndex,
-                    RobotInstance.SignalBuyOrder, RobotInstance.SignalSellOrder, RobotInstance.StopLossOrder, RobotInstance.TakeProfitOrder);
+                var lostTime = (carrentCendle.CloseTime - LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame)).TotalMinutes;
+                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: robot.RobotState, RobotIndex,
+                    robot.SignalBuyOrder, robot.SignalSellOrder, robot.StopLossOrder, robot.TakeProfitOrder);
                 //------ выставление СЛ ТП после сбоя
-                RobotInstance.SetSLTPAfterFail(candlesAnalyse, Math.Abs(RobotInstance.RobotState.Position), RobotInstance.SignalBuyOrder.OrderId, RobotInstance.SignalSellOrder.OrderId);
+                robot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(robot.RobotState.Position), robot.SignalBuyOrder.OrderId, robot.SignalSellOrder.OrderId);
 
-                RobotInstance.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
+                robot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
             }
             LastCandleTime = carrentCendle.CloseTime;
             //-----------
@@ -124,11 +118,11 @@ namespace ShortPeakRobot.Robots.Algorithms
                 NewCandle(LastCandle);
             }
             //----------- анализ графика после закрытия сделки ------------------------------
-            if (!NeedChartAnalyse && RobotInstance.Position != 0)
+            if (!NeedChartAnalyse && robot.Position != 0)
             {
                 NeedChartAnalyse = true;
             }
-            if (NeedChartAnalyse && RobotInstance.Position == 0)
+            if (NeedChartAnalyse && robot.Position == 0)
             {
                 NeedChartAnalyse = false;
                 ChartAnalyse();
@@ -136,49 +130,49 @@ namespace ShortPeakRobot.Robots.Algorithms
 
 
             //---------------- скидываем пики
-            if ((LowPeak.Peak != 0 && RobotInstance.Position != 0) ||
-            (RobotInstance.SignalSellOrder.OrderId != 0 && !RobotInstance.CheckTradingStatus(carrentCendle.OpenTime)))
+            if ((LowPeak.Peak != 0 && robot.Position != 0) ||
+            (robot.SignalSellOrder.OrderId != 0 && !robot.CheckTradingStatus(carrentCendle.OpenTime)))
             {
-                if (RobotInstance.SignalSellOrder.OrderId != 0)//снимаем ордер по сигналу если торговля запрещена 
+                if (robot.SignalSellOrder.OrderId != 0)//снимаем ордер по сигналу если торговля запрещена 
                 {
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
                         RobotIndex = RobotIndex,
-                        Symbol = RobotInstance.Symbol,
+                        Symbol = robot.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
-                        OrderId = RobotInstance.SignalSellOrder.OrderId,
-                        OrderType = RobotInstance.SignalSellOrder.Type
+                        OrderId = robot.SignalSellOrder.OrderId,
+                        OrderType = robot.SignalSellOrder.Type
                     });
-                    RobotInstance.RobotState.SignalSellOrderId = 0;
-                    RobotInstance.SignalSellOrder = new();
+                    robot.RobotState.SignalSellOrderId = 0;
+                    robot.SignalSellOrder = new();
 
                 }
                 LowPeak.Peak = 0;
             }
 
 
-            if ((HighPeak.Peak != 0 && RobotInstance.Position != 0) ||
-                (RobotInstance.SignalBuyOrder.OrderId != 0 && !RobotInstance.CheckTradingStatus(carrentCendle.OpenTime)))
+            if ((HighPeak.Peak != 0 && robot.Position != 0) ||
+                (robot.SignalBuyOrder.OrderId != 0 && !robot.CheckTradingStatus(carrentCendle.OpenTime)))
             {
-                if (RobotInstance.SignalBuyOrder.OrderId != 0)//снимаем ордер по сигналу если торговля запрещена 
+                if (robot.SignalBuyOrder.OrderId != 0)//снимаем ордер по сигналу если торговля запрещена 
                 {
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
                         RobotIndex = RobotIndex,
-                        Symbol = RobotInstance.Symbol,
+                        Symbol = robot.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
-                        OrderId = RobotInstance.SignalBuyOrder.OrderId,
-                        OrderType = RobotInstance.SignalSellOrder.Type
+                        OrderId = robot.SignalBuyOrder.OrderId,
+                        OrderType = robot.SignalSellOrder.Type
                     });
-                    RobotInstance.RobotState.SignalBuyOrderId = 0;
-                    RobotInstance.SignalBuyOrder = new();
+                    robot.RobotState.SignalBuyOrderId = 0;
+                    robot.SignalBuyOrder = new();
 
                 }
                 HighPeak.Peak = 0;
             }
 
             //--------------- ордер по сигналу low peak
-            var signalSellPrice = RobotServices.GetSignalPrice(RobotInstance.BaseSettings.OffsetPercent, LowPeak.Peak,
+            var signalSellPrice = RobotServices.GetSignalPrice(robot.BaseSettings.OffsetPercent, LowPeak.Peak,
                         RobotOrderType.SignalSell, FuturesOrderType.StopMarket);
             
             if (LowPeak.Peak != 0 && currentPrice  > signalSellPrice)
@@ -187,19 +181,19 @@ namespace ShortPeakRobot.Robots.Algorithms
 
                 //LowPeak.Peak + RobotInstance.BaseSettings.OffsetPercent;
                 LowPeak.Peak = 0;//скидываем пики при открытии сделки
-                if (RobotInstance.SignalSellOrder.OrderId != 0)
+                if (robot.SignalSellOrder.OrderId != 0)
                 {
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
                         RobotIndex = RobotIndex,
-                        Symbol = RobotInstance.Symbol,
+                        Symbol = robot.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
-                        OrderId = RobotInstance.SignalSellOrder.OrderId,
-                        OrderType = RobotInstance.SignalSellOrder.Type
+                        OrderId = robot.SignalSellOrder.OrderId,
+                        OrderType = robot.SignalSellOrder.Type
                     });
                 }
-                RobotInstance.RobotState.SignalSellOrderId = 0;
-                RobotInstance.SignalSellOrder = new();
+                robot.RobotState.SignalSellOrderId = 0;
+                robot.SignalSellOrder = new();
 
 
 
@@ -207,10 +201,10 @@ namespace ShortPeakRobot.Robots.Algorithms
                 {
                     RobotIndex = RobotIndex,
                     StartDealOrderId = 0,
-                    Symbol = RobotInstance.Symbol,
+                    Symbol = robot.Symbol,
                     Side = (int)OrderSide.Sell,
                     OrderType = (int)FuturesOrderType.StopMarket,
-                    Quantity = RobotInstance.BaseSettings.Volume,
+                    Quantity = robot.BaseSettings.Volume,
                     Price = 0,
                     StopPrice = signalSellPrice,
                     robotOrderType = RobotOrderType.SignalSell,
@@ -222,36 +216,36 @@ namespace ShortPeakRobot.Robots.Algorithms
             }
 
             //--------------- ордер по сигналу High peak
-            var signalBuyPrice = RobotServices.GetSignalPrice(RobotInstance.BaseSettings.OffsetPercent, HighPeak.Peak,
+            var signalBuyPrice = RobotServices.GetSignalPrice(robot.BaseSettings.OffsetPercent, HighPeak.Peak,
                         RobotOrderType.SignalBuy, FuturesOrderType.StopMarket);
 
             if (HighPeak.Peak != 0 && currentPrice < signalBuyPrice)
             {                
                 HighPeak.Peak = 0;//скидываем пики при открытии сделки
 
-                if (RobotInstance.SignalBuyOrder.OrderId != 0)
+                if (robot.SignalBuyOrder.OrderId != 0)
                 {
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
                         RobotIndex = RobotIndex,
-                        Symbol = RobotInstance.Symbol,
+                        Symbol = robot.Symbol,
                         robotRequestType = RobotRequestType.CancelOrder,
-                        OrderId = RobotInstance.SignalBuyOrder.OrderId,
-                        OrderType = RobotInstance.SignalSellOrder.Type
+                        OrderId = robot.SignalBuyOrder.OrderId,
+                        OrderType = robot.SignalSellOrder.Type
                     });
                 }
-                RobotInstance.RobotState.SignalBuyOrderId = 0;
-                RobotInstance.SignalBuyOrder = new();
+                robot.RobotState.SignalBuyOrderId = 0;
+                robot.SignalBuyOrder = new();
 
 
                 MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                 {
                     RobotIndex = RobotIndex,
                     StartDealOrderId = 0,
-                    Symbol = RobotInstance.Symbol,
+                    Symbol = robot.Symbol,
                     Side = (int)OrderSide.Buy,
                     OrderType = (int)FuturesOrderType.StopMarket,
-                    Quantity = RobotInstance.BaseSettings.Volume,
+                    Quantity = robot.BaseSettings.Volume,
                     Price = 0,
                     StopPrice = signalBuyPrice,
                     robotOrderType = RobotOrderType.SignalBuy,
@@ -269,9 +263,9 @@ namespace ShortPeakRobot.Robots.Algorithms
 
         public void ChartAnalyse()
         {
-            var SpRobot = RobotVM.robots[RobotIndex];
-            var carrentCendle = MarketData.CandleDictionary[SpRobot.Symbol][SpRobot.BaseSettings.TimeFrame][^1];
-            var candles = MarketData.CandleDictionary[SpRobot.Symbol][SpRobot.BaseSettings.TimeFrame];
+            var robot = RobotVM.robots[RobotIndex];
+            var carrentCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1];
+            var candles = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame];
 
             var candlesForCheck = candles.Where(x => x.OpenTime != carrentCendle.OpenTime).ToList();
 
@@ -311,6 +305,7 @@ namespace ShortPeakRobot.Robots.Algorithms
 
         private void NewCandle(Candle candle)
         {
+            var robot = RobotVM.robots[RobotIndex];
             //------------инициализация high1------------
             if (HighPeak.FirstCandle == 0) { HighPeak.FirstCandle = candle.HighPrice; }
             //--------------добавление high2 или обновление high1 ---------------------
@@ -325,7 +320,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             //---------- добавление short hi или обновление high1 high2
             if (HighPeak.FirstCandle != 0 && HighPeak.SecondCandle != 0 && candle.HighPrice < HighPeak.SecondCandle)
             {
-                if (candle.HighPrice - RobotInstance.BaseSettings.OffsetPercent < HighPeak.SecondCandle)
+                if (candle.HighPrice - robot.BaseSettings.OffsetPercent < HighPeak.SecondCandle)
                 {
                     HighPeak.Peak = HighPeak.SecondCandle;
                 }
@@ -353,7 +348,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             //---------- добавление short low или обновление low1 low2
             if (LowPeak.FirstCandle != 0 && LowPeak.SecondCandle != 0 && candle.LowPrice > LowPeak.SecondCandle)
             {
-                if (candle.LowPrice + RobotInstance.BaseSettings.OffsetPercent > LowPeak.SecondCandle)
+                if (candle.LowPrice + robot.BaseSettings.OffsetPercent > LowPeak.SecondCandle)
                 {
                     LowPeak.Peak = LowPeak.SecondCandle;
                 }
@@ -366,9 +361,9 @@ namespace ShortPeakRobot.Robots.Algorithms
                 LowPeak.SecondCandle = candle.LowPrice;
             }
             //------- скидываем pick
-            if (HighPeak.Peak != 0 && candle.HighPrice - RobotInstance.BaseSettings.OffsetPercent >= HighPeak.Peak)
+            if (HighPeak.Peak != 0 && candle.HighPrice - robot.BaseSettings.OffsetPercent >= HighPeak.Peak)
                 HighPeak.Peak = 0;
-            if (LowPeak.Peak != 0 && candle.LowPrice + RobotInstance.BaseSettings.OffsetPercent <= LowPeak.Peak)
+            if (LowPeak.Peak != 0 && candle.LowPrice + robot.BaseSettings.OffsetPercent <= LowPeak.Peak)
                 LowPeak.Peak = 0;
 
             SetRobotInfo();//to UI
@@ -376,21 +371,21 @@ namespace ShortPeakRobot.Robots.Algorithms
 
         private void SetCurrentPrifit(decimal price)
         {
-            RobotInstance = RobotVM.robots[RobotIndex];
+            var robot = RobotVM.robots[RobotIndex];
 
-            if (RobotInstance.Position > 0)
+            if (robot.Position > 0)
             {
-                RobotInstance.Profit = price - RobotInstance.OpenPositionPrice;
+                robot.Profit = price - robot.OpenPositionPrice;
                 return;
             }
 
-            if (RobotInstance.Position < 0)
+            if (robot.Position < 0)
             {
-                RobotInstance.Profit = RobotInstance.OpenPositionPrice - price;
+                robot.Profit = robot.OpenPositionPrice - price;
                 return;
             }
 
-            RobotInstance.Profit = 0;
+            robot.Profit = 0;
         }
 
 

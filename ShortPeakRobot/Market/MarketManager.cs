@@ -21,9 +21,8 @@ using System.Threading.Tasks;
 namespace ShortPeakRobot.Market
 {
     public class MarketManager
-    {
-        public HttpClient httpClient = new HttpClient();
-        public ApplicationDbContext _context { get; set; }
+    {      
+       
         public Dictionary<string, Subscribe> subscribes { get; set; }
         public List<CallResult<UpdateSubscription>> updateSubscriptions { get; set; } = new List<CallResult<UpdateSubscription>>();
 
@@ -42,8 +41,6 @@ namespace ShortPeakRobot.Market
 
         public MarketManager()
         {
-            _context = new ApplicationDbContext();
-
             subscribes = new Dictionary<string, Subscribe>();
 
             foreach (var symbol in SymbolInitialization.list)
@@ -55,9 +52,7 @@ namespace ShortPeakRobot.Market
             Task.Run(() => BinanceFailRequestQueue());
 
             //--
-            httpClient.DefaultRequestHeaders.Accept.Clear();
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            httpClient.BaseAddress = new Uri("http://nero-trade.ai/api/");
+            
         }
 
         private void BinanceFailRequestQueue()
@@ -237,7 +232,7 @@ namespace ShortPeakRobot.Market
                         RobotVM.robots[q.RobotIndex].RobotState.TakeProfitOrderId = RobotVM.robots[q.RobotIndex].TakeProfitOrder.OrderId;
                         break;
                     case RobotOrderType.ClosePosition:
-                        RobotVM.robots[q.RobotIndex].ResetRobotStateOrders();
+                        RobotVM.robots[q.RobotIndex].ResetRobotData();
                         RobotVM.robots[q.RobotIndex].RobotState = new();
                         RobotServices.GetRobotDealByOrderId(order.Data.Id, q.RobotIndex);//формируем сделку откр + закр 
                         break;
@@ -481,20 +476,11 @@ namespace ShortPeakRobot.Market
             }
         }
 
-        public bool CheckRobotsState()
-        {
-            if (RobotVM.robots.Where(x => x.IsRun).Count() > 0)
-            {
-                return true;
-            }
-            return false;
-        }
-
+       
 
 
         public void Log(LogType type, string message)
         {
-
             var log = new RobotLog
             {
                 RobotId = -1,
@@ -504,26 +490,15 @@ namespace ShortPeakRobot.Market
                 Message = message
             };
 
-
-            _context.RobotLogs.Add(log);
-            _context.SaveChangesAsync();
-
-            App.Current.Dispatcher.Invoke(() => LogVM.logs.Add(log));
-
-
+            Task.Run(()=>ApiServices.SaveLog(log));
         }
 
         public void UpdateRobotTrade(RobotTrade trade)
         {
-            
-            _context.RobotTrades.Update(trade);
-            _context.SaveChanges();
+            Task.Run(()=>ApiServices.UpdateTrade(trade));                        
 
             RobotServices.SaveCustomRobotDealByOrderId(trade.StartDealOrderId, trade.OrderId, RobotServices.GetRobotIndex(trade.RobotId));
-
         }
-
-
 
     }
 }
