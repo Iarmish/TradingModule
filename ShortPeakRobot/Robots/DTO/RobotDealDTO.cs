@@ -3,6 +3,8 @@ using Binance.Net.Objects.Models.Futures;
 using CryptoExchange.Net.Objects;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
+using ShortPeakRobot.Market.Models.ApiDataModels;
+using ShortPeakRobot.Robots.Algorithms.Models;
 using ShortPeakRobot.ViewModel;
 using System;
 using System.Collections.Generic;
@@ -112,6 +114,35 @@ namespace ShortPeakRobot.Robots.DTO
                 CloseOrderPrice = deal.CloseOrderPrice,
                 OpenOrderPrice = deal.OpenOrderPrice,
                 
+            };
+        }
+        
+        public static RobotDeal DTO(ApiDealModel deal)
+        {
+            var slip = Math.Abs(deal.open_price - deal.open_order_price) + Math.Abs(deal.close_price - deal.close_order_price);
+
+            DateTime.TryParse(deal.close_time, out DateTime CloseTime);
+            DateTime.TryParse(deal.open_time, out DateTime OpenTime);
+
+            return new RobotDeal
+            {
+                ClientId = deal.client_id,
+                CloseOrderId = deal.close_order_id,
+                CloseOrderPrice = deal.close_order_price,
+                ClosePrice = deal.close_price,
+                CloseTime = CloseTime,
+                Fee = deal.fee,
+                Id = deal.id,
+                OpenOrderId = deal.open_order_id,
+                OpenOrderPrice = deal.open_order_price,
+                OpenPrice = deal.open_price,
+                OpenTime = OpenTime,
+                Quantity = deal.quantity,
+                Result = deal.result,
+                RobotId = deal.robot_id,
+                Side = deal.side,
+                StartDeposit = deal.start_deposit,
+                Symbol = deal.symbol,                
             };
         }
 

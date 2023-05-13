@@ -31,9 +31,13 @@ namespace ShortPeakRobot.Constants
     {
         Required,
         NotRequired,
-        BuySLTP,
-        SellSLTP
+        SLTPCrossed
+    }
 
+    public enum SLTPStatus
+    {
+        Crossed,
+        Valid
     }
 
     public enum RobotCommands

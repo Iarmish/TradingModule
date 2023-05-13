@@ -1,4 +1,5 @@
 ﻿using ShortPeakRobot.Data;
+using ShortPeakRobot.Market.Models.ApiDataModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,6 @@ namespace ShortPeakRobot.Market.Models.ApiModels
     {
         public bool success { get; set; }
         public string message { get; set; }
-        public List<RobotDeal> data { get; set; } = new List<RobotDeal>();
+        public List<ApiDealModel> data { get; set; } = new List<ApiDealModel>();
     }
 }

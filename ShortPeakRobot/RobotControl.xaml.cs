@@ -65,7 +65,7 @@ namespace ShortPeakRobot
 
 
             robot.RobotState.SignalBuyOrderId = signalBuy;
-            robot.RobotState.SignalBuyOrderId = signalSell;
+            robot.RobotState.SignalSellOrderId = signalSell;
 
             robot.RobotState.TakeProfitOrderId = takeProfit;
             robot.RobotState.StopLossOrderId = stopLoss;
@@ -74,6 +74,7 @@ namespace ShortPeakRobot
             robot.Position = robot.RobotState.Position;
 
             robot.RobotState.OpenPositionPrice = positionPrice;
+            robot.OpenPositionPrice = positionPrice;
 
             MessageBox.Show("Изменения сохранены.");
         }
@@ -112,12 +113,8 @@ namespace ShortPeakRobot
 
             robot.RobotState.OpenPositionPrice = positionPrice;
 
+            await robot.SetRobotData();//синхронизируем данные по текущим ордера с биржей
 
-            if (robot.RobotState.Position == 0)
-            {
-                MessageBox.Show("Позиция не открыта!");
-                return;
-            }
 
             long signalOrderId = 0;
             OrderSide side = new();

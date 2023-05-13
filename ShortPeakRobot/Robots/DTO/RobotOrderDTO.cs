@@ -5,6 +5,7 @@ using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
+using ShortPeakRobot.Market.Models.ApiDataModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -134,6 +135,37 @@ namespace ShortPeakRobot.Robots.DTO
                 PlacedTime = order.PlacedTime,
             };
         }
+
+
+
+
+        public static RobotOrder DTO(ApiOrderModel order)
+        {
+            DateTime.TryParse(order.placed_time, out DateTime date);            
+
+            return new RobotOrder
+            {
+                OrderId = order.order_id,
+                ClientId = order.client_id,
+                StartDealOrderId = order.start_deal_order_id,
+                StartDeposit = order.start_deposit,
+                RobotId = order.robot_id,
+                Symbol = order.symbol,
+                Side = order.side,
+                Type = order.type,
+                Quantity = order.quantity,
+                Price = order.price,
+                PriceLastFilledTrade = order.price_last_filled_trade,
+                StopPrice = order.stop_price,
+                Status = order.status,
+                Description = order.description,
+                PlacedTime = date,
+                Id = order.id,
+            };
+        }
+
+
+       
 
         public static List<RobotOrder> OrdersDTO(WebCallResult<IEnumerable<BinanceFuturesOrder>> orders, int robotIndex)
         {

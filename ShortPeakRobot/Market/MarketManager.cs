@@ -21,8 +21,8 @@ using System.Threading.Tasks;
 namespace ShortPeakRobot.Market
 {
     public class MarketManager
-    {      
-       
+    {
+
         public Dictionary<string, Subscribe> subscribes { get; set; }
         public List<CallResult<UpdateSubscription>> updateSubscriptions { get; set; } = new List<CallResult<UpdateSubscription>>();
 
@@ -52,7 +52,7 @@ namespace ShortPeakRobot.Market
             Task.Run(() => BinanceFailRequestQueue());
 
             //--
-            
+
         }
 
         private void BinanceFailRequestQueue()
@@ -310,14 +310,19 @@ namespace ShortPeakRobot.Market
                 data =>
                 {
                     // Handle margin update
-                    
+
                 },
                 data =>
                 {
                     // Handle account balance update, caused by trading
                     foreach (var position in data.Data.UpdateData.Positions)
                     {
-                        SymbolVM.symbols[MarketServices.GetSymbolIndex(position.Symbol)].Position = position.Quantity;
+                        var symbolIndex = MarketServices.GetSymbolIndex(position.Symbol);
+                        if (symbolIndex != -1)
+                        {
+                            SymbolVM.symbols[symbolIndex].Position = position.Quantity;
+                        }
+
                     }
                     var bal = data.Data.UpdateData.Balances.FirstOrDefault();
 
@@ -397,7 +402,7 @@ namespace ShortPeakRobot.Market
                 MarketServices.candleChartDwaw(MarketData.CandleDictionary[robotSymbol][robotIinterval], new List<RobotTrade>(),
                     selectedRobot.BaseSettings.TimeFrame);
 
-               
+
 
                 if (selectedRobot.BaseSettings.SLPercent)
                 {
@@ -418,7 +423,7 @@ namespace ShortPeakRobot.Market
                 {
                     selectedRobot.BaseSettings.TakeProfitPercent = selectedRobot.BaseSettings.TakeProfit;
                 }
-                
+
                 if (selectedRobot.BaseSettings.IsOffsetPercent)
                 {
                     selectedRobot.BaseSettings.OffsetPercent =
@@ -476,7 +481,7 @@ namespace ShortPeakRobot.Market
             }
         }
 
-       
+
 
 
         public void Log(LogType type, string message)
@@ -490,13 +495,12 @@ namespace ShortPeakRobot.Market
                 Message = message
             };
 
-            Task.Run(()=>ApiServices.SaveLog(log));
+            Task.Run(() => ApiServices.SaveLog(log));
         }
 
         public void UpdateRobotTrade(RobotTrade trade)
         {
-            Task.Run(()=>ApiServices.UpdateTrade(trade));                        
-
+            Task.Run(() => ApiServices.UpdateTrade(trade));
             RobotServices.SaveCustomRobotDealByOrderId(trade.StartDealOrderId, trade.OrderId, RobotServices.GetRobotIndex(trade.RobotId));
         }
 

@@ -66,24 +66,15 @@ namespace ShortPeakRobot.Robots
         }
 
 
-        //public async static Task<RobotState> LoadStateAsync(int robotIndex)
-        //{
-        //    var robotId = GetRobotId(robotIndex);
-            
-        //        var stateResponse = await ApiServices.GetRobotStateAsync(robotId);
-
-        //        if (stateResponse.success)
-        //        {
-        //            return stateResponse.state;
-        //        }
-        //        else
-        //        {
-        //            return new RobotState { RobotId = robotId };
-        //        }
-            
-
-
-        //}
+        public static decimal GetSignalPrice(RobotOrder order)
+        {
+            var signalPrice = (decimal)order.StopPrice;
+            if (order.StopPrice == 0)
+            {
+                signalPrice = order.Price;
+            }
+            return signalPrice;
+        }
 
         public static void GetRobotDealByOrderId(long orderId, int robotIndex)
         {

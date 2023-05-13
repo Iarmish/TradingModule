@@ -24,13 +24,20 @@ namespace ShortPeakRobot.Robots
         public string AlgorithmName { get; set; }
 
         public List<RobotLog> RobotLogsQueue { get; set; } = new List<RobotLog>();
+        public List<RobotLog> RobotLogsUnsaved { get; set; } = new List<RobotLog>();
+
         public List<RobotOrder> RobotOrdersQueue { get; set; } = new List<RobotOrder>();
+        public List<RobotOrder> RobotOrdersUnsaved { get; set; } = new List<RobotOrder>();
+
         public List<RobotTrade> RobotTradesQueue { get; set; } = new List<RobotTrade>();
+        public List<RobotTrade> RobotTradesUnsaved { get; set; } = new List<RobotTrade>();
+
         public List<RobotDeal> RobotDealQueue { get; set; } = new List<RobotDeal>();
+        public List<RobotDeal> RobotDealUnsaved { get; set; } = new List<RobotDeal>();
 
 
 
-        private RobotCommands Command { get; set; } = RobotCommands.Nothing;
+        public RobotCommands Command { get; set; } = RobotCommands.Nothing;
 
         public object Locker = new object();
 
@@ -525,17 +532,38 @@ namespace ShortPeakRobot.Robots
 
                 Task.Run(async () =>
                 {
+                    var flagApiError = false;
                     foreach (var trade in RobotTradesTemp)
                     {
                         var response = await ApiServices.SaveTrade(trade);
 
                         if (!response.success)
                         {
-                            await JsonDataServices.SaveRobotTradeAsync(trade);
+                            RobotTradesUnsaved.Add(trade);
+                            flagApiError = true;
                         }
-                        Thread.Sleep(300);
+                        Thread.Sleep(200);
                     }
-                    Thread.Sleep(600);
+                    if (flagApiError) 
+                    { 
+                        await JsonDataServices.SaveRobotTradesAsync(RobotTradesUnsaved); 
+                    }
+                    else
+                    {
+                        var RobotTradesUnsavedTemp = new List<RobotTrade>();
+                        foreach (var trade in RobotTradesUnsaved)
+                        {
+                            var response = await ApiServices.SaveTrade(trade);
+                            if (!response.success)
+                            {
+                                RobotTradesUnsavedTemp.Add(trade);
+                            }
+                            Thread.Sleep(100);
+                        }
+                        RobotTradesUnsaved = RobotTradesUnsavedTemp;
+                        await JsonDataServices.SaveRobotTradesAsync(RobotTradesUnsaved);
+                    }
+                    Thread.Sleep(500);
                     MarketServices.GetRobotMarketData(Index);
 
                 });
@@ -959,29 +987,29 @@ namespace ShortPeakRobot.Robots
             OpenPositionPrice = 0;
         }
 
-        public void SetSLTPAfterFail(CandlesAnalyse candlesAnalyse, decimal volume, long signalBuyOrderId, long signalSellOrderId)
-        {
-            Task.Run(() =>// выставляем СЛ ТП
-            {
-                if (candlesAnalyse == CandlesAnalyse.BuySLTP)
-                {
-                    var signalPrice = (decimal)SignalBuyOrder.StopPrice;
-                    if ((decimal)SignalBuyOrder.StopPrice == 0)
-                    { signalPrice = SignalBuyOrder.Price; }
-                    SetSLTP(OrderSide.Buy, volume, signalPrice, signalBuyOrderId);
+        //public void SetSLTPAfterFail(CandlesAnalyse candlesAnalyse, decimal volume, long signalBuyOrderId, long signalSellOrderId)
+        //{
+        //    Task.Run(() =>// выставляем СЛ ТП
+        //    {
+        //        if (candlesAnalyse == CandlesAnalyse.BuySLTP)
+        //        {
+        //            var signalPrice = (decimal)SignalBuyOrder.StopPrice;
+        //            if ((decimal)SignalBuyOrder.StopPrice == 0)
+        //            { signalPrice = SignalBuyOrder.Price; }
+        //            SetSLTP(OrderSide.Buy, volume, signalPrice, signalBuyOrderId);
 
-                }
+        //        }
 
-                if (candlesAnalyse == CandlesAnalyse.SellSLTP)
-                {
-                    var signalPrice = (decimal)SignalSellOrder.StopPrice;
-                    if ((decimal)SignalSellOrder.StopPrice == 0)
-                    { signalPrice = SignalSellOrder.Price; }
-                    SetSLTP(OrderSide.Sell, volume, signalPrice, signalSellOrderId);
+        //        if (candlesAnalyse == CandlesAnalyse.SellSLTP)
+        //        {
+        //            var signalPrice = (decimal)SignalSellOrder.StopPrice;
+        //            if ((decimal)SignalSellOrder.StopPrice == 0)
+        //            { signalPrice = SignalSellOrder.Price; }
+        //            SetSLTP(OrderSide.Sell, volume, signalPrice, signalSellOrderId);
 
-                }
-            });
-        }
+        //        }
+        //    });
+        //}
 
 
         public bool CheckTradingStatus(DateTime date)
@@ -1003,6 +1031,24 @@ namespace ShortPeakRobot.Robots
             }
 
             return true;
+        }
+
+        public void SetCurrentPrifit(decimal price)
+        {           
+
+            if (Position > 0)
+            {
+                Profit = price - OpenPositionPrice;
+                return;
+            }
+
+            if (Position < 0)
+            {
+                Profit = OpenPositionPrice - price;
+                return;
+            }
+
+            Profit = 0;
         }
 
 

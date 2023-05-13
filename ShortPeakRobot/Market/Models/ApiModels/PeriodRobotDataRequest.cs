@@ -9,7 +9,8 @@ namespace ShortPeakRobot.Market.Models.ApiModels
     public class PeriodRobotDataRequest
     {
         public int robot_id { get; set; }
-        public DateTime start_date { get; set; }
-        public DateTime end_date { get; set; }
+        public string from { get; set; }
+        public string to { get; set; }
+        public int limit { get; set; }
     }
 }

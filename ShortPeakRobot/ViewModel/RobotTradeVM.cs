@@ -25,6 +25,10 @@ namespace ShortPeakRobot.ViewModel
             {
                 orders.ForEach(order => RobotTradeVM.trades.Add(order));
             }
+
+
+
+
         }
     
 }

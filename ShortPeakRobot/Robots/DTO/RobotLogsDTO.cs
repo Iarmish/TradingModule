@@ -1,6 +1,8 @@
 ﻿using Binance.Net.Objects.Models.Futures;
+using CryptoExchange.Net.CommonObjects;
 using CryptoExchange.Net.Objects;
 using ShortPeakRobot.Data;
+using ShortPeakRobot.Market.Models.ApiDataModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +23,21 @@ namespace ShortPeakRobot.Robots.DTO
                 Message = log.Message,
                 RobotId = log.RobotId,
                 Type = log.Type
+            };
+        }
+
+        public static RobotLog DTO(ApiLogModel log)
+        {
+            DateTime.TryParse(log.date, out DateTime date);
+
+            return new RobotLog
+            {
+                Id = log.id,
+                ClientId = log.client_id,
+                Date = date,
+                Message = log.message,
+                RobotId = log.robot_id,
+                Type = log.type
             };
         }
     }

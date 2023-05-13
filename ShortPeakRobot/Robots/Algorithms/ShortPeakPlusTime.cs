@@ -47,7 +47,7 @@ namespace ShortPeakRobot.Robots.Algorithms
         public async void NewTick(RobotCommands command)
         {
             var robot = RobotVM.robots[RobotIndex];
-            SetRobotInfo();
+           
 
             switch (command)
             {
@@ -68,20 +68,22 @@ namespace ShortPeakRobot.Robots.Algorithms
             var currentPrice = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1].ClosePrice;
             var carrentCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1];
             var LastCompletedCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^2];
-            SetCurrentPrifit(currentPrice);
+
+            robot.SetCurrentPrifit(currentPrice);
 
             //Анализ графика
             if (LastCandle.OpenPrice == 0)
             {
                 LastCandle = LastCompletedCendle;
+
+                await robot.SetRobotData();
+
                 var candlesAnalyse = CandlesAnalyse.Required;
 
                
-                await robot.SetRobotData();
 
 
-                candlesAnalyse = RobotStateProcessor.CheckStateAsync(robot.RobotState, RobotIndex,
-                    robot.SignalBuyOrder, robot.SignalSellOrder, robot.StopLossOrder, robot.TakeProfitOrder);
+                candlesAnalyse = RobotStateProcessor.CheckStateAsync(robot.RobotState, RobotIndex);
 
 
                 //--------- анализ графика ------------
@@ -94,10 +96,6 @@ namespace ShortPeakRobot.Robots.Algorithms
 
                 }
 
-                //------ выставление СЛ ТП после сбоя
-
-                robot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(robot.RobotState.Position), robot.SignalBuyOrder.OrderId, robot.SignalSellOrder.OrderId);
-
 
             }
 
@@ -109,14 +107,11 @@ namespace ShortPeakRobot.Robots.Algorithms
 
 
             //проверка на разрыв связи 
-            if (LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame) < carrentCendle.CloseTime &&
+            if (LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame + 10) < carrentCendle.CloseTime &&
                 LastCandle.OpenPrice != 0)
             {
                 var lostTime = (carrentCendle.CloseTime - LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame)).TotalMinutes;
-                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: robot.RobotState, RobotIndex,
-                    robot.SignalBuyOrder, robot.SignalSellOrder, robot.StopLossOrder, robot.TakeProfitOrder);
-                //------ выставление СЛ ТП после сбоя
-                robot.SetSLTPAfterFail(candlesAnalyse, Math.Abs(robot.RobotState.Position), robot.SignalBuyOrder.OrderId, robot.SignalSellOrder.OrderId);
+                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: robot.RobotState, RobotIndex);
 
                 robot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
             }
@@ -377,23 +372,6 @@ namespace ShortPeakRobot.Robots.Algorithms
             }
 
         }
-        private void SetCurrentPrifit(decimal price)
-        {
-            var robot = RobotVM.robots[RobotIndex];
-
-            if (robot.Position > 0)
-            {
-                robot.Profit = price - robot.OpenPositionPrice;
-                return;
-            }
-
-            if (robot.Position < 0)
-            {
-                robot.Profit = robot.OpenPositionPrice - price;
-                return;
-            }
-
-            robot.Profit = 0;
-        }
+        
     }
 }

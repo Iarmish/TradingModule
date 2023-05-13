@@ -6,13 +6,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace ShortPeakRobot.Market
 {
     public static class JsonDataServices
     {
         public static List<RobotOrder> RobotOrders = new List<RobotOrder>();
-        public static List<RobotTrade> RobotTrades = new List<RobotTrade>();
+        //public static List<RobotTrade> RobotTrades = new List<RobotTrade>();
         public static List<RobotDeal> RobotDeals = new List<RobotDeal>();
         public static List<RobotLog> RobotLogs = new List<RobotLog>();
 
@@ -26,28 +27,78 @@ namespace ShortPeakRobot.Market
             {
                 Directory.CreateDirectory("Reserve");
             }
-
-            using (FileStream fs = new FileStream(fileName, FileMode.Create))
+            try
             {
-                await JsonSerializer.SerializeAsync(fs, RobotOrders);
+                using (FileStream fs = new FileStream(fileName, FileMode.Create))
+                {
+                    await JsonSerializer.SerializeAsync(fs, RobotOrders);
+                }
+            }
+            catch (System.Exception error)
+            {
+                MessageBox.Show(error.Message);
             }
 
         }
         //-------Trade -------------
-        public static async Task SaveRobotTradeAsync(RobotTrade trade)
+        public static async Task SaveRobotTradesAsync(List<RobotTrade> trades)
         {
-            RobotTrades.Add(trade);
-            string fileName = "Reserve/RobotTrades.json";
-
-            if (!Directory.Exists("Reserve"))
+            if (trades.Count == 0)
             {
-                Directory.CreateDirectory("Reserve");
+                return;
+            }
+            var robotId = trades[0].RobotId;            
+
+            string fileName = "Reserve/RobotTrades/RobotTrades_"+robotId+".json";
+
+            if (!Directory.Exists("Reserve/RobotTrades"))
+            {
+                Directory.CreateDirectory("Reserve/RobotTrades");
             }
 
-            using (FileStream fs = new FileStream(fileName, FileMode.Create))
+            try
             {
-                await JsonSerializer.SerializeAsync(fs, RobotTrades);
+                using (FileStream fs = new FileStream(fileName, FileMode.Create))
+                {
+                    await JsonSerializer.SerializeAsync(fs, trades);
+                }
+
             }
+            catch (System.Exception error)
+            {
+                MessageBox.Show(error.Message);
+            }
+
+        }
+
+        public static async Task<GetTradesResponse> LoadRobotTradeAsync(int robotIndex)
+        {
+            var robotTradeResponse = new GetTradesResponse();
+
+            var robotId = RobotServices.GetRobotId(robotIndex);            
+
+            var fileName = "Reserve/RobotTrades/RobotTrades_" + robotId + ".json";
+            if (Directory.Exists("Reserve/RobotTrades/") && File.Exists(fileName))
+            {
+                try
+                {
+                    using (FileStream fs = new FileStream(fileName, FileMode.Open))
+                    {
+                        var trades = await JsonSerializer.DeserializeAsync<List<RobotTrade>>(fs);
+
+                        if (trades != null)
+                        {                            
+                            robotTradeResponse.success = true;
+                        }
+                    }
+                }
+                catch (System.Exception error)
+                {
+                    MessageBox.Show(error.Message);
+                }
+            }
+
+            return robotTradeResponse;
 
         }
         //------- Deal -------------
@@ -61,9 +112,16 @@ namespace ShortPeakRobot.Market
                 Directory.CreateDirectory("Reserve");
             }
 
-            using (FileStream fs = new FileStream(fileName, FileMode.Create))
+            try
             {
-                await JsonSerializer.SerializeAsync(fs, RobotDeals);
+                using (FileStream fs = new FileStream(fileName, FileMode.Create))
+                {
+                    await JsonSerializer.SerializeAsync(fs, RobotDeals);
+                }
+            }
+            catch (System.Exception error)
+            {
+                MessageBox.Show(error.Message);
             }
 
         }
@@ -78,9 +136,16 @@ namespace ShortPeakRobot.Market
                 Directory.CreateDirectory("Reserve");
             }
 
-            using (FileStream fs = new FileStream(fileName, FileMode.Create))
+            try
             {
-                await JsonSerializer.SerializeAsync(fs, RobotLogs);
+                using (FileStream fs = new FileStream(fileName, FileMode.Create))
+                {
+                    await JsonSerializer.SerializeAsync(fs, RobotLogs);
+                }
+            }
+            catch (System.Exception error)
+            {
+                MessageBox.Show(error.Message);
             }
 
         }
@@ -95,9 +160,17 @@ namespace ShortPeakRobot.Market
                 Directory.CreateDirectory("Reserve/RobotStates");
             }
 
-            using (FileStream fs = new FileStream(fileName, FileMode.Create))
+            try
             {
-                await JsonSerializer.SerializeAsync(fs, state);
+                using (FileStream fs = new FileStream(fileName, FileMode.Create))
+                {
+                    await JsonSerializer.SerializeAsync(fs, state);
+                }
+
+            }
+            catch (System.Exception error)
+            {
+                MessageBox.Show(error.Message);
             }
 
         }
@@ -112,6 +185,8 @@ namespace ShortPeakRobot.Market
             var fileName = "Reserve/RobotStates/RobotState_" + robotId + ".json";
             if (Directory.Exists("Reserve/RobotStates/") && File.Exists(fileName))
             {
+                try
+                {
                 using (FileStream fs = new FileStream(fileName, FileMode.Open))
                 {
                     var state = await JsonSerializer.DeserializeAsync<RobotState>(fs);
@@ -121,6 +196,11 @@ namespace ShortPeakRobot.Market
                         robotStateResponse.data = state;
                         robotStateResponse.success = true;
                     }
+                }
+                }
+                catch (System.Exception error)
+                {
+                    MessageBox.Show(error.Message);
                 }
             }
 

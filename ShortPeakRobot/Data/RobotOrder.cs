@@ -12,7 +12,7 @@ namespace ShortPeakRobot.Data
         public decimal StartDeposit { get; set; }
         public string Symbol { get; set; }
         public int Side { get; set; }
-        public int Type { get; set; } = -1;
+        public int Type { get; set; } = -1; //FuturesOrderType
         public decimal Quantity { get; set; }
         public decimal Price { get; set; }
         public decimal PriceLastFilledTrade { get; set; }
@@ -21,4 +21,8 @@ namespace ShortPeakRobot.Data
         public string? Description { get; set; }
         public DateTime PlacedTime { get; set; }
     }
+
+
+
+
 }

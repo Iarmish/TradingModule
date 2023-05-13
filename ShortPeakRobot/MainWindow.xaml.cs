@@ -135,6 +135,8 @@ namespace ShortPeakRobot
         private async void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
             LoginResponse loginResponse = await ApiServices.Login(TbLogin.Text, TbPass.Text);
+            BtnLogin.IsEnabled = false;
+
             if (loginResponse.success)
             {
                 ApiServices.SetTokens(loginResponse);
@@ -468,7 +470,7 @@ namespace ShortPeakRobot
 
         }
 
-        private async void RobotSelect_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private  void RobotSelect_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             var stackPanel = (StackPanel)((TextBlock)sender).Parent;
 
@@ -483,6 +485,7 @@ namespace ShortPeakRobot
                 else
                 {
                     robot.Selected = true;
+                    robot.Command = RobotCommands.SetRobotInfo;
                 }
             }
 

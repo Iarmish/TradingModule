@@ -1,4 +1,6 @@
-﻿using ShortPeakRobot.Data;
+﻿using CryptoExchange.Net.CommonObjects;
+using ShortPeakRobot.Data;
+using ShortPeakRobot.Market.Models.ApiDataModels;
 using ShortPeakRobot.Robots.Algorithms.Models;
 using System;
 using System.Collections.Generic;
@@ -35,6 +37,39 @@ namespace ShortPeakRobot.Robots.DTO
                 Side = deal.Side,
                 StartDeposit = deal.StartDeposit,
                 Symbol = deal.Symbol,
+                Slip = slip
+            };
+        }
+
+
+        public static RobotDealModel DTO(ApiDealModel deal)
+        {
+
+
+            var slip = Math.Abs(deal.open_price - deal.open_order_price) + Math.Abs(deal.close_price - deal.close_order_price);
+
+            DateTime.TryParse(deal.close_time, out DateTime CloseTime);
+            DateTime.TryParse(deal.open_time, out DateTime OpenTime);
+
+            return new RobotDealModel
+            {
+                ClientId = deal.client_id,
+                CloseOrderId = deal.close_order_id,
+                CloseOrderPrice = deal.close_order_price,
+                ClosePrice = deal.close_price,
+                CloseTime = CloseTime,
+                Fee = deal.fee,
+                Id = deal.id,
+                OpenOrderId = deal.open_order_id,
+                OpenOrderPrice = deal.open_order_price,
+                OpenPrice = deal.open_price,
+                OpenTime = OpenTime,
+                Quantity = deal.quantity,
+                Result = deal.result,
+                RobotId = deal.robot_id,
+                Side = deal.side,
+                StartDeposit = deal.start_deposit,
+                Symbol = deal.symbol,
                 Slip = slip
             };
         }

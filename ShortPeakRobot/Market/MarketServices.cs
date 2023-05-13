@@ -14,6 +14,7 @@ using CryptoExchange.Net.Objects;
 using Binance.Net.Objects.Models.Futures;
 using Binance.Infrastructure.Constants;
 using ShortPeakRobot.Socket;
+using ShortPeakRobot.Robots.Algorithms.Models;
 
 namespace ShortPeakRobot.Market
 {
@@ -83,6 +84,7 @@ namespace ShortPeakRobot.Market
         public async static void GetRobotMarketData(int robotIndex)
         {
             var robotId = RobotServices.GetRobotId(robotIndex);
+            var robot = RobotVM.robots[robotIndex];
             if (MarketData.Info.SelectedRobotIndex == robotIndex)
             {
                 var robotOrdersRespose = await ApiServices.GetOrders(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
@@ -90,40 +92,58 @@ namespace ShortPeakRobot.Market
                 var robotDealsRespose = await ApiServices.GetDeals(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
                 var robotLogsRespose = await ApiServices.GetLogs(robotId, MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
 
-                if (robotDealsRespose.success)
-                {
-                    MarketData.Info.PeriodRobotProfit = GetDealsProfit(robotDealsRespose.data);
-                }
 
                 GetOpenOrders(robotIndex);
 
 
                 App.Current.Dispatcher.Invoke(() =>
                 {
+                    RobotTradeVM.trades.Clear();
+                    RobotOrderVM.orders.Clear();
+                    RobotDealVM.deals.Clear();
+                    LogVM.logs.Clear();
+
                     if (robotOrdersRespose.success)
                     {
-                        RobotOrderVM.orders.Clear();
-                        RobotOrderVM.AddRange(robotOrdersRespose.data);
+                        var robotOrders = new List<RobotOrder>();
+                        robotOrdersRespose.data.ForEach(order => robotOrders.Add(RobotOrderDTO.DTO(order)));
+                        RobotOrderVM.AddRange(robotOrders);
                     }
 
 
                     if (robotTradesRespose.success)
                     {
-                        RobotTradeVM.trades.Clear();
-                        RobotTradeVM.AddRange(robotTradesRespose.data);
+                        var robotTrades = new List<RobotTrade>();
+                        robotTradesRespose.data.ForEach(trade => robotTrades.Add(RobotTradeDTO.DTO(trade)));
+                        RobotTradeVM.AddRange(robotTrades);
+                    }
+                    else
+                    {
+                        RobotTradeVM.AddRange(robot.RobotTradesUnsaved);
                     }
 
 
                     if (robotDealsRespose.success)
                     {
-                        RobotDealVM.deals.Clear();
-                        RobotDealVM.AddRange(RobotDealModelDTO.DTO(robotDealsRespose.data));
+                        var robotDealsModel = new List<RobotDealModel>();
+                        var robotDeals = new List<RobotDeal>();
+
+                        robotDealsRespose.data.ForEach(deal =>
+                        {
+                            robotDealsModel.Add(RobotDealModelDTO.DTO(deal));
+                            robotDeals.Add(RobotDealDTO.DTO(deal));
+
+                        });
+                        RobotDealVM.AddRange(robotDealsModel);
+
+                        MarketData.Info.PeriodRobotProfit = GetDealsProfit(robotDeals);
                     }
 
                     if (robotLogsRespose.success)
                     {
-                        LogVM.logs.Clear();
-                        LogVM.AddRange(robotLogsRespose.data);
+                        var robotLogs = new List<RobotLog>();
+                        robotLogsRespose.data.ForEach(log =>  robotLogs.Add(RobotLogsDTO.DTO(log)));
+                        LogVM.AddRange(robotLogs);
                     }
                 });
 

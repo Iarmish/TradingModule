@@ -6,6 +6,7 @@ using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
+using ShortPeakRobot.Market.Models.ApiDataModels;
 using ShortPeakRobot.ViewModel;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,7 @@ namespace ShortPeakRobot.Robots.DTO
         {
             return new RobotTrade
             {
+                Id = order.Id,
                 OrderId = order.OrderId,
                 ClientId = order.ClientId,
                 RobotId = order.RobotId,
@@ -37,6 +39,33 @@ namespace ShortPeakRobot.Robots.DTO
                 RealizedPnl = order.RealizedPnl,
                 Timestamp = order.Timestamp,
                 Fee = order.Fee
+            };
+        }
+
+       
+
+
+        public static RobotTrade DTO(ApiTradeModel  trade)
+        {
+            DateTime.TryParse(trade.timestamp, out DateTime date);
+            return new RobotTrade
+            {
+                Id = trade.id,
+                OrderId = trade.order_id,
+                ClientId = trade.client_id,
+                RobotId = trade.robot_id,
+                StartDealOrderId = trade.start_deal_order_id,
+                StartDeposit = trade.start_deposit,
+                Symbol = trade.symbol,
+                Side = trade.side,
+                PositionSide = trade.position_side,
+                Buyer = trade.buyer,
+                Price = trade.price,
+                PriceLastFilledTrade = trade.price_last_filled_trade,
+                Quantity = trade.quantity,
+                RealizedPnl = trade.realized_pnl,
+                Timestamp = date,
+                Fee = trade.fee,
             };
         }
 

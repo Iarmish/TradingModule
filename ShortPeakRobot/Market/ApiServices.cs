@@ -1,5 +1,10 @@
-﻿using ShortPeakRobot.Data;
+﻿using ShortPeakRobot.Constants;
+using ShortPeakRobot.Data;
+using ShortPeakRobot.Market.Models.ApiDataModels;
 using ShortPeakRobot.Market.Models.ApiModels;
+using ShortPeakRobot.Robots;
+using ShortPeakRobot.Robots.DTO;
+using ShortPeakRobot.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -109,7 +114,7 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("save_order.php", order);
+                var response = await httpClient.PostAsJsonAsync("robot_orders/add", new ApiOrderModel(order));
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
                     var refreshToken = await RefreshToken();
@@ -118,7 +123,7 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("save_order.php", order);
+                        response = await httpClient.PostAsJsonAsync("robot_orders/add", new ApiOrderModel(order));
                     }
                     else
                     {
@@ -136,6 +141,7 @@ namespace ShortPeakRobot.Market
 
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
                 responseData = JsonSerializer.Deserialize<SaveDataResponse>(responceString);
+
             }
             catch (Exception)
             {
@@ -155,7 +161,10 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("get_orders.php", new PeriodRobotDataRequest { robot_id = robotId, start_date = startDate, end_date = endDate });
+                var dateFrom = startDate.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");//"2023-05-10T00:00:00.000Z"
+                var dateTo = endDate.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+                var response = await httpClient.PostAsJsonAsync("robot_orders/list", 
+                    new PeriodRobotDataRequest { robot_id = robotId, from = dateFrom, to = dateTo, limit = 200 });
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
@@ -165,7 +174,8 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("get_order.php", new PeriodRobotDataRequest { robot_id = robotId, start_date = startDate, end_date = endDate });
+                        response = await httpClient.PostAsJsonAsync("robot_orders/list", 
+                            new PeriodRobotDataRequest { robot_id = robotId, from = dateFrom, to = dateTo, limit = 200 });
                     }
                     else
                     {
@@ -182,9 +192,14 @@ namespace ShortPeakRobot.Market
                 }
 
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
+                
                 responseData = JsonSerializer.Deserialize<GetOrdersResponse>(responceString);
+                if (responseData.data == null)
+                {
+                    responseData.data = new List<ApiOrderModel>();
+                }
             }
-            catch (Exception)
+            catch (Exception error)
             {
 
             }
@@ -201,7 +216,7 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("save_trade.php", trade);
+                var response = await httpClient.PostAsJsonAsync("robot_trades/add", new ApiTradeModel(trade));
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
@@ -211,7 +226,7 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("save_trade.php", trade);
+                        response = await httpClient.PostAsJsonAsync("robot_trades/add", new ApiTradeModel(trade));
                     }
                     else
                     {
@@ -247,7 +262,9 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("update_trade.php", trade);
+                var apiTrade = new ApiTradeModel(trade);
+                apiTrade.id = trade.Id;
+                var response = await httpClient.PostAsJsonAsync("robot_trades/update", apiTrade);
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
@@ -257,7 +274,7 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("update_trade.php", trade);
+                        response = await httpClient.PostAsJsonAsync("robot_trades/update", apiTrade);
                     }
                     else
                     {
@@ -292,7 +309,10 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("get_trades.php", new PeriodRobotDataRequest { robot_id = robotId, start_date = startDate, end_date = endDate });
+                var dateFrom = startDate.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+                var dateTo = endDate.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+                var response = await httpClient.PostAsJsonAsync("robot_trades/list", 
+                    new PeriodRobotDataRequest { robot_id = robotId, from = dateFrom, to = dateTo , limit = 200 });
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
@@ -302,7 +322,8 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("get_trade.php", new PeriodRobotDataRequest { robot_id = robotId, start_date = startDate, end_date = endDate });
+                        response = await httpClient.PostAsJsonAsync("robot_trades/list",
+                            new PeriodRobotDataRequest { robot_id = robotId, from = dateFrom, to = dateTo , limit = 200 });
                     }
                     else
                     {
@@ -320,6 +341,11 @@ namespace ShortPeakRobot.Market
 
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
                 responseData = JsonSerializer.Deserialize<GetTradesResponse>(responceString);
+
+                if (responseData.data == null)
+                {
+                    responseData.data = new List<ApiTradeModel>();
+                }
             }
             catch (Exception)
             {
@@ -338,7 +364,7 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("save_deal.php", deal);
+                var response = await httpClient.PostAsJsonAsync("robot_deals/add", new ApiDealModel(deal));
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
@@ -348,7 +374,7 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("save_deal.php", deal);
+                        response = await httpClient.PostAsJsonAsync("robot_deals/add", new ApiDealModel(deal));
                     }
                     else
                     {
@@ -384,7 +410,10 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("get_deals.php", new PeriodRobotDataRequest { robot_id = robotId, start_date = startDate, end_date = endDate });
+                var dateFrom = startDate.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+                var dateTo = endDate.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+                var response = await httpClient.PostAsJsonAsync("robot_deals/list", 
+                    new PeriodRobotDataRequest { robot_id = robotId, from = dateFrom, to = dateTo, limit = 200 });
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
@@ -394,7 +423,8 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("get_deal.php", new PeriodRobotDataRequest { robot_id = robotId, start_date = startDate, end_date = endDate });
+                        response = await httpClient.PostAsJsonAsync("robot_deals/list", 
+                            new PeriodRobotDataRequest { robot_id = robotId, from = dateFrom, to = dateTo , limit = 200 });
                     }
                     else
                     {
@@ -412,6 +442,11 @@ namespace ShortPeakRobot.Market
 
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
                 responseData = JsonSerializer.Deserialize<GetDealsResponse>(responceString);
+
+                if (responseData.data == null)
+                {
+                    responseData.data = new List<ApiDealModel>();
+                }
             }
             catch (Exception)
             {
@@ -429,7 +464,7 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("save_log.php", log);
+                var response = await httpClient.PostAsJsonAsync("robot_logs/add", new ApiLogModel(log));
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
@@ -439,7 +474,7 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("save_log.php", log);
+                        response = await httpClient.PostAsJsonAsync("robot_logs/add", new ApiLogModel(log));
                     }
                     else
                     {
@@ -474,7 +509,10 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("get_logs.php", new PeriodRobotDataRequest { robot_id = robotId, start_date = startDate, end_date = endDate });
+                var dateFrom = startDate.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+                var dateTo = endDate.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+                var response = await httpClient.PostAsJsonAsync("robot_logs/list", 
+                    new PeriodRobotDataRequest { robot_id = robotId, from = dateFrom, to = dateTo , limit = 200 });
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
@@ -484,7 +522,8 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("get_logs.php", new PeriodRobotDataRequest { robot_id = robotId, start_date = startDate, end_date = endDate });
+                        response = await httpClient.PostAsJsonAsync("robot_logs/list", 
+                            new PeriodRobotDataRequest { robot_id = robotId, from = dateFrom, to = dateTo , limit = 200 });
                     }
                     else
                     {
@@ -502,6 +541,11 @@ namespace ShortPeakRobot.Market
 
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
                 responseData = JsonSerializer.Deserialize<GetLogsResponse>(responceString);
+
+                if (responseData.data == null)
+                {
+                    responseData.data = new List<ApiLogModel>();
+                }
             }
             catch (Exception)
             {
@@ -594,9 +638,9 @@ namespace ShortPeakRobot.Market
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
                 responseData = JsonSerializer.Deserialize<RobotStateResponse>(responceString);
             }
-            catch (Exception)
+            catch (Exception error)
             {
-
+                RobotVM.robots[RobotServices.GetRobotIndex(robotId)].Log(LogType.Error, error.Message);
             }
 
             return responseData;

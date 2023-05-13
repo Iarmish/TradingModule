@@ -37,7 +37,7 @@ namespace ShortPeakRobot.Robots
                 {
                     _Simbol = value;
                     OnPropertyChanged("Simbol");
-                    RobotVM.robots[RobotServices.GetRobotIndex( RobotId)].Symbol = _Simbol;
+                    RobotVM.robots[RobotServices.GetRobotIndex(RobotId)].Symbol = _Simbol;
                 }
             }
         }
@@ -55,7 +55,7 @@ namespace ShortPeakRobot.Robots
                 }
             }
         }
-        
+
         public decimal _TakeProfit { get; set; }
         public decimal TakeProfit
         {
@@ -70,7 +70,7 @@ namespace ShortPeakRobot.Robots
             }
         }
 
-        
+
         public decimal _StopLossPercent { get; set; }
         public decimal StopLossPercent
         {
@@ -84,7 +84,7 @@ namespace ShortPeakRobot.Robots
                 }
             }
         }
-        
+
         public decimal _TakeProfitPercent { get; set; }
         public decimal TakeProfitPercent
         {
@@ -195,7 +195,7 @@ namespace ShortPeakRobot.Robots
 
         //public decimal CurrentLot { get; set; } 
         //public decimal VariableVolume { get; set; } 
-        public decimal _Volume { get; set; } 
+        public decimal _Volume { get; set; }
         public decimal Volume
         {
             get { return _Volume; }
@@ -208,7 +208,7 @@ namespace ShortPeakRobot.Robots
                 }
             }
         }
-        public decimal _Deposit { get; set; } 
+        public decimal _Deposit { get; set; }
         public decimal Deposit
         {
             get { return _Deposit; }
@@ -222,7 +222,7 @@ namespace ShortPeakRobot.Robots
             }
         }
 
-        public decimal _CurrentDeposit { get; set; } 
+        public decimal _CurrentDeposit { get; set; }
         public decimal CurrentDeposit
         {
             get { return _CurrentDeposit; }
@@ -265,7 +265,7 @@ namespace ShortPeakRobot.Robots
                 }
             }
         }
-        
+
         public bool _TPPercent { get; set; }
         public bool TPPercent
         {
@@ -280,7 +280,7 @@ namespace ShortPeakRobot.Robots
                 }
             }
         }
-         public bool _IsOffsetPercent { get; set; }
+        public bool _IsOffsetPercent { get; set; }
         public bool IsOffsetPercent
         {
             get { return _IsOffsetPercent; }
@@ -296,8 +296,8 @@ namespace ShortPeakRobot.Robots
         }
 
 
-        public decimal Profit { get; set; }
-        
+
+
 
         public BaseRobotSettings(int robotId)
         {
@@ -332,40 +332,46 @@ namespace ShortPeakRobot.Robots
                 Directory.CreateDirectory(robotId.ToString());
             }
 
-
-            using (FileStream fs = new FileStream(fileName, FileMode.Create))
+            try
             {
-                await JsonSerializer.SerializeAsync(fs, baseRobotSettings);
-                //MessageBox.Show("Конфигурация сохранена в файл " + fileName);
-            }
-        }
-
-
-        public async void SaveSettingsToFile(int robotId, BaseRobotSettings baseRobotSettings)
-        {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "Text files(*.json)|*.json|All files(*.*)|*.*";
-
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                string fileName = saveFileDialog.FileName;
-
-                if (!Directory.Exists(robotId.ToString()))
-                {
-                    Directory.CreateDirectory(robotId.ToString());
-                }
-
-
                 using (FileStream fs = new FileStream(fileName, FileMode.Create))
                 {
                     await JsonSerializer.SerializeAsync(fs, baseRobotSettings);
-                    //MessageBox.Show("Конфигурация сохранена в файл " + fileName);
                 }
             }
-           
-
+            catch (Exception error)
+            {
+                MessageBox.Show(error.Message);
+            }
 
         }
+
+
+        //public async void SaveSettingsToFile(int robotId, BaseRobotSettings baseRobotSettings)
+        //{
+        //    SaveFileDialog saveFileDialog = new SaveFileDialog();
+        //    saveFileDialog.Filter = "Text files(*.json)|*.json|All files(*.*)|*.*";
+
+        //    if (saveFileDialog.ShowDialog() == true)
+        //    {
+        //        string fileName = saveFileDialog.FileName;
+
+        //        if (!Directory.Exists(robotId.ToString()))
+        //        {
+        //            Directory.CreateDirectory(robotId.ToString());
+        //        }
+
+
+        //        using (FileStream fs = new FileStream(fileName, FileMode.Create))
+        //        {
+        //            await JsonSerializer.SerializeAsync(fs, baseRobotSettings);
+        //            //MessageBox.Show("Конфигурация сохранена в файл " + fileName);
+        //        }
+        //    }
+
+
+
+        //}
 
         public async void LoadSettings(int robotIndex)
         {
@@ -373,53 +379,61 @@ namespace ShortPeakRobot.Robots
             var fileName = robotId + "/" + robotId + ".json";
             if (Directory.Exists(robotId.ToString()) && File.Exists(fileName))
             {
-                using (FileStream fs = new FileStream(fileName, FileMode.Open))
+                try
                 {
-                    var settings = await JsonSerializer.DeserializeAsync<BaseRobotSettings>(fs);
-
-                    if (settings != null)
+                    using (FileStream fs = new FileStream(fileName, FileMode.Open))
                     {
-                        RobotVM.robots[robotIndex].BaseSettings = settings;
-                        RobotVM.robots[robotIndex].IsActivated = settings.IsActivated;
-                    }
-                }
-            }
-        }
+                        var settings = await JsonSerializer.DeserializeAsync<BaseRobotSettings>(fs);
 
-        public async void LoadSettingsFromFile(int robotIndex)
-        {
-            var robotId = RobotServices.GetRobotId(robotIndex);
-            OpenFileDialog dialog = new OpenFileDialog()
-            {
-                CheckFileExists = false,
-                CheckPathExists = true,
-                Multiselect = false,
-                Title = "Выберите файл"
-            };
-            if (dialog.ShowDialog() == true)
-            {
-                using (FileStream fs = new FileStream(dialog.FileName, FileMode.Open))
-                {
-
-
-                    var settings = await JsonSerializer.DeserializeAsync<BaseRobotSettings>(fs);
-
-                    if (settings != null)
-                    {
-                        if (settings.RobotId != robotId)
+                        if (settings != null)
                         {
-                            MessageBox.Show("Id робота не соответствует загружаемым настройкам");
-                            return;
+                            RobotVM.robots[robotIndex].BaseSettings = settings;
+                            RobotVM.robots[robotIndex].IsActivated = settings.IsActivated;
                         }
-                        RobotVM.robots[robotIndex].BaseSettings = settings;
-                        DataProcessor.SetCellsVM(robotIndex);
                     }
-
                 }
+                catch (Exception error)
+                {
+                    MessageBox.Show(error.Message);
+                }
+
             }
-
-
         }
+
+        //public async void LoadSettingsFromFile(int robotIndex)
+        //{
+        //    var robotId = RobotServices.GetRobotId(robotIndex);
+        //    OpenFileDialog dialog = new OpenFileDialog()
+        //    {
+        //        CheckFileExists = false,
+        //        CheckPathExists = true,
+        //        Multiselect = false,
+        //        Title = "Выберите файл"
+        //    };
+        //    if (dialog.ShowDialog() == true)
+        //    {
+        //        using (FileStream fs = new FileStream(dialog.FileName, FileMode.Open))
+        //        {
+
+
+        //            var settings = await JsonSerializer.DeserializeAsync<BaseRobotSettings>(fs);
+
+        //            if (settings != null)
+        //            {
+        //                if (settings.RobotId != robotId)
+        //                {
+        //                    MessageBox.Show("Id робота не соответствует загружаемым настройкам");
+        //                    return;
+        //                }
+        //                RobotVM.robots[robotIndex].BaseSettings = settings;
+        //                DataProcessor.SetCellsVM(robotIndex);
+        //            }
+
+        //        }
+        //    }
+
+
+        //}
 
     }
 }
