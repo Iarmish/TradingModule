@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CryptoExchange.Net.CommonObjects;
+using System.Reflection.Metadata;
 
 namespace ShortPeakRobot.Robots.Algorithms
 {
@@ -63,7 +64,6 @@ namespace ShortPeakRobot.Robots.Algorithms
             }
 
             var currentPrice = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1].ClosePrice;
-
             var carrentCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1];
             var candles = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame];
             var LastCompletedCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^2];
@@ -81,9 +81,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             if (LastCandle.OpenPrice == 0)
             {
                 LastCandle = LastCompletedCendle;
-                LastTime = currentTime;
-
-                              
+                LastTime = currentTime;                              
                  
                 await robot.SetRobotData();
 
@@ -96,14 +94,12 @@ namespace ShortPeakRobot.Robots.Algorithms
                     await robot.SetRobotData();
 
                     PeaksAnalyse(candles);
-
                 }
                 if (candlesAnalyse == CandlesAnalyse.SLTPCrossed)
                 {
                     robot.Log(LogType.Error, " Пересечение СЛ или ТП во время отсутствия связи!");
                     RobotServices.ForceStopRobotAsync(RobotIndex);
                 }
-
 
                 //-------------                
                 robot.IsReady = true;
@@ -114,7 +110,6 @@ namespace ShortPeakRobot.Robots.Algorithms
                 return;
             }
 
-
             //проверка на разрыв связи             
             if (LastTime.AddSeconds(30) < currentTime)
             {                
@@ -122,12 +117,10 @@ namespace ShortPeakRobot.Robots.Algorithms
                 LastCandle = new();
 
                 var lostTime = (currentTime - LastTime.AddSeconds(30)).TotalSeconds;
-                robot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");                
-
+                robot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
             }
-
-            LastTime = currentTime;            
-
+            LastTime = currentTime;
+            //-----------------------
             if (LastCandle.CloseTime < LastCompletedCendle.CloseTime)//новая свечка
             {
                 LastCandle = LastCompletedCendle;
@@ -139,18 +132,12 @@ namespace ShortPeakRobot.Robots.Algorithms
                     PeaksAnalyse(candles);
                 }
 
-            }
-
-            //------------------- Проверка на выход за пределы СЛ ТП
-            //Task.Run(() => HLRobot.CheckSLTPCross(currentPrice));
-
-
+            }            
             //----------- анализ графика после закрытия сделки ------------------------------
             if (!NeedPeaksAnalyse && robot.Position != 0)
             {
                 NeedPeaksAnalyse = true;
             }
-
             if (NeedPeaksAnalyse && robot.Position == 0)
             {
                 NeedPeaksAnalyse = false;
@@ -216,6 +203,8 @@ namespace ShortPeakRobot.Robots.Algorithms
 
         }
 
+
+       
         private void GetCurrenLowPeak(decimal offset)
         {
 
@@ -367,9 +356,7 @@ namespace ShortPeakRobot.Robots.Algorithms
 
         private void PeaksAnalyse(List<Candle> candles)
         {
-            var robot = RobotVM.robots[RobotIndex];
-
-            CancelSignalOrders();
+            var robot = RobotVM.robots[RobotIndex];            
             //----------------
 
             for (int i = HLDaysCount + 1; i > 1; i--)

@@ -67,7 +67,7 @@ namespace ShortPeakRobot.Constants
 
 
         //public static int ClientId = 1;
-        public static int ClientId = 3;
+        //public static int ClientId = 3;
         //public static int ClientId = 4;
     }
 }

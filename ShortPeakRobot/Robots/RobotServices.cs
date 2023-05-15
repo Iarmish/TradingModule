@@ -189,7 +189,7 @@ namespace ShortPeakRobot.Robots
             var index = GetRobotIndex(deal.RobotId);
             lock (RobotVM.robots[index].Locker)
             {
-                RobotVM.robots[index].RobotDealQueue.Add(deal);
+                RobotVM.robots[index].RobotDealsQueue.Add(deal);
             }
 
         }

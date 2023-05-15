@@ -35,6 +35,8 @@ namespace ShortPeakRobot.ViewModel
                 };
                 Task.Run(() => robot.RunSilentMode());
 
+                
+
                 robots.Add(robot);
                 cnt++;
             }

@@ -3,6 +3,7 @@ using Binance.Net.Objects.Models.Futures;
 using CryptoExchange.Net.Objects;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
+using ShortPeakRobot.Market;
 using ShortPeakRobot.Market.Models.ApiDataModels;
 using ShortPeakRobot.Robots.Algorithms.Models;
 using ShortPeakRobot.ViewModel;
@@ -71,7 +72,7 @@ namespace ShortPeakRobot.Robots.DTO
 
             return new RobotDeal
             {
-                ClientId = RobotsInitialization.ClientId,
+                ClientId = MarketData.Info.ClientId,
                 RobotId = robotId,
                 OpenOrderId = openOrder.Data.Id,
                 CloseOrderId = closeOrder.Data.Id,

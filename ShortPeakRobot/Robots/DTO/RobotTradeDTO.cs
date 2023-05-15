@@ -6,6 +6,7 @@ using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
+using ShortPeakRobot.Market;
 using ShortPeakRobot.Market.Models.ApiDataModels;
 using ShortPeakRobot.ViewModel;
 using System;
@@ -80,7 +81,7 @@ namespace ShortPeakRobot.Robots.DTO
             return new RobotTrade
             {
                 OrderId = data.Data.UpdateData.OrderId,
-                ClientId = RobotsInitialization.ClientId,
+                ClientId = MarketData.Info.ClientId,
                 RobotId = robotId,
                 StartDealOrderId= startDealOrderId,
                 Symbol = data.Data.UpdateData.Symbol,

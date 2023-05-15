@@ -1,4 +1,5 @@
 ﻿using ShortPeakRobot.Constants;
+using ShortPeakRobot.Market;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace ShortPeakRobot.Data
     {
         public int Id { get; set; }
         public int RobotId { get; set; }
-        public int ClientId { get; set; } = RobotsInitialization.ClientId;
+        public int ClientId { get; set; } = MarketData.Info.ClientId;
         public decimal Position { get; set; }
         public decimal OpenPositionPrice { get; set; }
         public long SignalBuyOrderId { get; set; }

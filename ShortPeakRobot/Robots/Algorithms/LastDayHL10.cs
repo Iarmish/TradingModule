@@ -15,7 +15,7 @@ namespace ShortPeakRobot.Robots.Algorithms
     public class LastDayHL10
     {
         public Candle LastCandle { get; set; } = new Candle();
-        public DateTime LastCandleTime { get; set; } = DateTime.UtcNow;
+        public DateTime LastTime { get; set; } = DateTime.UtcNow;
         public int RobotId { get; set; }
         public int RobotIndex { get; set; }
 
@@ -47,6 +47,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 case RobotCommands.Nothing:
                     break;
                 case RobotCommands.SetRobotInfo:
+                    SetRobotInfo();
                     break;
                 case RobotCommands.CloseRobotPosition:
                     //CloseRobotPositionAsync();
@@ -59,22 +60,28 @@ namespace ShortPeakRobot.Robots.Algorithms
             }
 
             var currentPrice = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1].ClosePrice;
-
             var carrentCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1];
             var candles = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame];
             var LastCompletedCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^2];
+
+            if (candles.Count == 0)
+            {
+                return;
+            }
+
+            var currentTime = DateTime.UtcNow;
+
             SetCurrentPrifit(currentPrice);
 
             //Анализ графика
             if (LastCandle.OpenPrice == 0)
             {
                 LastCandle = LastCompletedCendle;
-                var candlesAnalyse = CandlesAnalyse.Required;
-               
+                LastTime = currentTime;
+
                 await robot.SetRobotData();
 
-
-                candlesAnalyse = RobotStateProcessor.CheckStateAsync(robot.RobotState, RobotIndex);
+                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(robot.RobotState, RobotIndex);
 
                 //--------- анализ графика ------------
                 if (candlesAnalyse == CandlesAnalyse.Required)
@@ -83,12 +90,15 @@ namespace ShortPeakRobot.Robots.Algorithms
                     await robot.SetRobotData();
 
                     PeaksAnalyse(candles);
-
+                }
+                if (candlesAnalyse == CandlesAnalyse.SLTPCrossed)
+                {
+                    robot.Log(LogType.Error, " Пересечение СЛ или ТП во время отсутствия связи!");
+                    RobotServices.ForceStopRobotAsync(RobotIndex);
                 }
 
-               
-
                 //-------------                
+                robot.IsReady = true;
 
             }
 
@@ -97,25 +107,19 @@ namespace ShortPeakRobot.Robots.Algorithms
                 return;
             }
 
-
-            //проверка на разрыв связи 
-            if (LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame) < carrentCendle.CloseTime &&
-                LastCandle.OpenPrice != 0)
+            //проверка на разрыв связи             
+            if (LastTime.AddSeconds(30) < currentTime)
             {
-                var lostTime = (carrentCendle.CloseTime - LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame)).TotalMinutes;
-                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: robot.RobotState, RobotIndex);
-                //------ выставление СЛ ТП после сбоя
-               
+                robot.IsReady = false;
+                LastCandle = new();
 
+                var lostTime = (currentTime - LastTime.AddSeconds(30)).TotalSeconds;
                 robot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
-            }
-            LastCandleTime = carrentCendle.CloseTime;
 
-            if (LastCandle.OpenPrice == 0)
-            {
-                LastCandle = LastCompletedCendle;
             }
+            LastTime = currentTime;
 
+            //-----------------------
             if (LastCandle.CloseTime < LastCompletedCendle.CloseTime)//новая свечка
             {
                 LastCandle = LastCompletedCendle;
@@ -128,10 +132,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 }
 
             }
-
-            //------------------- Проверка на выход за пределы СЛ ТП
-            //Task.Run(() => HLRobot.CheckSLTPCross(currentPrice));
-
+           
 
             //----------- анализ графика после закрытия сделки ------------------------------
             if (!NeedPeaksAnalyse && robot.Position != 0)
@@ -350,6 +351,7 @@ namespace ShortPeakRobot.Robots.Algorithms
         }
 
 
+        
 
         private void PeaksAnalyse(List<Candle> candles)
         {

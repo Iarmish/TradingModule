@@ -25,7 +25,7 @@ namespace ShortPeakRobot.Robots.Algorithms
 
 
         public Candle LastCandle { get; set; } = new Candle();
-        public DateTime LastCandleTime { get; set; } = DateTime.UtcNow;
+        public DateTime LastTime { get; set; } = DateTime.UtcNow;
         public int RobotId { get; set; }
         public int RobotIndex { get; set; }
 
@@ -66,6 +66,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 case RobotCommands.Nothing:
                     break;
                 case RobotCommands.SetRobotInfo:
+                    SetRobotInfo();
                     break;
                 case RobotCommands.ResetCandleAnalyse:
                     LastCandle = new();
@@ -77,67 +78,75 @@ namespace ShortPeakRobot.Robots.Algorithms
             var currentPrice = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1].ClosePrice;
 
             var carrentCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1];
-            //var candles = MarketData.CandleDictionary[VwapRobot.Symbol][VwapRobot.BaseSettings.TimeFrame];
+            var candles = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame];
             var LastCompletedCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^2];
 
             SetCurrentPrifit(currentPrice);
+
+            if (candles.Count == 0)
+            {
+                return;
+            }
+
+            var currentTime = DateTime.UtcNow;
+
+
             //Анализ графика
             if (LastCandle.OpenPrice == 0)
             {
                 LastCandle = LastCompletedCendle;
+                LastTime = currentTime;
 
                 vwap = new VWAP();
                 MarketData.VWAPs.Clear();
+                IsSignalSellOrderPlaced = false;
+                IsSignalBuyOrderPlaced = false;
 
                 await GetVWAPCandles();
                 CalculateVWAP();
                 Take_status();
-                SetRobotInfo();
-
-                var candlesAnalyse = CandlesAnalyse.Required;
-
+                SetRobotInfo();                
                 
                 await robot.SetRobotData();//из robotState
 
+                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(robot.RobotState, RobotIndex);
 
-                candlesAnalyse = RobotStateProcessor.CheckStateAsync(robot.RobotState, RobotIndex);
+                if (candlesAnalyse == CandlesAnalyse.SLTPCrossed)
+                {
+                    robot.Log(LogType.Error, " Пересечение СЛ или ТП во время отсутствия связи!");
+                    RobotServices.ForceStopRobotAsync(RobotIndex);
+                }
 
-                //--------- анализ графика ------------
-                //if (candlesAnalyse == CandlesAnalyse.Required)
-                //{
-                //    robot.RobotState = new();
-                //    await robot.SetRobotData();
-                //}
-
-                //-------------              
+                //-------------                
+                robot.IsReady = true;
 
             }
-
+           
 
             if (!robot.IsReady)
             {
                 return;
             }
+
+            if (VWAPcandles.Count == 0)
+            {
+                return;
+            }
             //-------------------------------------------
             //проверка на разрыв связи 
-            if (LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame) < carrentCendle.CloseTime &&
-                LastCandle.OpenPrice != 0)
+            if (LastTime.AddSeconds(30) < currentTime)
             {
-                var lostTime = (carrentCendle.CloseTime - LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame)).TotalMinutes;
-                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: robot.RobotState, RobotIndex);
+                robot.IsReady = false;
+                LastCandle = new();
 
+                var lostTime = (currentTime - LastTime.AddSeconds(30)).TotalSeconds;
                 robot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
-            }
-            LastCandleTime = carrentCendle.CloseTime;
-            //-----------------------
-            if (LastCandle.OpenPrice == 0)
-            {
-                LastCandle = LastCompletedCendle;
-            }
 
+            }
+            LastTime = currentTime;
+            //-----------------------            
             if (LastCandle.CloseTime < LastCompletedCendle.CloseTime)//новая свечка
             {
-
                 if (LastCandle.CloseTime.Day != LastCompletedCendle.CloseTime.Day)//новый день - сброс vwap
                 {
                     Thread.Sleep(500);
@@ -155,12 +164,9 @@ namespace ShortPeakRobot.Robots.Algorithms
                     NewCandle(LastCompletedCendle);
                 }
 
-
                 LastCandle = LastCompletedCendle;
-
             }
-            //------------------- Проверка на выход за пределы СЛ ТП
-            //Task.Run(() => VwapRobot.CheckSLTPCross(currentPrice));
+           
             //==============  пересечение vwap =======================================================
             if (VWAPStatus == -1 && currentPrice < VWAPcandles[^1].VWAP)
             {
@@ -377,6 +383,8 @@ namespace ShortPeakRobot.Robots.Algorithms
         public void Take_status()
         {
             var robot = RobotVM.robots[RobotIndex];
+            DayHighPrice = 0;
+            DayLowPrice = 0;
 
             int candleCnt = 1;
             foreach (CandleVWAP candle in VWAPcandles)
@@ -429,11 +437,12 @@ namespace ShortPeakRobot.Robots.Algorithms
         private async Task GetVWAPCandles()
         {
             var robot = RobotVM.robots[RobotIndex];
+            var carrentCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1];
             var result = await BinanceApi.client.UsdFuturesApi.ExchangeData.GetKlinesAsync(robot.Symbol,
                 (KlineInterval)robot.BaseSettings.TimeFrame,
                 limit: 1440);
             //startTime: startDate, endTime: DateTime.UtcNow);
-            VWAPcandles = result.Data.Where(x=> x.OpenTime.Day == DateTime.UtcNow.Day)
+            VWAPcandles = result.Data.Where(x=> x.OpenTime.Day == carrentCendle.CloseTime.Day)
                 .Select(x => new CandleVWAP
             {
                 OpenPrice = x.OpenPrice,
@@ -449,7 +458,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             VWAPcandles.RemoveAt(VWAPcandles.Count - 1);//удаляем незакрытую свечу
         }
 
-        private decimal CalculateCandleVWAP(CandleVWAP candle)
+        private decimal CalculateCandleVWAP(CandleVWAP candle)//new candle
         {
             decimal candleVWAP = 0;
 
@@ -467,7 +476,7 @@ namespace ShortPeakRobot.Robots.Algorithms
 
             return candleVWAP;
         }
-        private void CalculateVWAP()
+        private void CalculateVWAP()//chart analyse
         {
 
 
@@ -478,9 +487,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 {
                     continue;
                 }
-                VWAPcandles[i].VWAP = CalculateCandleVWAP(VWAPcandles[i]);
-
-                //MarketData.VWAPs.Add(new VWAP { Date = VWAPcandles[i].OpenTime, Volume = VWAPcandles[i].VWAP });
+                VWAPcandles[i].VWAP = CalculateCandleVWAP(VWAPcandles[i]);                
             }
         }
 

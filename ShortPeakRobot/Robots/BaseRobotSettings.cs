@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using ShortPeakRobot.Market;
 using ShortPeakRobot.ViewModel;
 using System;
 using System.Collections.Generic;
@@ -341,7 +342,8 @@ namespace ShortPeakRobot.Robots
             }
             catch (Exception error)
             {
-                MessageBox.Show(error.Message);
+                MarketData.Info.Message += error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
         }
@@ -394,7 +396,8 @@ namespace ShortPeakRobot.Robots
                 }
                 catch (Exception error)
                 {
-                    MessageBox.Show(error.Message);
+                    MarketData.Info.Message += error.Message + "\n";
+                    MarketData.Info.IsMessageActive = true;
                 }
 
             }

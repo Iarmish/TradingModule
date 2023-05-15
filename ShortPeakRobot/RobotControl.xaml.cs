@@ -1,4 +1,5 @@
 ﻿using Binance.Net.Enums;
+using CryptoExchange.Net.Objects;
 using ShortPeakRobot.Market;
 using ShortPeakRobot.Robots;
 using ShortPeakRobot.ViewModel;
@@ -103,7 +104,7 @@ namespace ShortPeakRobot
 
 
             robot.RobotState.SignalBuyOrderId = signalBuy;
-            robot.RobotState.SignalBuyOrderId = signalSell;
+            robot.RobotState.SignalSellOrderId = signalSell;
 
             robot.RobotState.TakeProfitOrderId = takeProfit;
             robot.RobotState.StopLossOrderId = stopLoss;
@@ -149,7 +150,9 @@ namespace ShortPeakRobot
             //-----
             if (signalOrder.OrderId == 0)
             {
-                MessageBox.Show("Не найден ордер id" + signalOrder.OrderId);
+                MarketData.Info.Message += "Не найден ордер id" + signalOrder.OrderId + "\n";
+                MarketData.Info.IsMessageActive = true;
+               
                 return;
             }
             else

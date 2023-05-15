@@ -26,8 +26,8 @@ namespace ShortPeakRobot.Robots.Algorithms
 
         //private bool IsReady { get; set; }
 
-        public Candle LastCandle { get; set; } = new Candle();
-        public DateTime LastCandleTime { get; set; } = DateTime.UtcNow;
+        public Candle LastCandle { get; set; } = new Candle();        
+        public DateTime LastTime { get; set; } = DateTime.UtcNow;
         public int RobotId { get; set; }
         public int RobotIndex { get; set; }
         public bool NeedChartAnalyse { get; set; }
@@ -54,6 +54,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 case RobotCommands.Nothing:
                     break;
                 case RobotCommands.SetRobotInfo:
+                    SetRobotInfo();
                     break;
                 case RobotCommands.CloseRobotPosition:
                     //CloseRobotPositionAsync();
@@ -67,7 +68,15 @@ namespace ShortPeakRobot.Robots.Algorithms
 
             var currentPrice = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1].ClosePrice;
             var carrentCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1];
+            var candles = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame];
             var LastCompletedCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^2];
+
+            if (candles.Count == 0)
+            {
+                return;
+            }
+
+            var currentTime = DateTime.UtcNow;
 
             robot.SetCurrentPrifit(currentPrice);
 
@@ -75,16 +84,11 @@ namespace ShortPeakRobot.Robots.Algorithms
             if (LastCandle.OpenPrice == 0)
             {
                 LastCandle = LastCompletedCendle;
+                LastTime = currentTime;
 
-                await robot.SetRobotData();
+                await robot.SetRobotData();                
 
-                var candlesAnalyse = CandlesAnalyse.Required;
-
-               
-
-
-                candlesAnalyse = RobotStateProcessor.CheckStateAsync(robot.RobotState, RobotIndex);
-
+                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(robot.RobotState, RobotIndex);
 
                 //--------- анализ графика ------------
                 if (candlesAnalyse == CandlesAnalyse.Required)
@@ -93,10 +97,16 @@ namespace ShortPeakRobot.Robots.Algorithms
                     await robot.SetRobotData();
 
                     ChartAnalyse();
-
+                }
+                if (candlesAnalyse == CandlesAnalyse.SLTPCrossed)
+                {
+                    robot.Log(LogType.Error, " Пересечение СЛ или ТП во время отсутствия связи!");
+                    RobotServices.ForceStopRobotAsync(RobotIndex);
                 }
 
 
+                //-------------                
+                robot.IsReady = true;
             }
 
             if (!robot.IsReady)
@@ -106,22 +116,18 @@ namespace ShortPeakRobot.Robots.Algorithms
 
 
 
-            //проверка на разрыв связи 
-            if (LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame + 10) < carrentCendle.CloseTime &&
-                LastCandle.OpenPrice != 0)
+            //проверка на разрыв связи             
+            if (LastTime.AddSeconds(30) < currentTime)
             {
-                var lostTime = (carrentCendle.CloseTime - LastCandleTime.AddSeconds(robot.BaseSettings.TimeFrame)).TotalMinutes;
-                var candlesAnalyse = RobotStateProcessor.CheckStateAsync(state: robot.RobotState, RobotIndex);
+                robot.IsReady = false;
+                LastCandle = new();
 
+                var lostTime = (currentTime - LastTime.AddSeconds(30)).TotalSeconds;
                 robot.Log(LogType.RobotState, "отсутствие связи с сервером " + lostTime + " мин");
-            }
-            LastCandleTime = carrentCendle.CloseTime;
-            //-----------
-            if (LastCandle.OpenPrice == 0)
-            {
-                LastCandle = LastCompletedCendle;
-            }
 
+            }
+            LastTime = currentTime;
+            //-----------           
             if (LastCandle.CloseTime < LastCompletedCendle.CloseTime)//новая свечка
             {
                 LastCandle = LastCompletedCendle;
@@ -217,6 +223,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             }
 
         }
+
 
 
         public void ChartAnalyse()

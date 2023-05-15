@@ -1,5 +1,6 @@
 ﻿using Binance.Net.Enums;
 using Binance.Net.Objects.Models.Futures.Socket;
+using CryptoExchange.Net.CommonObjects;
 using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.API;
 using ShortPeakRobot.Constants;
@@ -32,8 +33,8 @@ namespace ShortPeakRobot.Robots
         public List<RobotTrade> RobotTradesQueue { get; set; } = new List<RobotTrade>();
         public List<RobotTrade> RobotTradesUnsaved { get; set; } = new List<RobotTrade>();
 
-        public List<RobotDeal> RobotDealQueue { get; set; } = new List<RobotDeal>();
-        public List<RobotDeal> RobotDealUnsaved { get; set; } = new List<RobotDeal>();
+        public List<RobotDeal> RobotDealsQueue { get; set; } = new List<RobotDeal>();
+        public List<RobotDeal> RobotDealsUnsaved { get; set; } = new List<RobotDeal>();
 
 
 
@@ -464,20 +465,41 @@ namespace ShortPeakRobot.Robots
 
                 Task.Run(async () =>
                 {
+                    var flagApiError = false;
                     foreach (var log in RobotLogsTemp)
                     {
                         var response = await ApiServices.SaveLog(log);
 
                         if (!response.success)
                         {
-                            await JsonDataServices.SaveRobotLogAsync(log);
+                            RobotLogsUnsaved.Add(log);
+                            flagApiError = true;
                         }
-                        Thread.Sleep(300);
+                        Thread.Sleep(200);
                     }
+                    if (flagApiError)
+                    {
+                        await JsonDataServices.SaveRobotLogsAsync(Id, RobotLogsUnsaved);
+                    }
+                    else
+                    {
+                        var RobotLogsUnsavedTemp = new List<RobotLog>();
+                        foreach (var log in RobotLogsUnsaved)
+                        {
+                            var response = await ApiServices.SaveLog(log);
+                            if (!response.success)
+                            {
+                                RobotLogsUnsavedTemp.Add(log);
+                            }
+                            Thread.Sleep(100);
+                        }
+                        RobotLogsUnsaved = RobotLogsUnsavedTemp;
+                        await JsonDataServices.SaveRobotLogsAsync(Id, RobotLogsUnsaved);
+                    }
+                    Thread.Sleep(500);
+                    MarketServices.GetRobotMarketData(Index);
 
                 });
-
-
 
             }
 
@@ -496,6 +518,7 @@ namespace ShortPeakRobot.Robots
                     RobotOrdersQueue.Clear();
                 }
 
+                var flagApiError = false;
                 Task.Run(async () =>
                 {
                     foreach (var order in RobotOrdersTemp)
@@ -504,18 +527,38 @@ namespace ShortPeakRobot.Robots
 
                         if (!response.success)
                         {
-                            await JsonDataServices.SaveRobotOrderAsync(order);
+                            RobotOrdersUnsaved.Add(order);
+                            flagApiError = true;                            
                         }
-                        Thread.Sleep(300);
+                        Thread.Sleep(200);
                     }
-                    Thread.Sleep(600);
+                    if (flagApiError)
+                    {
+                        await JsonDataServices.SaveRobotOrdersAsync(Id, RobotOrdersUnsaved);
+                    }
+                    else
+                    {
+                        var RobotOrdersUnsavedTemp = new List<RobotOrder>();
+                        foreach (var order in RobotOrdersUnsaved)
+                        {
+                            var response = await ApiServices.SaveOrder(order);
+                            if (!response.success)
+                            {
+                                RobotOrdersUnsavedTemp.Add(order);
+                            }
+                            Thread.Sleep(100);
+                        }
+                        RobotOrdersUnsaved = RobotOrdersUnsavedTemp;
+                        await JsonDataServices.SaveRobotOrdersAsync(Id, RobotOrdersUnsaved);
+                    }
+                    Thread.Sleep(500);
                     MarketServices.GetRobotMarketData(Index);
                 });
 
 
             }
 
-
+            //-----------------------------------------------------
             if (RobotTradesQueue.Count > 0)
             {
                 var RobotTradesTemp = new List<RobotTrade>();
@@ -546,7 +589,7 @@ namespace ShortPeakRobot.Robots
                     }
                     if (flagApiError) 
                     { 
-                        await JsonDataServices.SaveRobotTradesAsync(RobotTradesUnsaved); 
+                        await JsonDataServices.SaveRobotTradesAsync(Id, RobotTradesUnsaved); 
                     }
                     else
                     {
@@ -561,7 +604,7 @@ namespace ShortPeakRobot.Robots
                             Thread.Sleep(100);
                         }
                         RobotTradesUnsaved = RobotTradesUnsavedTemp;
-                        await JsonDataServices.SaveRobotTradesAsync(RobotTradesUnsaved);
+                        await JsonDataServices.SaveRobotTradesAsync(Id, RobotTradesUnsaved);
                     }
                     Thread.Sleep(500);
                     MarketServices.GetRobotMarketData(Index);
@@ -570,33 +613,54 @@ namespace ShortPeakRobot.Robots
             }
 
 
-            if (RobotDealQueue.Count > 0)
+            if (RobotDealsQueue.Count > 0)
             {
                 var RobotDealsTemp = new List<RobotDeal>();
 
                 lock (Locker)
                 {
-                    foreach (var deal in RobotDealQueue)
+                    foreach (var deal in RobotDealsQueue)
                     {
                         RobotDealsTemp.Add(RobotDealDTO.DTO(deal));
                     }
 
-                    RobotDealQueue.Clear();
+                    RobotDealsQueue.Clear();
                 }
 
                 Task.Run(async () =>
                 {
+                    var flagApiError = false;
                     foreach (var deal in RobotDealsTemp)
                     {
                         var response = await ApiServices.SaveDeal(deal);
 
                         if (!response.success)
                         {
-                            await JsonDataServices.SaveRobotDealAsync(deal);
+                            RobotDealsUnsaved.Add(deal);
+                            flagApiError = true;
                         }
-                        Thread.Sleep(300);
+                        Thread.Sleep(200);
                     }
-                    Thread.Sleep(600);
+                    if (flagApiError)
+                    {
+                        await JsonDataServices.SaveRobotDealsAsync(Id, RobotDealsUnsaved);
+                    }
+                    else
+                    {
+                        var RobotDealsUnsavedTemp = new List<RobotDeal>();
+                        foreach (var deal in RobotDealsUnsaved)
+                        {
+                            var response = await ApiServices.SaveDeal(deal);
+                            if (!response.success)
+                            {
+                                RobotDealsUnsavedTemp.Add(deal);
+                            }
+                            Thread.Sleep(100);
+                        }
+                        RobotDealsUnsaved = RobotDealsUnsavedTemp;
+                        await JsonDataServices.SaveRobotDealsAsync(Id, RobotDealsUnsaved);
+                    }
+                    Thread.Sleep(500);
                     MarketServices.GetRobotMarketData(Index);
 
                 });
@@ -692,7 +756,7 @@ namespace ShortPeakRobot.Robots
             var log = new RobotLog
             {
                 RobotId = Id,
-                ClientId = RobotsInitialization.ClientId,
+                ClientId = MarketData.Info.ClientId,
                 Date = DateTime.UtcNow,
                 Type = (int)type,
                 Message = message
@@ -1050,6 +1114,8 @@ namespace ShortPeakRobot.Robots
 
             Profit = 0;
         }
+
+        
 
 
     }

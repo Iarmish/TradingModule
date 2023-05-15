@@ -12,9 +12,11 @@ using ShortPeakRobot.Socket;
 using ShortPeakRobot.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -489,7 +491,7 @@ namespace ShortPeakRobot.Market
             var log = new RobotLog
             {
                 RobotId = -1,
-                ClientId = RobotsInitialization.ClientId,
+                ClientId = MarketData.Info.ClientId,
                 Date = DateTime.UtcNow,
                 Type = (int)type,
                 Message = message
@@ -503,6 +505,9 @@ namespace ShortPeakRobot.Market
             Task.Run(() => ApiServices.UpdateTrade(trade));
             RobotServices.SaveCustomRobotDealByOrderId(trade.StartDealOrderId, trade.OrderId, RobotServices.GetRobotIndex(trade.RobotId));
         }
+
+
+        
 
     }
 }

@@ -73,9 +73,38 @@ namespace ShortPeakRobot.Market.Models
                 }
             }
         }
+        
+        private string _Message { get; set; }
+        public string Message
+        {
+            get { return _Message; }
+            set
+            {
+                if (_Message != value)
+                {
+                    _Message = value;
+                    OnPropertyChanged("Message");
+                }
+            }
+        }
+
+        private bool _IsMessageActive { get; set; } = false;
+        public bool IsMessageActive
+        {
+            get { return _IsMessageActive; }
+            set
+            {
+                if (_IsMessageActive != value)
+                {
+                    _IsMessageActive = value;
+                    OnPropertyChanged("IsMessageActive");
+                }
+            }
+        }
 
         public int SelectedRobotIndex { get; set; }
         public decimal Deposit { get; set; }
+        public int ClientId { get; set; }
         
        
     }

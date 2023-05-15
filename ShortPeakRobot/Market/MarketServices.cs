@@ -15,6 +15,8 @@ using Binance.Net.Objects.Models.Futures;
 using Binance.Infrastructure.Constants;
 using ShortPeakRobot.Socket;
 using ShortPeakRobot.Robots.Algorithms.Models;
+using System.IO;
+using System.Security.Cryptography;
 
 namespace ShortPeakRobot.Market
 {
@@ -142,7 +144,7 @@ namespace ShortPeakRobot.Market
                     if (robotLogsRespose.success)
                     {
                         var robotLogs = new List<RobotLog>();
-                        robotLogsRespose.data.ForEach(log =>  robotLogs.Add(RobotLogsDTO.DTO(log)));
+                        robotLogsRespose.data.ForEach(log => robotLogs.Add(RobotLogsDTO.DTO(log)));
                         LogVM.AddRange(robotLogs);
                     }
                 });
@@ -220,7 +222,7 @@ namespace ShortPeakRobot.Market
             lock (Locker)
             {
                 robotOrders = _context.RobotOrders
-                   .Where(x => x.PlacedTime >= startDate && x.PlacedTime <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
+                   .Where(x => x.PlacedTime >= startDate && x.PlacedTime <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == MarketData.Info.ClientId)
                    .OrderBy(x => x.PlacedTime).AsEnumerable().TakeLast(100).ToList();
 
                 //robotOrders = robotOrders.TakeLast(100).ToList();
@@ -234,7 +236,7 @@ namespace ShortPeakRobot.Market
             lock (Locker)
             {
                 robotDeals = _context.RobotDeals
-                   .Where(x => x.CloseTime >= startDate && x.CloseTime <= endDate.AddDays(1) && x.ClientId == RobotsInitialization.ClientId).ToList();
+                   .Where(x => x.CloseTime >= startDate && x.CloseTime <= endDate.AddDays(1) && x.ClientId == MarketData.Info.ClientId).ToList();
 
             }
 
@@ -248,7 +250,7 @@ namespace ShortPeakRobot.Market
             lock (Locker)
             {
                 robotTrades = _context.RobotTrades
-                   .Where(x => x.Timestamp > startDate && x.ClientId == RobotsInitialization.ClientId)
+                   .Where(x => x.Timestamp > startDate && x.ClientId == MarketData.Info.ClientId)
                    .ToList();
 
             }
@@ -266,7 +268,7 @@ namespace ShortPeakRobot.Market
             lock (Locker)
             {
                 robotTrades = _context.RobotTrades
-                   .Where(x => x.Timestamp >= startDate && x.Timestamp <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
+                   .Where(x => x.Timestamp >= startDate && x.Timestamp <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == MarketData.Info.ClientId)
                    .OrderBy(x => x.Timestamp).AsEnumerable().TakeLast(100).ToList();
             }
 
@@ -278,7 +280,7 @@ namespace ShortPeakRobot.Market
             lock (Locker)
             {
                 robotDeals = _context.RobotDeals
-                   .Where(x => x.CloseTime >= startDate && x.CloseTime <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == RobotsInitialization.ClientId)
+                   .Where(x => x.CloseTime >= startDate && x.CloseTime <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == MarketData.Info.ClientId)
                    .OrderBy(x => x.OpenTime).AsEnumerable().TakeLast(200).ToList();
             }
 
@@ -295,7 +297,7 @@ namespace ShortPeakRobot.Market
                 lock (Locker)
                 {
                     var orders = _context.RobotOrders
-                        .Where(x => x.ClientId == RobotsInitialization.ClientId && x.RobotId == robotId && x.PlacedTime >= startDate);
+                        .Where(x => x.ClientId == MarketData.Info.ClientId && x.RobotId == robotId && x.PlacedTime >= startDate);
                     ids = orders.Select(x => x.OrderId).Distinct().ToList();
                 }
             }
@@ -404,6 +406,65 @@ namespace ShortPeakRobot.Market
         {
             MarketData.MarketManager.ActivateUserDataStream();
             MarketData.MarketManager.ActivateSubscribe();
+        }
+
+
+        public static byte[] EncryptStringToBytes(string plainText, byte[] key, byte[] iv)
+        {
+            byte[] encrypted;
+
+            // Create an Aes object with the specified key and IV.
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.IV = iv;
+
+                // Create a new MemoryStream object to contain the encrypted bytes.
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    // Create a CryptoStream object to perform the encryption.
+                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                    {
+                        // Encrypt the plaintext.
+                        using (StreamWriter streamWriter = new StreamWriter(cryptoStream))
+                        {
+                            streamWriter.Write(plainText);
+                        }
+
+                        encrypted = memoryStream.ToArray();
+                    }
+                }
+            }
+
+            return encrypted;
+        }
+
+        public static string DecryptStringFromBytes(byte[] cipherText, byte[] key, byte[] iv)
+        {
+            string decrypted;
+
+            // Create an Aes object with the specified key and IV.
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.IV = iv;
+
+                // Create a new MemoryStream object to contain the decrypted bytes.
+                using (MemoryStream memoryStream = new MemoryStream(cipherText))
+                {
+                    // Create a CryptoStream object to perform the decryption.
+                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateDecryptor(), CryptoStreamMode.Read))
+                    {
+                        // Decrypt the ciphertext.
+                        using (StreamReader streamReader = new StreamReader(cryptoStream))
+                        {
+                            decrypted = streamReader.ReadToEnd();
+                        }
+                    }
+                }
+            }
+
+            return decrypted;
         }
     }
 }

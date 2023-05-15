@@ -23,6 +23,8 @@ using System.Globalization;
 using Symbol = ShortPeakRobot.Market.Models.Symbol;
 using ShortPeakRobot.Market.Models.ApiModels;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ShortPeakRobot
 {
@@ -43,8 +45,8 @@ namespace ShortPeakRobot
 
             chartData = new ChartData();
 
-            BinanceApi.SetKeys("VY75xh1L9t0Ac5ICLtEkjGcH5qyW99RuwkqLouK0qdnGfm3YZCxUVJfGPapPPJ4T",
-                "ihEt9zyZgJzzNAxqXIFYtbNy5FdlwNWYXrWDmNDAQdHX7oomVnbLMtIJfxkLYYqE");
+            //BinanceApi.SetKeys("VY75xh1L9t0Ac5ICLtEkjGcH5qyW99RuwkqLouK0qdnGfm3YZCxUVJfGPapPPJ4T",
+            //    "ihEt9zyZgJzzNAxqXIFYtbNy5FdlwNWYXrWDmNDAQdHX7oomVnbLMtIJfxkLYYqE");
 
             //invest
             //BinanceApi.SetKeys("RIYpUuLyDlmxIyQhXx1YzBGl69GeURpIerPN70waLRn5O8kqTRGvvVwYRaygDYBt",
@@ -84,16 +86,8 @@ namespace ShortPeakRobot
 
         private async void testAction_Click(object sender, RoutedEventArgs e)
         {
-
-            var testResponse = await ApiServices.Test();
-            if (testResponse.success)
-            {
-                MessageBox.Show(testResponse.data.user_id.ToString());
-            }
-            else
-            {
-                MessageBox.Show(testResponse.message);
-            }
+            MarketData.Info.Message += "dfgsdfg \n";
+            MarketData.Info.IsMessageActive = true;
 
 
 
@@ -140,18 +134,33 @@ namespace ShortPeakRobot
             if (loginResponse.success)
             {
                 ApiServices.SetTokens(loginResponse);
+                MarketData.Info.ClientId = loginResponse.data.client_id;
                 RunApp();
                 StackLogin.Visibility = Visibility.Collapsed;
             }
             else
             {
-                MessageBox.Show(loginResponse.message);
+                MarketData.Info.Message += "Ошибка авторизации" + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
         }
 
         private async void RunApp()
         {
+            var apiKey = ini.GetPrivateString("apiKey", "value");
+            var apiSecret = ini.GetPrivateString("apiSecret", "value");
+            BinanceApi.SetKeys(apiKey, apiSecret);
+
+            CbSymbol.ItemsSource = SymbolInitialization.list;
+            CbTradeSymbol.ItemsSource = SymbolInitialization.list;
+            CbOrderSymbol.ItemsSource = SymbolInitialization.list;
+            CbTF.ItemsSource = TimeFrameInitialization.list;
+            StackInfo.DataContext = MarketData.Info;
+            GridMessage.DataContext = MarketData.Info;
+            StackRobotProfit.DataContext = MarketData.Info;
+            StackRobotProfit2.DataContext = MarketData.Info;
+
             TBDepo.Text = ini.GetPrivateString("deposit", "value");
             MarketData.Info.Deposit = (int)decimal.Parse(TBDepo.Text.Replace(',', '.'), CultureInfo.InvariantCulture);
 
@@ -178,8 +187,7 @@ namespace ShortPeakRobot
 
             MarketServices.GetSessioProfit();
             MarketServices.GetPeriodProfit();
-            //------------
-
+            //------- Инициализация роботов  -----
             foreach (var robot in RobotVM.robots)//добавление id роботов в алгоритмы роботов
             {
                 robot.BaseSettings.LoadSettings(robot.Index);
@@ -193,9 +201,12 @@ namespace ShortPeakRobot
                     //обработать
                     robot.RobotState = new RobotState { RobotId = robot.Id };
                 }
-
-
-                
+                //-----не сохраненные в в базу данные
+                robot.RobotTradesUnsaved = await JsonDataServices.LoadRobotTradesAsync(robot.Id);
+                robot.RobotOrdersUnsaved = await JsonDataServices.LoadRobotOrdersAsync(robot.Id);
+                robot.RobotDealsUnsaved = await JsonDataServices.LoadRobotDealsAsync(robot.Id);
+                robot.RobotLogsUnsaved = await JsonDataServices.LoadRobotLogsAsync(robot.Id);
+                //-----
                 await robot.SetRobotData();
             }
 
@@ -218,13 +229,7 @@ namespace ShortPeakRobot
                 }
             }
 
-            CbSymbol.ItemsSource = SymbolInitialization.list;
-            CbTradeSymbol.ItemsSource = SymbolInitialization.list;
-            CbOrderSymbol.ItemsSource = SymbolInitialization.list;
-            CbTF.ItemsSource = TimeFrameInitialization.list;
-            StackInfo.DataContext = MarketData.Info;
-            StackRobotProfit.DataContext = MarketData.Info;
-            StackRobotProfit2.DataContext = MarketData.Info;
+
 
             //подписка на получение данных с биржы
             MarketData.MarketManager.ActivateSubscribe();
@@ -255,15 +260,61 @@ namespace ShortPeakRobot
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            LabelClientId.Content = RobotsInitialization.ClientId;
 
             ApiServices.httpClient.DefaultRequestHeaders.Accept.Clear();
             ApiServices.httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             ApiServices.httpClient.BaseAddress = new Uri("https://api.nero-trade.ai/");
 
+            var login = ini.GetPrivateString("login", "value");
+            var password = ini.GetPrivateString("password", "value");
+
+            TbLogin.Text = login;
+            TbPass.Text = password;
+
+
+
+            //string original = "secret message";
+            //byte[] encrypted;
+            //string decrypted;
+
+            //var key = GetKey("keyd");
+            //var four = GetIV("fourd");
+
+
+            //using (Aes aes = Aes.Create())
+            //{
+                
+            //    // Encrypt the string
+            //    encrypted = MarketServices.EncryptStringToBytes(original, key, four);
+            //    Console.WriteLine("Encrypted: {0}", Convert.ToBase64String(encrypted));
+
+               
+            //}
+           
+
+            //using (Aes aes = Aes.Create())
+            //{
+
+
+            //    // Decrypt the bytes
+            //    decrypted = MarketServices.DecryptStringFromBytes(encrypted, key, four);
+            //    Console.WriteLine("Decrypted: {0}", decrypted);
+            //}
+
             
         }
 
+
+        private static byte[] GetIV(string ivSecret)
+        {
+            using MD5 md5 = MD5.Create();
+            return md5.ComputeHash(Encoding.UTF8.GetBytes(ivSecret));
+        }
+        private static byte[] GetKey(string key)
+        {
+            using SHA256 sha256 = SHA256.Create();
+            return sha256.ComputeHash(Encoding.UTF8.GetBytes(key));
+        }
 
         private void DayMonthState(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -326,15 +377,18 @@ namespace ShortPeakRobot
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            foreach (var robot in RobotVM.robots)
+            if (MarketData.Info.ClientId != 0)
             {
-                robot.BaseSettings.SaveSettings(robot.Id, robot.BaseSettings);
+                foreach (var robot in RobotVM.robots)
+                {
+                    robot.BaseSettings.SaveSettings(robot.Id, robot.BaseSettings);
+                }
+                ini.WritePrivateString("startStatisticPeriod", "value", TBStartStatisticPeriod.Text);
+                ini.WritePrivateString("endStatisticPeriod", "value", TBEndStatisticPeriod.Text);
             }
             //
             BinanceSocket.client.UnsubscribeAllAsync();
 
-            ini.WritePrivateString("startStatisticPeriod", "value", TBStartStatisticPeriod.Text);
-            ini.WritePrivateString("endStatisticPeriod", "value", TBEndStatisticPeriod.Text);
 
             if (MessageBox.Show("Подтвердите закрытие программы", "Binance Robot", MessageBoxButton.YesNo, MessageBoxImage.Question).ToString() == "No")
             {
@@ -470,7 +524,7 @@ namespace ShortPeakRobot
 
         }
 
-        private  void RobotSelect_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void RobotSelect_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             var stackPanel = (StackPanel)((TextBlock)sender).Parent;
 
@@ -620,7 +674,7 @@ namespace ShortPeakRobot
             string symbol = ((TextBlock)stack.Children[0]).Text;
             if (MessageBox.Show("Подтвердите аварийное снятие всех ордеров на " + symbol, "Binance Robot", MessageBoxButton.YesNo, MessageBoxImage.Question).ToString() == "Yes")
             {
-                 BinanceApi.client.UsdFuturesApi.Trading.CancelAllOrdersAsync(symbol);
+                BinanceApi.client.UsdFuturesApi.Trading.CancelAllOrdersAsync(symbol);
             }
         }
 
@@ -733,6 +787,16 @@ namespace ShortPeakRobot
             MarketServices.GetPeriodProfit();
 
             MarketServices.GetBalanceUSDTAsync();
+        }
+
+        private void BtnCloseMessage_Click(object sender, RoutedEventArgs e)
+        {
+            MarketData.Info.IsMessageActive = false;
+        }
+
+        private void BtnClearMessage_Click(object sender, RoutedEventArgs e)
+        {
+            MarketData.Info.Message = string.Empty;
         }
     }
 }

@@ -5,6 +5,7 @@ using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
+using ShortPeakRobot.Market;
 using ShortPeakRobot.Market.Models.ApiDataModels;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,7 @@ namespace ShortPeakRobot.Robots.DTO
             return new RobotOrder
             {
                 OrderId = data.Data.UpdateData.OrderId,
-                ClientId = RobotsInitialization.ClientId,
+                ClientId = MarketData.Info.ClientId,
                 RobotId = robotId,
                 StartDealOrderId = startDealOrderId,
                 StopPrice = data.Data.UpdateData.StopPrice,
@@ -61,7 +62,7 @@ namespace ShortPeakRobot.Robots.DTO
             return new RobotOrder
             {
                 OrderId = order.Data.Id,
-                ClientId = RobotsInitialization.ClientId,
+                ClientId = MarketData.Info.ClientId,
                 StartDealOrderId = startDealOrderId,
                 RobotId = robotId,
                 StopPrice = order.Data.StopPrice,
@@ -80,7 +81,7 @@ namespace ShortPeakRobot.Robots.DTO
             return new RobotOrder
             {
                 OrderId = order.Data.Id,
-                ClientId = RobotsInitialization.ClientId,
+                ClientId = MarketData.Info.ClientId,
                 RobotId = robotId,
                 StopPrice = order.Data.StopPrice,
                 Quantity = order.Data.Quantity,
@@ -98,7 +99,7 @@ namespace ShortPeakRobot.Robots.DTO
             return new RobotOrder
             {
                 OrderId = order.Data.Id,
-                ClientId = RobotsInitialization.ClientId,
+                ClientId = MarketData.Info.ClientId,
                 RobotId = robotId,
                 StartDealOrderId = startDealOrderId,
                 StopPrice = order.Data.StopPrice,
@@ -185,7 +186,7 @@ namespace ShortPeakRobot.Robots.DTO
                         robotOrders.Add(new RobotOrder
                         {
                             OrderId = order.Id,
-                            ClientId = RobotsInitialization.ClientId,
+                            ClientId = MarketData.Info.ClientId,
                             RobotId = -1,
                             Symbol = order.Symbol,
                             Side = (int)order.Side,
