@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace ShortPeakRobot.Market.Models.ApiModels
 {
-    public class LoginRequest
+    public class StateRequest
     {
-        public string login { get; set; }
-        public string password { get; set; }
-        public string app_instance_key { get; set; }
+        public int robot_id { get; set; }
     }
 }

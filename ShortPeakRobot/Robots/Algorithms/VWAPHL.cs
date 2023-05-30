@@ -81,7 +81,7 @@ namespace ShortPeakRobot.Robots.Algorithms
             var candles = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame];
             var LastCompletedCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^2];
 
-            SetCurrentPrifit(currentPrice);
+            robot.SetCurrentPrifit(currentPrice);
 
             if (candles.Count == 0)
             {
@@ -128,10 +128,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 return;
             }
 
-            if (VWAPcandles.Count == 0)
-            {
-                return;
-            }
+            
             //-------------------------------------------
             //проверка на разрыв связи 
             if (LastTime.AddSeconds(30) < currentTime)
@@ -166,7 +163,11 @@ namespace ShortPeakRobot.Robots.Algorithms
 
                 LastCandle = LastCompletedCendle;
             }
-           
+
+            if (VWAPcandles.Count == 0)
+            {
+                return;
+            }
             //==============  пересечение vwap =======================================================
             if (VWAPStatus == -1 && currentPrice < VWAPcandles[^1].VWAP)
             {
@@ -206,13 +207,12 @@ namespace ShortPeakRobot.Robots.Algorithms
 
                 }
                 //------------ заменяем ордера ------------
-                if (IsSignalSellOrderPlaced && SignalSellPrice != RobotServices.GetSignalPrice(robot.BaseSettings.OffsetPercent, vwapVolume,
-                        RobotOrderType.SignalSell, FuturesOrderType.StopMarket))
-                {
-                    SignalSellPrice = RobotServices.GetSignalPrice(robot.BaseSettings.OffsetPercent, vwapVolume,
+                var newSignalSellPrice = RobotServices.GetSignalPrice(robot.BaseSettings.OffsetPercent, vwapVolume,
                         RobotOrderType.SignalSell, FuturesOrderType.StopMarket);
+                if (IsSignalSellOrderPlaced && SignalSellPrice != newSignalSellPrice)
+                {
+                    SignalSellPrice = newSignalSellPrice;
 
-                    //VwapRobot.CancelOrderAsync(VwapRobot.SignalSellOrder, "Cancel Signal Sell Order");
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
                         RobotIndex = RobotIndex,
@@ -264,12 +264,12 @@ namespace ShortPeakRobot.Robots.Algorithms
 
                 }
                 //------------ заменяем ордера ------------
-                if (IsSignalBuyOrderPlaced && SignalBuyPrice != RobotServices.GetSignalPrice(robot.BaseSettings.OffsetPercent, vwapVolume,
-                        RobotOrderType.SignalBuy, FuturesOrderType.StopMarket))
-                {
-                    SignalBuyPrice = RobotServices.GetSignalPrice(robot.BaseSettings.OffsetPercent, vwapVolume,
+                var newSignalBuyPrice = RobotServices.GetSignalPrice(robot.BaseSettings.OffsetPercent, vwapVolume,
                         RobotOrderType.SignalBuy, FuturesOrderType.StopMarket);
-                    //VwapRobot.CancelOrderAsync(VwapRobot.SignalBuyOrder, "Cancel Signal Buy Order");
+                if (IsSignalBuyOrderPlaced && SignalBuyPrice != newSignalBuyPrice)
+                {
+                    SignalBuyPrice = newSignalBuyPrice;
+                    
                     MarketData.MarketManager.AddRequestQueue(new BinanceRequest
                     {
                         RobotIndex = RobotIndex,
@@ -362,6 +362,10 @@ namespace ShortPeakRobot.Robots.Algorithms
 
         public void SetRobotInfo()
         {
+            if (VWAPcandles.Count == 0)
+            {
+                return;
+            }
             var robot = RobotVM.robots[RobotIndex];
             if (MarketData.Info.SelectedRobotIndex == RobotIndex)
             {
@@ -375,6 +379,8 @@ namespace ShortPeakRobot.Robots.Algorithms
                     //RobotInfoVM.AddParam("VWAP.Date", MarketData.VWAPs[^1].Date.ToString());
                     RobotInfoVM.AddParam("DayHighPrice", DayHighPrice.ToString());
                     RobotInfoVM.AddParam("DayLowPrice", DayLowPrice.ToString());
+                    RobotInfoVM.AddParam("IsSignalBuyOrderPlaced", IsSignalBuyOrderPlaced.ToString());
+                    RobotInfoVM.AddParam("IsSignalSellOrderPlaced", IsSignalSellOrderPlaced.ToString());
 
                 });
             }
@@ -492,24 +498,24 @@ namespace ShortPeakRobot.Robots.Algorithms
         }
 
 
-        private void SetCurrentPrifit(decimal price)
-        {
-            var robot = RobotVM.robots[RobotIndex];            
+        //private void SetCurrentPrifit(decimal price)
+        //{
+        //    var robot = RobotVM.robots[RobotIndex];            
 
-            if (robot.Position > 0)
-            {
-                robot.Profit = price - robot.OpenPositionPrice;
-                return;
-            }
+        //    if (robot.Position > 0)
+        //    {
+        //        robot.Profit =  (price - robot.OpenPositionPrice) * Math.Abs(robot.Position);
+        //        return;
+        //    }
 
-            if (robot.Position < 0)
-            {
-                robot.Profit = robot.OpenPositionPrice - price;
-                return;
-            }
+        //    if (robot.Position < 0)
+        //    {
+        //        robot.Profit = (robot.OpenPositionPrice - price) * Math.Abs(robot.Position);
+        //        return;
+        //    }
 
-            robot.Profit = 0;
-        }
+        //    robot.Profit = 0;
+        //}
 
 
 

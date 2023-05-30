@@ -71,7 +71,7 @@ namespace ShortPeakRobot.Robots.Algorithms
 
             var currentTime = DateTime.UtcNow;
 
-            SetCurrentPrifit(currentPrice);
+            robot.SetCurrentPrifit(currentPrice);
 
             //Анализ графика
             if (LastCandle.OpenPrice == 0)
@@ -446,23 +446,23 @@ namespace ShortPeakRobot.Robots.Algorithms
             }
         }
 
-        private void SetCurrentPrifit(decimal price)
-        {
-            var robot = RobotVM.robots[RobotIndex];
+        //private void SetCurrentPrifit(decimal price)
+        //{
+        //    var robot = RobotVM.robots[RobotIndex];
 
-            if (robot.Position > 0)
-            {
-                robot.Profit = price - robot.OpenPositionPrice;
-                return;
-            }
+        //    if (robot.Position > 0)
+        //    {
+        //        robot.Profit = price - robot.OpenPositionPrice;
+        //        return;
+        //    }
 
-            if (robot.Position < 0)
-            {
-                robot.Profit = robot.OpenPositionPrice - price;
-                return;
-            }
+        //    if (robot.Position < 0)
+        //    {
+        //        robot.Profit = robot.OpenPositionPrice - price;
+        //        return;
+        //    }
 
-            robot.Profit = 0;
-        }
+        //    robot.Profit = 0;
+        //}
     }
 }

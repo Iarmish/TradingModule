@@ -339,7 +339,7 @@ namespace ShortPeakRobot.Market
             var robotStateResponse = new RobotStateResponse();
 
             var robotId = RobotServices.GetRobotId(robotIndex);
-            robotStateResponse.data.RobotId = robotId;
+            robotStateResponse.json_data.RobotId = robotId;
 
             var fileName = "Reserve/RobotStates/RobotState_" + robotId + ".json";
             if (Directory.Exists("Reserve/RobotStates/") && File.Exists(fileName))
@@ -352,7 +352,7 @@ namespace ShortPeakRobot.Market
 
                         if (state != null)
                         {
-                            robotStateResponse.data = state;
+                            robotStateResponse.json_data = state;
                             robotStateResponse.success = true;
                         }
                     }

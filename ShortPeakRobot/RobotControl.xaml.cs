@@ -1,22 +1,10 @@
 ﻿using Binance.Net.Enums;
-using CryptoExchange.Net.Objects;
 using ShortPeakRobot.Market;
 using ShortPeakRobot.Robots;
 using ShortPeakRobot.ViewModel;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace ShortPeakRobot
 {
@@ -223,6 +211,11 @@ namespace ShortPeakRobot
             RobotVM.robots[RobotIindex].RobotState.TakeProfitOrderId = 0;
 
             TBTakeProfitID.Text = "0";
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+
         }
     }
 }

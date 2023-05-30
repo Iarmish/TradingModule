@@ -102,10 +102,28 @@ namespace ShortPeakRobot.Market.Models
             }
         }
 
+
+
+        private decimal _TotalCurrentProfit { get; set; }
+        public decimal TotalCurrentProfit
+        {
+            get { return _TotalCurrentProfit; }
+            set
+            {
+                if (_TotalCurrentProfit != value)
+                {
+                    _TotalCurrentProfit = value;
+                    OnPropertyChanged("TotalCurrentProfit");
+                }
+            }
+        }
+
         public int SelectedRobotIndex { get; set; }
         public decimal Deposit { get; set; }
         public int ClientId { get; set; }
-        
-       
+        public bool IsApiKeysValid { get; set; }
+        public string AppInstanceKey { get; set; }
+
+        public decimal DayProfit { get; set; }
     }
 }

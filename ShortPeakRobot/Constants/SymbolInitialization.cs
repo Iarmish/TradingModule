@@ -9,9 +9,9 @@ namespace ShortPeakRobot.Constants
 {
     public static class SymbolInitialization
     {
-        public static readonly List<string> list =new List<string>()
+        public static readonly List<string> list = new List<string>()
         {
-            "ETHUSDT" ,"BTCUSDT" ,"BNBUSDT" ,"XRPUSDT","ADAUSDT" ,"LTCUSDT","CHZUSDT"
+            "ETHUSDT", "BTCUSDT", "SOLUSDT", "ADAUSDT", "XRPUSDT" ,"CHZUSDT" , "LTCUSDT", "DOGEUSDT" , "DOTUSDT"
         };
     }
 }

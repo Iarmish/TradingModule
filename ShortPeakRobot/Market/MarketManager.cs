@@ -1,6 +1,7 @@
 ﻿using Binance.Infrastructure.Constants;
 using Binance.Net.Enums;
 using Binance.Net.Interfaces;
+using CryptoExchange.Net.CommonObjects;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.API;
@@ -52,11 +53,51 @@ namespace ShortPeakRobot.Market
 
             Task.Run(() => Queue());
             Task.Run(() => BinanceFailRequestQueue());
+            //Task.Run(() => TotalProfitMonitor());// дневной СЛ ТП
 
             //--
 
         }
 
+        private void TotalProfitMonitor()
+        {
+            while (true)
+            {
+                if ( DateTime.UtcNow.Day != MarketData.DayStatus.CurrentDay)
+                {
+                    MarketData.DayStatus.CurrentDay = DateTime.UtcNow.Day;
+                    MarketServices.GetLastDayProfit();
+                    if (MarketData.DayStatus.IsSLTPTaken)
+                    {
+                        MarketData.DayStatus.IsSLTPTaken = false;
+                        RobotsRun();
+                        MarketData.Info.Message += "Роботы запущены после остановки при достижении порога СЛТП" + "\n";
+                        MarketData.Info.IsMessageActive = true;
+                    }
+                }
+
+
+                var totalCurrentProfit = MarketData.Info.DayProfit;
+                foreach (var robot in RobotVM.robots)
+                {
+                    if (robot.Position != 0)
+                    {
+                        totalCurrentProfit += robot.Profit - robot.Commission;
+                    }
+                }
+                MarketData.Info.TotalCurrentProfit = totalCurrentProfit;
+
+                if (totalCurrentProfit > MarketData.DayStatus.DayTP || totalCurrentProfit < MarketData.DayStatus.DaySL)
+                {
+                    MarketData.DayStatus.IsSLTPTaken = true;
+                    CloseRobotsPosition();
+                    MarketData.Info.Message += "Роботы остановлены при достижении порога СЛТП. Результаты дня: "+ totalCurrentProfit + "\n";
+                    MarketData.Info.IsMessageActive = true;
+                }
+
+                Thread.Sleep(400);
+            }
+        }
         private void BinanceFailRequestQueue()
         {
             while (true)
@@ -152,7 +193,7 @@ namespace ShortPeakRobot.Market
                             CancelBinanceOrder(BinanceRequestDTO.DTO(q));
                         }
 
-                        Thread.Sleep(50);
+                        Thread.Sleep(100);
                     }
                     RequestQueue.Clear();
                 }
@@ -166,8 +207,6 @@ namespace ShortPeakRobot.Market
             {
                 App.Current.Dispatcher.Invoke(() =>
                 {
-
-
                     LogVM.AddRange(new List<RobotLog> { new RobotLog {
                     ClientId = 0,
                     Date = DateTime.Now,
@@ -181,7 +220,7 @@ namespace ShortPeakRobot.Market
             var result = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(q.Symbol, q.OrderId);
             if (result.Success)
             {
-
+                
             }
             else
             {
@@ -215,6 +254,7 @@ namespace ShortPeakRobot.Market
 
             if (order.Success)
             {
+                
                 switch (q.robotOrderType)
                 {
                     case RobotOrderType.SignalBuy:
@@ -247,10 +287,12 @@ namespace ShortPeakRobot.Market
                 lock (FailRequestLocker)
                 {
                     FailRequestQueue.Add(q);
+                    
                 }
+                MarketData.Info.Message += "Place order error. RobotID "+ RobotVM.robots[q.RobotIndex].Id + " " + order.Error.ToString() + "\n";
+                MarketData.Info.IsMessageActive = true;
 
-
-                var orderPrice = "";
+                var orderPrice = string.Empty;
                 if (q.StopPrice != 0)
                 {
                     orderPrice = q.StopPrice.ToString();
@@ -467,19 +509,38 @@ namespace ShortPeakRobot.Market
 
         }
 
-        public void RobotsRun(List<int> robotIndexes)
+        public void RobotsRun()
         {
-            foreach (var index in robotIndexes)
+
+            foreach (var robot in RobotVM.robots)
             {
-                Task.Run(() => RobotVM.robots[index].Run());
+                if (robot.IsActivated)
+                {
+                    Task.Run(() => robot.Run());
+                }
+
             }
         }
 
-        public void RobotsStop(List<int> robotIndexes)
+        public void RobotsStop()
         {
-            foreach (var index in robotIndexes)
+            foreach (var robot in RobotVM.robots)
             {
-                RobotVM.robots[index].Stop();
+                if (robot.IsActivated)
+                {
+                    robot.Stop();
+                }
+            }
+        }
+
+        public void CloseRobotsPosition()
+        {
+            foreach (var robot in RobotVM.robots)
+            {
+                if (robot.IsActivated)
+                {
+                    robot.CloseRobotPosition();
+                }
             }
         }
 
@@ -507,7 +568,7 @@ namespace ShortPeakRobot.Market
         }
 
 
-        
+
 
     }
 }

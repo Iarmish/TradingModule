@@ -16,6 +16,7 @@ namespace ShortPeakRobot.Market
         public static List<VWAP> VWAPs { get; set; } = new List<VWAP>();
         
         public static MarketInfo Info { get; set; } = new MarketInfo();
+        public static DayControl DayStatus { get; set; } = new DayControl();
         
         public static MarketManager MarketManager { get; set; } = new MarketManager();
         

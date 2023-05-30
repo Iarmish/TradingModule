@@ -12,7 +12,7 @@ namespace ShortPeakRobot.Data
     {
         public int Id { get; set; }
         public int RobotId { get; set; }
-        public int ClientId { get; set; } = MarketData.Info.ClientId;
+        public int ClientId { get; set; }
         public decimal Position { get; set; }
         public decimal OpenPositionPrice { get; set; }
         public long SignalBuyOrderId { get; set; }

@@ -7,7 +7,7 @@
         xmlns:Converters="clr-namespace:ShortPeakRobot.VMConverters"
         mc:Ignorable="d"
         x:Name="Wind"
-        Title="MainWindow" Height="688" Width="1348" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="MainWindow" Height="800" Width="1348" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <MVVM:RobotVM x:Key="robot_res"/>
         <MVVM:CellDayMonthVM x:Key="cellDayMonth_res"/>
@@ -26,15 +26,19 @@
         <TabControl HorizontalAlignment="Left" Width="468">
             <TabItem Header="Роботы">
                 <Grid >
+                    <StackPanel Orientation="Vertical">
+                        
+                    
                     <StackPanel Orientation="Horizontal" Height="35" VerticalAlignment="Top">
-                        <Button x:Name="TB_RobotsRun"   Padding="5,4"  Width="140"  Background="MintCream"
-                                   Margin="5" Cursor="Hand" Click="TB_RobotsRun_Click">Запустить  роботов</Button>
-                        <Button x:Name="BtnCloseAll"  Padding="5,4" Width="140" HorizontalAlignment="Left" Background="MintCream"
-                                  Margin="5" Cursor="Hand" Click="BtnCloseAll_Click" >Закрыть все позиции</Button>
-                        <Button x:Name="BtnRobotList"  Margin="5" Padding="5,4"  Cursor="Hand" Click="BtnRobotList_Click" Background="MintCream">Список роботов</Button>
+                        <Button x:Name="TB_RobotsRun"   Padding="4"  Width="130"  Background="MintCream"
+                                   Margin="3,5" Cursor="Hand" Click="TB_RobotsRun_Click">Запустить  роботов</Button>
+                        <Button x:Name="BtnCloseAll"  Padding="4" Width="130" HorizontalAlignment="Left" Background="MintCream"
+                                  Margin="3,5" Cursor="Hand" Click="BtnCloseAll_Click" >Закрыть все позиции</Button>
+                        <Button x:Name="BtnRobotList"  Margin="3,5" Padding="4"  Cursor="Hand" Click="BtnRobotList_Click" Background="MintCream">Список роботов</Button>
+                        <Button x:Name="BtnAuth"  Margin="3,5" Padding="8,4"  Cursor="Hand" Click="BtnAuth_Click" Background="MintCream">Auth</Button>
 
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Height="35" VerticalAlignment="Top" Margin="0,35,0,0">
+                    <StackPanel Orientation="Horizontal" Height="35" VerticalAlignment="Top" >
                         <TextBox x:Name="TBStartStatisticPeriod" Text="01.03.2023"   Padding="5,4"  Width="86" Margin="5,0,5,0"
                                   VerticalAlignment="Top"  />
                         <TextBox x:Name="TBEndStatisticPeriod" Text="01.03.2023"   Padding="5,4"  Width="86" Margin="5,0,5,0"
@@ -45,19 +49,24 @@
                                   VerticalAlignment="Top"  />
 
                     </StackPanel>
-                    <StackPanel x:Name="StackInfo" Orientation="Horizontal" Margin="5,66,0,0" Background="AntiqueWhite" Height="25" VerticalAlignment="Top">
+                    <StackPanel x:Name="StackInfo" Orientation="Horizontal"  Background="AntiqueWhite" Height="25" VerticalAlignment="Top">
                         <TextBlock Text="Balance USDT"   Padding="5,4"  Width="88" 
-                                  VerticalAlignment="Top"  Cursor="Hand"  />
-                        <TextBlock Text="{Binding BalanceUSDT}"  Padding="5,4"  Width="96" 
-                                  VerticalAlignment="Top"  Cursor="Hand"  />
+                                  VerticalAlignment="Top"    />
+                        <TextBlock Text="{Binding BalanceUSDT}"  Padding="5,4"  Width="80" 
+                                  VerticalAlignment="Top"    />
                         <TextBlock Text="Session Profit"   Padding="5,4"  Width="88" 
-                                  VerticalAlignment="Top"  Cursor="Hand"  />
-                        <TextBlock Text="{Binding PeriodProfit}"  Padding="5,4"  Width="96" 
-                                  VerticalAlignment="Top"  Cursor="Hand"  />
+                                  VerticalAlignment="Top"    />
+                        <TextBlock Text="{Binding PeriodProfit}"  Padding="5,4"  Width="80" 
+                                  VerticalAlignment="Top"    />
 
-                    </StackPanel>
+                            <TextBlock Text="{Binding TotalCurrentProfit}"  Margin="10,0,0,0"  Padding="5,4"  Width="80" 
+                                  VerticalAlignment="Top"  Foreground="{Binding TotalCurrentProfit, Converter={StaticResource numberColor_res}}"  />
 
-                    <ScrollViewer  Margin="0,94,0,274">
+                        </StackPanel>
+
+                    
+
+                    <ScrollViewer Height="365"  >
                         <StackPanel>
                             <StackPanel Margin="0,2,0,0" Visibility="{Binding IsActivated, Converter={StaticResource visibility_res}}" Height="24" 
                                         Background="WhiteSmoke" Orientation="Horizontal">
@@ -121,6 +130,7 @@
                         </StackPanel>
 
                     </ScrollViewer>
+                    </StackPanel>
                 </Grid>
             </TabItem>
             <TabItem Header="Сделки">
@@ -574,31 +584,21 @@
             </TabItem>
         </TabControl>
 
+        
+        
+        
+
         <Grid x:Name="GridMessage" Visibility="{Binding IsMessageActive, Converter={StaticResource visibility_res}}"
-              Background="LightGray" Margin="86,99,78,0" Height="374" VerticalAlignment="Top">
+              Background="LightGray" Margin="86,116,78,0" Height="374" VerticalAlignment="Top">
             <ScrollViewer Margin="10,10,10,60">
 
                 <TextBox Text="{Binding Message}"   ></TextBox>
             </ScrollViewer>
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom" Orientation="Horizontal">
-                
-            <Button x:Name="BtnCloseMessage" Margin="10" HorizontalAlignment="Center" Height="30" Padding="10,0" Click="BtnCloseMessage_Click" VerticalAlignment="Bottom">Закрыть</Button>
-            <Button x:Name="BtnClearMessage" Margin="10" HorizontalAlignment="Center" Height="30" Padding="10,0" Click="BtnClearMessage_Click" VerticalAlignment="Bottom">Очистить</Button>
+
+                <Button x:Name="BtnCloseMessage" Margin="10" HorizontalAlignment="Center" Height="30" Padding="10,0" Click="BtnCloseMessage_Click" VerticalAlignment="Bottom">Закрыть</Button>
+                <Button x:Name="BtnClearMessage" Margin="10" HorizontalAlignment="Center" Height="30" Padding="10,0" Click="BtnClearMessage_Click" VerticalAlignment="Bottom">Очистить</Button>
             </StackPanel>
-        </Grid>
-        
-        <Grid Background="White" x:Name="StackLogin" Visibility="Visible">            
-            <Border BorderBrush="Gray" BorderThickness="1"  HorizontalAlignment="Center" VerticalAlignment="Center" Width="500" >
-                <StackPanel Orientation="Vertical"  Background="LightGray" >
-
-                    <Label Content="Login" Margin="30,10,30,0" Padding="3"/>
-                    <TextBox x:Name="TbLogin"  Text="magicom@yandex.ru" Margin="30,10,30,0" Padding="5"/>
-                    <Label Content="Password" Margin="30,10,30,0" Padding="3"/>
-                    <TextBox x:Name="TbPass" Text="q1w2e311" Margin="30,10" Padding="5"/>
-                    <Button x:Name="BtnLogin" Margin="30,30,30,30" Padding="5"  Click="BtnLogin_Click">Log In</Button>
-
-                </StackPanel>
-            </Border>
         </Grid>
 
 

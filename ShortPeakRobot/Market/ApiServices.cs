@@ -1,4 +1,5 @@
-﻿using ShortPeakRobot.Constants;
+﻿using CryptoExchange.Net.Objects;
+using ShortPeakRobot.Constants;
 using ShortPeakRobot.Data;
 using ShortPeakRobot.Market.Models.ApiDataModels;
 using ShortPeakRobot.Market.Models.ApiModels;
@@ -29,13 +30,15 @@ namespace ShortPeakRobot.Market
 
             try
             {
-                var response = await httpClient.PostAsJsonAsync("auth/login.php", new LoginRequest { login = login, password = password });
+                var response = await httpClient.PostAsJsonAsync("auth/login.php", 
+                    new LoginRequest { login = login, password = password, app_instance_key = MarketData.Info.AppInstanceKey });
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
                 responseData = JsonSerializer.Deserialize<LoginResponse>(responceString);
             }
-            catch (Exception)
+            catch (Exception error)
             {
-
+                MarketData.Info.Message += "Api login " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
             return responseData;
@@ -88,13 +91,15 @@ namespace ShortPeakRobot.Market
 
             try
             {
-                var response = await httpClient.PostAsJsonAsync("auth/refresh_token.php", new RefreshTokenRequest { refresh_token = Tokens.refresh_token });
+                var response = await httpClient.PostAsJsonAsync("auth/refresh_token.php",
+                    new RefreshTokenRequest { refresh_token = Tokens.refresh_token, app_instance_key = MarketData.Info.AppInstanceKey });
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
                 responseData = JsonSerializer.Deserialize<LoginResponse>(responceString);
             }
-            catch (Exception)
+            catch (Exception error)
             {
-
+                MarketData.Info.Message += "Api RefreshToken " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
             return responseData;
@@ -143,9 +148,10 @@ namespace ShortPeakRobot.Market
                 responseData = JsonSerializer.Deserialize<SaveDataResponse>(responceString);
 
             }
-            catch (Exception)
+            catch (Exception error)
             {
-
+                MarketData.Info.Message += "Api SetTokens " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
             return responseData;
@@ -201,7 +207,8 @@ namespace ShortPeakRobot.Market
             }
             catch (Exception error)
             {
-
+                MarketData.Info.Message += "Api GetOrders " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
             return responseData;
@@ -393,9 +400,10 @@ namespace ShortPeakRobot.Market
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
                 responseData = JsonSerializer.Deserialize<SaveDataResponse>(responceString);
             }
-            catch (Exception)
+            catch (Exception error)
             {
-
+                MarketData.Info.Message += "Api SaveDeal " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
             return responseData;
@@ -448,13 +456,71 @@ namespace ShortPeakRobot.Market
                     responseData.data = new List<ApiDealModel>();
                 }
             }
-            catch (Exception)
+            catch (Exception error)
             {
-
+                MarketData.Info.Message += "Api GetDeals " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
             return responseData;
         }
+
+
+        public async static Task<GetDealsResponse> GetClientDeals( DateTime startDate, DateTime endDate)
+        {
+            var responseData = new GetDealsResponse();
+
+            try
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
+
+                var dateFrom = startDate.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+                var dateTo = endDate.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+                var response = await httpClient.PostAsJsonAsync("robot_deals/client_list",
+                    new PeriodRobotDataRequest { from = dateFrom, to = dateTo, limit = 0 });
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    var refreshToken = await RefreshToken();
+                    if (refreshToken.success)
+                    {
+                        SetTokens(refreshToken);
+
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
+                        response = await httpClient.PostAsJsonAsync("robot_deals/client_list",
+                            new PeriodRobotDataRequest {  from = dateFrom, to = dateTo, limit = 0 });
+                    }
+                    else
+                    {
+                        responseData.message = refreshToken.message;
+                        return responseData;
+                    }
+                }
+
+
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    responseData.message = response.StatusCode.ToString();
+                    return responseData;
+                }
+
+                var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
+                responseData = JsonSerializer.Deserialize<GetDealsResponse>(responceString);
+
+                if (responseData.data == null)
+                {
+                    responseData.data = new List<ApiDealModel>();
+                }
+            }
+            catch (Exception error)
+            {
+                MarketData.Info.Message += "Api GetClientDeals " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
+            }
+
+            return responseData;
+        }
+
         //------- Log -------------
         public async static Task<SaveDataResponse> SaveLog(RobotLog log)
         {
@@ -493,9 +559,10 @@ namespace ShortPeakRobot.Market
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
                 responseData = JsonSerializer.Deserialize<SaveDataResponse>(responceString);
             }
-            catch (Exception)
+            catch (Exception error)
             {
-
+                MarketData.Info.Message += "Api SaveLog " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
             return responseData;
@@ -547,15 +614,16 @@ namespace ShortPeakRobot.Market
                     responseData.data = new List<ApiLogModel>();
                 }
             }
-            catch (Exception)
+            catch (Exception error)
             {
-
+                MarketData.Info.Message += "Api GetLogs " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
             return responseData;
         }
         //--------------------
-        public async static Task<SaveDataResponse> UpdateRobotStateAsync(RobotState state)
+        public async static Task<SaveDataResponse> UpdateRobotStateAsync(int robot_id, RobotState state)
         {
             var responseData = new SaveDataResponse();
 
@@ -563,7 +631,7 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("update_robot_state.php", state);
+                var response = await httpClient.PostAsJsonAsync("robot_states/upsert", new ApiStateModel(state, robot_id));
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
@@ -573,7 +641,7 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("update_robot_state.php", state);
+                        response = await httpClient.PostAsJsonAsync("robot_states/upsert", new ApiStateModel(state, robot_id));
                     }
                     else
                     {
@@ -592,9 +660,10 @@ namespace ShortPeakRobot.Market
                 var responceString = (response.Content.ReadAsStringAsync().Result).Trim('"');
                 responseData = JsonSerializer.Deserialize<SaveDataResponse>(responceString);
             }
-            catch (Exception)
+            catch (Exception error)
             {
-
+                MarketData.Info.Message += "Api UpdateRobotStateAsync " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
             return responseData;
@@ -609,7 +678,7 @@ namespace ShortPeakRobot.Market
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
 
-                var response = await httpClient.PostAsJsonAsync("get_robot_state.php", robotId);
+                var response = await httpClient.PostAsJsonAsync("robot_states/get", new StateRequest { robot_id = robotId });
 
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
@@ -619,7 +688,7 @@ namespace ShortPeakRobot.Market
                         SetTokens(refreshToken);
 
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Tokens.access_token);
-                        response = await httpClient.PostAsJsonAsync("get_robot_state.php", robotId);
+                        response = await httpClient.PostAsJsonAsync("robot_states/get", new StateRequest { robot_id = robotId });
                     }
                     else
                     {
@@ -640,7 +709,8 @@ namespace ShortPeakRobot.Market
             }
             catch (Exception error)
             {
-                RobotVM.robots[RobotServices.GetRobotIndex(robotId)].Log(LogType.Error, error.Message);
+                MarketData.Info.Message += "Api GetRobotStateAsync " + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
             }
 
             return responseData;

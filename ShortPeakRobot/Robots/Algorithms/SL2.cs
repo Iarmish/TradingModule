@@ -59,7 +59,8 @@ namespace ShortPeakRobot.Robots.Algorithms
             var carrentCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1];
             var candles = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame];
             var LastCompletedCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^2];
-            SetCurrentPrifit(currentPrice);
+
+            robot.SetCurrentPrifit(currentPrice);
 
             //Анализ графика
             if (LastCandle.OpenPrice == 0)
@@ -350,23 +351,23 @@ namespace ShortPeakRobot.Robots.Algorithms
             SetRobotInfo();//to UI
         }
 
-        private void SetCurrentPrifit(decimal price)
-        {
-            var robot = RobotVM.robots[RobotIndex];
+        //private void SetCurrentPrifit(decimal price)
+        //{
+        //    var robot = RobotVM.robots[RobotIndex];
 
-            if (robot.Position > 0)
-            {
-                robot.Profit = price - robot.OpenPositionPrice;
-                return;
-            }
+        //    if (robot.Position > 0)
+        //    {
+        //        robot.Profit = price - robot.OpenPositionPrice;
+        //        return;
+        //    }
 
-            if (robot.Position < 0)
-            {
-                robot.Profit = robot.OpenPositionPrice - price;
-                return;
-            }
+        //    if (robot.Position < 0)
+        //    {
+        //        robot.Profit = robot.OpenPositionPrice - price;
+        //        return;
+        //    }
 
-            robot.Profit = 0;
-        }
+        //    robot.Profit = 0;
+        //}
     }
 }

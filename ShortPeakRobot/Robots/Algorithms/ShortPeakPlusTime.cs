@@ -2,13 +2,9 @@
 using ShortPeakRobot.Constants;
 using ShortPeakRobot.Market.Models;
 using ShortPeakRobot.Market;
-using ShortPeakRobot.Robots.Algorithms.Models;
 using ShortPeakRobot.ViewModel;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ShortPeakRobot.Robots.Algorithms.Models.ShortPeakModels;
 using ShortPeakRobot.Robots.Algorithms.Services;
 
@@ -228,8 +224,6 @@ namespace ShortPeakRobot.Robots.Algorithms
 
         public void ChartAnalyse()
         {
-           
-
             var robot = RobotVM.robots[RobotIndex];
             var carrentCendle = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame][^1];
             var candles = MarketData.CandleDictionary[robot.Symbol][robot.BaseSettings.TimeFrame];
@@ -255,11 +249,11 @@ namespace ShortPeakRobot.Robots.Algorithms
                     lowPeak = lastLowPeak;
                 }
                 // скидываем пики c учетом смещения 
-                if (highPeak.Volume != 0 && candle.HighPrice - robot.BaseSettings.OffsetPercent >= highPeak.Volume)
+                if (highPeak.Volume != 0 && candle.ClosePrice - robot.BaseSettings.OffsetPercent >= highPeak.Volume)
                 {
                     highPeak = new();                    
                 }
-                if (lowPeak.Volume != 0 && candle.LowPrice + robot.BaseSettings.OffsetPercent <= lowPeak.Volume)
+                if (lowPeak.Volume != 0 && candle.ClosePrice + robot.BaseSettings.OffsetPercent <= lowPeak.Volume)
                 {
                     
                     lowPeak = new();                    

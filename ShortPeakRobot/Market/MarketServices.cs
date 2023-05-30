@@ -26,7 +26,7 @@ namespace ShortPeakRobot.Market
 
         public static CandleChartDwawDelegate candleChartDwaw;
 
-        public static ApplicationDbContext _context = new ApplicationDbContext();
+        //public static ApplicationDbContext _context = new ApplicationDbContext();
 
 
         public async static Task<decimal> GetSymbolPositionAsync(string symbol)
@@ -45,9 +45,9 @@ namespace ShortPeakRobot.Market
             return position;
         }
 
-        public static void GetSessioProfit()
+        public static async void GetSessioProfit()
         {
-            var clienDeals = GetClientDeals(MarketData.Info.StartSessionDate, DateTime.UtcNow);
+            var clienDeals = await GetClientDeals(MarketData.Info.StartSessionDate, DateTime.UtcNow.AddDays(1));
             var profit = GetDealsProfit(clienDeals);
 
             foreach (var robot in RobotVM.robots)//добавление id роботов в алгоритмы роботов
@@ -58,10 +58,20 @@ namespace ShortPeakRobot.Market
             }
 
         }
-
-        public static void GetPeriodProfit()
+        
+        public static async void GetLastDayProfit()
         {
-            var clienDeals = GetClientDeals(MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
+            var dateNow = DateTime.UtcNow;
+            var dateToday = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 0, 0, 0, DateTimeKind.Utc);
+            
+            var clienDeals = await GetClientDeals(dateToday, dateToday.AddDays(1));
+            var profit = GetDealsProfit(clienDeals);
+            MarketData.Info.DayProfit = profit;
+        }
+
+        public static async void GetPeriodProfit()
+        {
+            var clienDeals = await GetClientDeals(MarketData.Info.StartStatisticPeriod, MarketData.Info.EndStatisticPeriod);
             var profit = GetDealsProfit(clienDeals);
 
             MarketData.Info.PeriodProfit = profit;
@@ -80,7 +90,6 @@ namespace ShortPeakRobot.Market
             });
             return profit;
         }
-
 
 
         public async static void GetRobotMarketData(int robotIndex)
@@ -169,9 +178,15 @@ namespace ShortPeakRobot.Market
 
         }
 
-        public static async Task GetBalanceUSDTAsync()
+        public static async Task<bool> GetBalanceUSDTAsync()
         {
             var balances = await BinanceApi.client.UsdFuturesApi.Account.GetBalancesAsync();
+            if (!balances.Success)
+            {
+                MarketData.Info.Message += balances.Error + "\n";
+                MarketData.Info.IsMessageActive = true;
+                return false;
+            }
             foreach (var item in balances.Data)
             {
                 if (item.Asset == "USDT")
@@ -179,6 +194,7 @@ namespace ShortPeakRobot.Market
                     MarketData.Info.BalanceUSDT = Math.Round(item.WalletBalance, 2);
                 }
             }
+            return true;
         }
 
         public static int GetSymbolIndex(string symbol)
@@ -216,100 +232,25 @@ namespace ShortPeakRobot.Market
             }
         }
 
-        public static List<RobotOrder> GetRobotOrders(int robotId, DateTime startDate, DateTime endDate)
+        
+
+        public async static Task<List<RobotDeal>> GetClientDeals(DateTime startDate, DateTime endDate)
         {
-            var robotOrders = new List<RobotOrder>();
-            lock (Locker)
+            var robotDeals = new List<RobotDeal>();// GetClientDeals
+
+            var robotOrdersRespose = await ApiServices.GetClientDeals(startDate, endDate);
+
+            if (robotOrdersRespose.success)
             {
-                robotOrders = _context.RobotOrders
-                   .Where(x => x.PlacedTime >= startDate && x.PlacedTime <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == MarketData.Info.ClientId)
-                   .OrderBy(x => x.PlacedTime).AsEnumerable().TakeLast(100).ToList();
-
-                //robotOrders = robotOrders.TakeLast(100).ToList();
+                robotOrdersRespose.data.ForEach(order => robotDeals.Add(RobotDealDTO.DTO(order)));
             }
-            return robotOrders;
-        }
-
-        public static List<RobotDeal> GetClientDeals(DateTime startDate, DateTime endDate)
-        {
-            var robotDeals = new List<RobotDeal>();
-            lock (Locker)
-            {
-                robotDeals = _context.RobotDeals
-                   .Where(x => x.CloseTime >= startDate && x.CloseTime <= endDate.AddDays(1) && x.ClientId == MarketData.Info.ClientId).ToList();
-
-            }
-
-
+           
             return robotDeals;
         }
 
-        public static List<RobotTrade> GetClientTrades(DateTime startDate)
-        {
-            var robotTrades = new List<RobotTrade>();
-            lock (Locker)
-            {
-                robotTrades = _context.RobotTrades
-                   .Where(x => x.Timestamp > startDate && x.ClientId == MarketData.Info.ClientId)
-                   .ToList();
+        
 
-            }
-
-            //robotTrades = robotTrades.Where(x => ids.Contains(x.OrderId)).ToList();
-
-
-
-            return robotTrades;
-        }
-
-        public static List<RobotTrade> GetRobotTrades(int robotId, DateTime startDate, DateTime endDate)
-        {
-            var robotTrades = new List<RobotTrade>();
-            lock (Locker)
-            {
-                robotTrades = _context.RobotTrades
-                   .Where(x => x.Timestamp >= startDate && x.Timestamp <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == MarketData.Info.ClientId)
-                   .OrderBy(x => x.Timestamp).AsEnumerable().TakeLast(100).ToList();
-            }
-
-            return robotTrades;
-        }
-        public static List<RobotDeal> GetRobotDeals(int robotId, DateTime startDate, DateTime endDate)
-        {
-            var robotDeals = new List<RobotDeal>();
-            lock (Locker)
-            {
-                robotDeals = _context.RobotDeals
-                   .Where(x => x.CloseTime >= startDate && x.CloseTime <= endDate.AddDays(1) && x.RobotId == robotId && x.ClientId == MarketData.Info.ClientId)
-                   .OrderBy(x => x.OpenTime).AsEnumerable().TakeLast(200).ToList();
-            }
-
-            return robotDeals;
-        }
-
-
-        public static List<long> GetRobotOrderIds(int robotId, DateTime startDate)
-        {
-            var ids = new List<long>();
-
-            try
-            {
-                lock (Locker)
-                {
-                    var orders = _context.RobotOrders
-                        .Where(x => x.ClientId == MarketData.Info.ClientId && x.RobotId == robotId && x.PlacedTime >= startDate);
-                    ids = orders.Select(x => x.OrderId).Distinct().ToList();
-                }
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
-
-
-            return ids;
-        }
+       
 
 
         public async static Task<WebCallResult<BinanceFuturesPlacedOrder>> PlaceBinanceOrder(long startDealOrderId, int orderCount, int robotIndex,

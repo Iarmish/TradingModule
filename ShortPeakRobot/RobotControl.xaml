@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ShortPeakRobot"
         mc:Ignorable="d"
-        Title="RobotControl" Height="207" Width="540" Loaded="Window_Loaded">
+        Title="RobotControl" Height="207" Width="540" Loaded="Window_Loaded" Closing="Window_Closing">
     <Grid>
         <TextBox x:Name="TBSignalBuyID"  HorizontalAlignment="Left" Height="22" Margin="9,34,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="150"/>
         <TextBox x:Name="TBSignalSellID" HorizontalAlignment="Left" Height="22" Margin="209,34,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="150"/>
