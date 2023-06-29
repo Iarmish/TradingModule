@@ -33,6 +33,7 @@ namespace ShortPeakRobot.Robots
         {
             return RobotVM.robots[robotIndex].Id;
         }
+
         public static int GetRobotIndex(int robotId)
         {
             return RobotVM.robots.Where(x => x.Id == robotId).Select(x => x.Index).FirstOrDefault();
@@ -100,10 +101,19 @@ namespace ShortPeakRobot.Robots
                         symbol: RobotVM.robots[robotIndex].Symbol, orderId: openDealOrderId);
 
 
-
                     if (openOrder.Success)
                     {
+
                         deal = RobotDealDTO.DTO(robotIndex, openOrder, closeOrder);
+
+                    }
+                    if (deal.OpenPrice == 0 || deal.ClosePrice == 0)
+                    {
+                        MarketData.Info.Message += "Ошибка сохранения сделки ! Robot ID - "+ RobotVM.robots[robotIndex].Id + "\n";
+                        MarketData.Info.IsMessageActive = true;
+                        MarketData.MarketManager.Log(LogType.Error, "Ошибка сохранения сделки ! Robot ID - " + RobotVM.robots[robotIndex].Id);
+                        JsonDataServices.SaveRobotDealAsync(RobotVM.robots[robotIndex].Id, deal);
+                        return;
                     }
 
                 }

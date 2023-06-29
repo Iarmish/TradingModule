@@ -19,7 +19,7 @@ namespace ShortPeakRobot.Robots.Models
                 {
                     _State = value;
                     OnPropertyChanged("State");
-                    RobotVM.robots[RobotIndex].BaseSettings.AllowedDayWeek[Index - 1] = value;
+                    RobotVM.robots[RobotIndex].BaseSettings.AllowedDayWeek[Index] = value;
                 }
             }
         }

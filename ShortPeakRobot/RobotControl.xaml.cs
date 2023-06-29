@@ -46,7 +46,7 @@ namespace ShortPeakRobot
             if (!long.TryParse(TBStopLossID.Text, out var stopLoss))
             { MessageBox.Show("Введено не корректное значение! "); return; }
 
-            if (!decimal.TryParse(TBPosition.Text.Replace(',', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var position))
+            if (!decimal.TryParse(TBPosition.Text,  out var position))
             { MessageBox.Show("Введено не корректное значение! "); return; }
 
             if (!decimal.TryParse(TBOpenPositionPrice.Text.Replace(',', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var positionPrice))
@@ -84,7 +84,7 @@ namespace ShortPeakRobot
             if (!long.TryParse(TBStopLossID.Text, out var stopLoss))
             { MessageBox.Show("Введено не корректное значение! "); return; }
 
-            if (!decimal.TryParse(TBPosition.Text.Replace(',', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var position))
+            if (!decimal.TryParse(TBPosition.Text,  out var position))
             { MessageBox.Show("Введено не корректное значение! "); return; }
 
             if (!decimal.TryParse(TBOpenPositionPrice.Text.Replace(',', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var positionPrice))
@@ -134,26 +134,26 @@ namespace ShortPeakRobot
                 side = OrderSide.Sell;
             }
 
-            var signalOrder = await RobotServices.GetBinOrderById(signalOrderId, RobotServices.GetRobotIndex(RobotIindex));
-            //-----
-            if (signalOrder.OrderId == 0)
-            {
-                MarketData.Info.Message += "Не найден ордер id" + signalOrder.OrderId + "\n";
-                MarketData.Info.IsMessageActive = true;
+            //var signalOrder = await RobotServices.GetBinOrderById(signalOrderId, RobotServices.GetRobotIndex(RobotIindex));
+            ////-----
+            //if (signalOrder.OrderId == 0)
+            //{
+            //    MarketData.Info.Message += "Не найден ордер id" + signalOrder.OrderId + "\n";
+            //    MarketData.Info.IsMessageActive = true;
                
-                return;
-            }
-            else
-            {
-                if (side == OrderSide.Buy)
-                {
-                    robot.SignalBuyOrder = signalOrder;
-                }
-                else
-                {
-                    robot.SignalSellOrder = signalOrder;
-                }
-            }
+            //    return;
+            //}
+            //else
+            //{
+            //    if (side == OrderSide.Buy)
+            //    {
+            //        robot.SignalBuyOrder = signalOrder;
+            //    }
+            //    else
+            //    {
+            //        robot.SignalSellOrder = signalOrder;
+            //    }
+            //}
 
 
             robot.SetSLTP(side, Math.Abs(robot.RobotState.Position), robot.RobotState.OpenPositionPrice, signalOrderId);

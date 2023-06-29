@@ -297,6 +297,119 @@ namespace ShortPeakRobot.Robots
         }
 
 
+        public decimal _Param1 { get; set; }
+        public decimal Param1
+        {
+            get { return _Param1; }
+            set
+            {
+                if (_Param1 != value)
+                {
+                    _Param1 = value;
+                    OnPropertyChanged("Param1");
+                }
+            }
+        }
+
+        public decimal _Param2 { get; set; }
+        public decimal Param2
+        {
+            get { return _Param2; }
+            set
+            {
+                if (_Param2 != value)
+                {
+                    _Param2 = value;
+                    OnPropertyChanged("Param2");
+                }
+            }
+        }
+
+        public decimal _Param3 { get; set; }
+        public decimal Param3
+        {
+            get { return _Param3; }
+            set
+            {
+                if (_Param3 != value)
+                {
+                    _Param3 = value;
+                    OnPropertyChanged("Param3");
+                }
+            }
+        }
+
+
+        public decimal _Param4 { get; set; }
+        public decimal Param4
+        {
+            get { return _Param4; }
+            set
+            {
+                if (_Param4 != value)
+                {
+                    _Param4 = value;
+                    OnPropertyChanged("Param4");
+                }
+            }
+        }
+
+        public string _LableParam1 { get; set; } = "Param1";
+        public string LableParam1
+        {
+            get { return _LableParam1; }
+            set
+            {
+                if (_LableParam1 != value)
+                {
+                    _LableParam1 = value;
+                    OnPropertyChanged("LableParam1");
+                }
+            }
+        }
+
+
+        public string _LableParam2 { get; set; } = "Param2";
+        public string LableParam2
+        {
+            get { return _LableParam2; }
+            set
+            {
+                if (_LableParam2 != value)
+                {
+                    _LableParam2 = value;
+                    OnPropertyChanged("LableParam2");
+                }
+            }
+        }
+
+        public string _LableParam3 { get; set; } = "Param3";
+        public string LableParam3
+        {
+            get { return _LableParam3; }
+            set
+            {
+                if (_LableParam3 != value)
+                {
+                    _LableParam3 = value;
+                    OnPropertyChanged("LableParam3");
+                }
+            }
+        }
+
+        public string _LableParam4 { get; set; } = "Param4";
+        public string LableParam4
+        {
+            get { return _LableParam4; }
+            set
+            {
+                if (_LableParam4 != value)
+                {
+                    _LableParam4 = value;
+                    OnPropertyChanged("LableParam4");
+                }
+            }
+        }
 
 
 

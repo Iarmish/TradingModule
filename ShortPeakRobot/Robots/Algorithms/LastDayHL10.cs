@@ -6,9 +6,6 @@ using ShortPeakRobot.Robots.Algorithms.Models;
 using ShortPeakRobot.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ShortPeakRobot.Robots.Algorithms
 {

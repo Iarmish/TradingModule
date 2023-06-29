@@ -125,5 +125,6 @@ namespace ShortPeakRobot.Market.Models
         public string AppInstanceKey { get; set; }
 
         public decimal DayProfit { get; set; }
+        public int ServerTimeOffsetMinutes { get; set; }
     }
 }

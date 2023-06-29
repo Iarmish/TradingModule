@@ -345,8 +345,8 @@ namespace ShortPeakRobot
             var index = Convert.ToInt32(((TextBlock)sender).Text);
 
 
-            RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.AllowedDayWeek[index - 1] =
-                !RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.AllowedDayWeek[index - 1];
+            RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.AllowedDayWeek[index] =
+                !RobotVM.robots[MarketData.Info.SelectedRobotIndex].BaseSettings.AllowedDayWeek[index];
 
             if (((TextBlock)sender).Background == Brushes.LightGreen)
             {

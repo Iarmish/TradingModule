@@ -13,7 +13,7 @@ namespace ShortPeakRobot.Market
        
         public static List<RobotOrder> OpenOrders { get; set; } = new List<RobotOrder>();        
 
-        public static List<VWAP> VWAPs { get; set; } = new List<VWAP>();
+        public static List<CandleExtParam> CandleExtParams { get; set; } = new List<CandleExtParam>();
         
         public static MarketInfo Info { get; set; } = new MarketInfo();
         public static DayControl DayStatus { get; set; } = new DayControl();

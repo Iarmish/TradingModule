@@ -32,6 +32,7 @@ namespace ShortPeakRobot.Data
         public DbSet<Scan> Scans { get; set; }
         public DbSet<ScanResult>  ScanResults { get; set; }
         public DbSet<RobotDeal> RobotDeals { get; set; }
+        public DbSet<DealCell> DealCells { get; set; }
         
     }
 }

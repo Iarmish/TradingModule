@@ -1,7 +1,6 @@
 ﻿using Binance.Infrastructure.Constants;
 using Binance.Net.Enums;
 using Binance.Net.Interfaces;
-using CryptoExchange.Net.CommonObjects;
 using CryptoExchange.Net.Objects;
 using CryptoExchange.Net.Sockets;
 using ShortPeakRobot.API;
@@ -13,11 +12,7 @@ using ShortPeakRobot.Socket;
 using ShortPeakRobot.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,6 +24,7 @@ namespace ShortPeakRobot.Market
         public Dictionary<string, Subscribe> subscribes { get; set; }
         public List<CallResult<UpdateSubscription>> updateSubscriptions { get; set; } = new List<CallResult<UpdateSubscription>>();
 
+
         private DateTime ListenKeyTimeUpdate = DateTime.UtcNow;
 
         private List<BinanceRequest> RequestQueue { get; set; } = new List<BinanceRequest>();
@@ -37,6 +33,7 @@ namespace ShortPeakRobot.Market
         private object Locker = new object();
         private object FailRequestLocker = new object();
         private object UserDataSubcription { get; set; }
+
 
         public WebCallResult<string> ListenKey;
 
@@ -53,17 +50,30 @@ namespace ShortPeakRobot.Market
 
             Task.Run(() => Queue());
             Task.Run(() => BinanceFailRequestQueue());
+            Task.Run(() => SaveRobotStates());
+            Task.Run(() => ServerTimeSynchronization());
             //Task.Run(() => TotalProfitMonitor());// дневной СЛ ТП
 
             //--
 
         }
 
+        private async void ServerTimeSynchronization()
+        {
+            while (true)
+            {
+                var serverTime = await BinanceApi.client.CoinFuturesApi.ExchangeData.GetServerTimeAsync(/* parameters */);
+                var offsetMinutes =(DateTime.UtcNow - serverTime.Data).TotalMinutes;
+                MarketData.Info.ServerTimeOffsetMinutes = (int)offsetMinutes;
+                Thread.Sleep(600000);
+            }
+        }
+
         private void TotalProfitMonitor()
         {
             while (true)
             {
-                if ( DateTime.UtcNow.Day != MarketData.DayStatus.CurrentDay)
+                if (DateTime.UtcNow.Day != MarketData.DayStatus.CurrentDay)
                 {
                     MarketData.DayStatus.CurrentDay = DateTime.UtcNow.Day;
                     MarketServices.GetLastDayProfit();
@@ -91,13 +101,26 @@ namespace ShortPeakRobot.Market
                 {
                     MarketData.DayStatus.IsSLTPTaken = true;
                     CloseRobotsPosition();
-                    MarketData.Info.Message += "Роботы остановлены при достижении порога СЛТП. Результаты дня: "+ totalCurrentProfit + "\n";
+                    MarketData.Info.Message += "Роботы остановлены при достижении порога СЛТП. Результаты дня: " + totalCurrentProfit + "\n";
                     MarketData.Info.IsMessageActive = true;
                 }
 
                 Thread.Sleep(400);
             }
         }
+
+        private async void SaveRobotStates()
+        {
+            Thread.Sleep(40000);
+            foreach (var robot in RobotVM.robots)
+            {
+                var response = await ApiServices.UpdateRobotStateAsync(robot.Id, robot.RobotState);
+                Thread.Sleep(500);
+            }
+            Thread.Sleep(6000000);
+        }
+
+
         private void BinanceFailRequestQueue()
         {
             while (true)
@@ -220,7 +243,7 @@ namespace ShortPeakRobot.Market
             var result = await BinanceApi.client.UsdFuturesApi.Trading.CancelOrderAsync(q.Symbol, q.OrderId);
             if (result.Success)
             {
-                
+
             }
             else
             {
@@ -254,7 +277,7 @@ namespace ShortPeakRobot.Market
 
             if (order.Success)
             {
-                
+
                 switch (q.robotOrderType)
                 {
                     case RobotOrderType.SignalBuy:
@@ -287,9 +310,9 @@ namespace ShortPeakRobot.Market
                 lock (FailRequestLocker)
                 {
                     FailRequestQueue.Add(q);
-                    
+
                 }
-                MarketData.Info.Message += "Place order error. RobotID "+ RobotVM.robots[q.RobotIndex].Id + " " + order.Error.ToString() + "\n";
+                MarketData.Info.Message += "Place order error. RobotID " + RobotVM.robots[q.RobotIndex].Id + " " + order.Error.ToString() + "\n";
                 MarketData.Info.IsMessageActive = true;
 
                 var orderPrice = string.Empty;
@@ -437,6 +460,7 @@ namespace ShortPeakRobot.Market
 
             var klineIinterval = data.Data.Data.Interval;
             var klineSymbol = data.Data.Symbol;
+            
             var robotIinterval = selectedRobot.BaseSettings.TimeFrame;
             var robotSymbol = selectedRobot.Symbol;
 
@@ -492,18 +516,17 @@ namespace ShortPeakRobot.Market
             }
             else
             {
-
                 if (data.Data.Data.CloseTime >
                     MarketData.CandleDictionary[data.Data.Symbol][(int)data.Data.Data.Interval][^1].CloseTime)
                 {
-                    MarketData.CandleDictionary[data.Data.Symbol][(int)data.Data.Data.Interval].Add(KlineDataDTO.DataToCandle(data));
+                    MarketData.CandleDictionary[data.Data.Symbol][(int)data.Data.Data.Interval] = MarketData.CandleDictionary[data.Data.Symbol][(int)data.Data.Data.Interval].TakeLast(100).ToList();
 
+                    MarketData.CandleDictionary[data.Data.Symbol][(int)data.Data.Data.Interval].Add(KlineDataDTO.DataToCandle(data));
                 }
                 else
                 {
                     MarketData.CandleDictionary[data.Data.Symbol][(int)data.Data.Data.Interval][^1] = KlineDataDTO.DataToCandle(data);
                 }
-
 
             }
 

@@ -19,9 +19,9 @@ namespace ShortPeakRobot.Robots
             }
 
             CellDayWeekVM.cells.Clear();
-            for (int i = 1; i <= 35; i++)
+            for (int i = 0; i < 7; i++)
             {
-                CellDayWeekVM.cells.Add(new CellDayWeek() { Index = i, RobotIndex = robotIndex, State = RobotVM.robots[robotIndex].BaseSettings.AllowedDayWeek[i - 1] });
+                CellDayWeekVM.cells.Add(new CellDayWeek() { Index = i, RobotIndex = robotIndex, State = RobotVM.robots[robotIndex].BaseSettings.AllowedDayWeek[i] });
 
             }
 

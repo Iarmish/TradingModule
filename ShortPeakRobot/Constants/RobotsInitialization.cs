@@ -89,6 +89,10 @@ namespace ShortPeakRobot.Constants
             new RobotBaseModel{Id = 140, Name= "LDHL-140-DOGE-D", Symbol = "DOGEUSDT", AlgorithmName = "LastDayHL"} ,
 
             new RobotBaseModel{Id = 141, Name= "SP-141-DOT-D", Symbol = "DOTUSDT", AlgorithmName = "ShortPeak"} ,
+
+            new RobotBaseModel{Id = 142, Name= "BOLEMA-142-ADA-H4", Symbol = "ADAUSDT", AlgorithmName = "BollEma"} ,
+            new RobotBaseModel{Id = 143, Name= "BOLSTD-143-LTC-H4", Symbol = "LTCUSDT", AlgorithmName = "BollStd"} ,
+            new RobotBaseModel{Id = 144, Name= "MEDLD-144-LTC-H4", Symbol = "LTCUSDT", AlgorithmName = "MedianaLD"} ,
         };
 
 

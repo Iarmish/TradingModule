@@ -276,9 +276,9 @@ namespace ShortPeakRobot.UI
             }
 
             //рисуем VWAP 
-            for (int i_deal = 0; i_deal < MarketData.VWAPs.Count; i_deal++)
+            for (int i_deal = 0; i_deal < MarketData.CandleExtParams.Count; i_deal++)
             {
-                var candleIndex = DateTimeToIndex(chartData, MarketData.VWAPs[i_deal].Date);
+                var candleIndex = DateTimeToIndex(chartData, MarketData.CandleExtParams[i_deal].Date);
                 if (candleIndex == 0)
                 {
                     continue;
@@ -288,28 +288,43 @@ namespace ShortPeakRobot.UI
                 if (candleIndex >= chartData.CandleStartIndex
                 && candleIndex <= chartData.CandleStartIndex + chartData.CandleCnt)
                 {
-
-
                     double x_ = ((candleIndex - chartData.CandleStartIndex - 1) * candleSpace) + (candleWidth / 2);
-                    double y_ = (setkaEnd - (double)MarketData.VWAPs[i_deal].Volume) * y_point;
+                    double y1_ = (setkaEnd - (double)MarketData.CandleExtParams[i_deal].Param1) * y_point;
+                    double y2_ = (setkaEnd - (double)MarketData.CandleExtParams[i_deal].Param2) * y_point;
+                    double y3_ = (setkaEnd - (double)MarketData.CandleExtParams[i_deal].Param3) * y_point;
 
+                    Ellipse elipse1 = new Ellipse();
+                    elipse1.Width = 4; elipse1.Height = 4;
+                    elipse1.StrokeThickness = 1;
+                    elipse1.Stroke = Brushes.Black;
+                    elipse1.Fill = Brushes.Red;                    
+                    elipse1.Margin = new Thickness(x_, y1_, 0, 0);
+                    elipse1.HorizontalAlignment = HorizontalAlignment.Left;
+                    elipse1.VerticalAlignment = VerticalAlignment.Top;
+                    elipse1.ToolTip = MarketData.CandleExtParams[i_deal].Param1;
+                    Grid_candles.Children.Add(elipse1);
 
+                     Ellipse elipse2 = new Ellipse();
+                    elipse2.Width = 4; elipse1.Height = 4;
+                    elipse2.StrokeThickness = 1;
+                    elipse2.Stroke = Brushes.Black;
+                    elipse2.Fill = Brushes.Red;                    
+                    elipse2.Margin = new Thickness(x_, y2_, 0, 0);
+                    elipse2.HorizontalAlignment = HorizontalAlignment.Left;
+                    elipse2.VerticalAlignment = VerticalAlignment.Top;
+                    elipse2.ToolTip = MarketData.CandleExtParams[i_deal].Param2;
+                    Grid_candles.Children.Add(elipse2);
 
-
-                    Ellipse elipse = new Ellipse();
-                    elipse.Width = 4; elipse.Height = 4;
-                    elipse.StrokeThickness = 1;
-                    elipse.Stroke = Brushes.Black;
-                    elipse.Fill = Brushes.Red;
-                    
-                    elipse.Margin = new Thickness(x_, y_, 0, 0);
-                    elipse.HorizontalAlignment = HorizontalAlignment.Left;
-                    elipse.VerticalAlignment = VerticalAlignment.Top;
-                    elipse.ToolTip = MarketData.VWAPs[i_deal].Volume;
-                    Grid_candles.Children.Add(elipse);
-
-
-
+                     Ellipse elipse3 = new Ellipse();
+                    elipse3.Width = 4; elipse1.Height = 4;
+                    elipse3.StrokeThickness = 1;
+                    elipse3.Stroke = Brushes.Black;
+                    elipse3.Fill = Brushes.Red;                    
+                    elipse3.Margin = new Thickness(x_, y3_, 0, 0);
+                    elipse3.HorizontalAlignment = HorizontalAlignment.Left;
+                    elipse3.VerticalAlignment = VerticalAlignment.Top;
+                    elipse3.ToolTip = MarketData.CandleExtParams[i_deal].Param3;
+                    Grid_candles.Children.Add(elipse3);
 
                 }
                 if (candleIndex > chartData.CandleStartIndex + chartData.CandleCnt) { break; }

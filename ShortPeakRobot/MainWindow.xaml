@@ -27,36 +27,36 @@
             <TabItem Header="Роботы">
                 <Grid >
                     <StackPanel Orientation="Vertical">
-                        
-                    
-                    <StackPanel Orientation="Horizontal" Height="35" VerticalAlignment="Top">
-                        <Button x:Name="TB_RobotsRun"   Padding="4"  Width="130"  Background="MintCream"
+
+
+                        <StackPanel Orientation="Horizontal" Height="35" VerticalAlignment="Top">
+                            <Button x:Name="TB_RobotsRun"   Padding="4"  Width="130"  Background="MintCream"
                                    Margin="3,5" Cursor="Hand" Click="TB_RobotsRun_Click">Запустить  роботов</Button>
-                        <Button x:Name="BtnCloseAll"  Padding="4" Width="130" HorizontalAlignment="Left" Background="MintCream"
+                            <Button x:Name="BtnCloseAll"  Padding="4" Width="130" HorizontalAlignment="Left" Background="MintCream"
                                   Margin="3,5" Cursor="Hand" Click="BtnCloseAll_Click" >Закрыть все позиции</Button>
-                        <Button x:Name="BtnRobotList"  Margin="3,5" Padding="4"  Cursor="Hand" Click="BtnRobotList_Click" Background="MintCream">Список роботов</Button>
-                        <Button x:Name="BtnAuth"  Margin="3,5" Padding="8,4"  Cursor="Hand" Click="BtnAuth_Click" Background="MintCream">Auth</Button>
+                            <Button x:Name="BtnRobotList"  Margin="3,5" Padding="4"  Cursor="Hand" Click="BtnRobotList_Click" Background="MintCream">Список роботов</Button>
+                            <Button x:Name="BtnAuth"  Margin="3,5" Padding="8,4"  Cursor="Hand" Click="BtnAuth_Click" Background="MintCream">Auth</Button>
 
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Height="35" VerticalAlignment="Top" >
-                        <TextBox x:Name="TBStartStatisticPeriod" Text="01.03.2023"   Padding="5,4"  Width="86" Margin="5,0,5,0"
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="35" VerticalAlignment="Top" >
+                            <TextBox x:Name="TBStartStatisticPeriod" Text="01.03.2023"   Padding="5,4"  Width="86" Margin="5,0,5,0"
                                   VerticalAlignment="Top"  />
-                        <TextBox x:Name="TBEndStatisticPeriod" Text="01.03.2023"   Padding="5,4"  Width="86" Margin="5,0,5,0"
+                            <TextBox x:Name="TBEndStatisticPeriod" Text="01.03.2023"   Padding="5,4"  Width="86" Margin="5,0,5,0"
                                   VerticalAlignment="Top"  />
-                        <Button x:Name="BtnPeriodDate"  Padding="5,4"  Width="110" 
+                            <Button x:Name="BtnPeriodDate"  Padding="5,4"  Width="110" 
                                   VerticalAlignment="Top"  Cursor="Hand" Background="MintCream" Click="BtnPeriodDate_Click" >Set Period</Button>
-                        <TextBlock x:Name="TBDepo" Text="285"   Padding="5,4"  Width="86" Margin="15,0,5,0"
+                            <TextBlock x:Name="TBDepo" Text="285"   Padding="5,4"  Width="86" Margin="15,0,5,0"
                                   VerticalAlignment="Top"  />
 
-                    </StackPanel>
-                    <StackPanel x:Name="StackInfo" Orientation="Horizontal"  Background="AntiqueWhite" Height="25" VerticalAlignment="Top">
-                        <TextBlock Text="Balance USDT"   Padding="5,4"  Width="88" 
+                        </StackPanel>
+                        <StackPanel x:Name="StackInfo" Orientation="Horizontal"  Background="AntiqueWhite" Height="25" VerticalAlignment="Top">
+                            <TextBlock Text="Balance USDT"   Padding="5,4"  Width="88" 
                                   VerticalAlignment="Top"    />
-                        <TextBlock Text="{Binding BalanceUSDT}"  Padding="5,4"  Width="80" 
+                            <TextBlock Text="{Binding BalanceUSDT}"  Padding="5,4"  Width="80" 
                                   VerticalAlignment="Top"    />
-                        <TextBlock Text="Session Profit"   Padding="5,4"  Width="88" 
+                            <TextBlock Text="Session Profit"   Padding="5,4"  Width="88" 
                                   VerticalAlignment="Top"    />
-                        <TextBlock Text="{Binding PeriodProfit}"  Padding="5,4"  Width="80" 
+                            <TextBlock Text="{Binding PeriodProfit}"  Padding="5,4"  Width="80" 
                                   VerticalAlignment="Top"    />
 
                             <TextBlock Text="{Binding TotalCurrentProfit}"  Margin="10,0,0,0"  Padding="5,4"  Width="80" 
@@ -64,72 +64,72 @@
 
                         </StackPanel>
 
-                    
 
-                    <ScrollViewer Height="365"  >
-                        <StackPanel>
-                            <StackPanel Margin="0,2,0,0" Visibility="{Binding IsActivated, Converter={StaticResource visibility_res}}" Height="24" 
+
+                        <ScrollViewer Height="365"  >
+                            <StackPanel>
+                                <StackPanel Margin="0,2,0,0" Visibility="{Binding IsActivated, Converter={StaticResource visibility_res}}" Height="24" 
                                         Background="WhiteSmoke" Orientation="Horizontal">
 
-                                <TextBlock Text="Название робота" Padding="5,3,5,0" Width="120" Cursor="Hand"
+                                    <TextBlock Text="Название робота" Padding="5,3,5,0" Width="120" Cursor="Hand"
                                                  Margin="0,0,0,0" TextAlignment="Center" HorizontalAlignment="Left" />
-                                <TextBlock   Padding="10,5,0,0" Width="70"   Text="Символ"/>
-                                <TextBlock   Padding="10,5,0,0" Width="50"   Text="Поз"/>
-                                <TextBlock   Padding="10,5,0,0" Width="50"   Text="Проф"/>
-                                <TextBlock   Padding="10,5,0,0" Width="50"   Text="Орд"/>
-                            </StackPanel>
-                            <ItemsControl ItemsSource="{Binding robots}" DataContext="{StaticResource robot_res}" >
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Margin="0,2,0,0" Visibility="{Binding IsActivated, Converter={StaticResource visibility_res}}"  Cursor="Hand"
+                                    <TextBlock   Padding="10,5,0,0" Width="70"   Text="Символ"/>
+                                    <TextBlock   Padding="10,5,0,0" Width="50"   Text="Поз"/>
+                                    <TextBlock   Padding="10,5,0,0" Width="50"   Text="Проф"/>
+                                    <TextBlock   Padding="10,5,0,0" Width="50"   Text="Орд"/>
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding robots}" DataContext="{StaticResource robot_res}" >
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,2,0,0" Visibility="{Binding IsActivated, Converter={StaticResource visibility_res}}"  Cursor="Hand"
                                                     Height="24" Background="{Binding Selected, Converter={StaticResource stackPanelColor_res}}" Orientation="Horizontal"  HorizontalAlignment="Left" >
-                                            <TextBlock    Width="0"   Text="{Binding Index}"/>
-                                            <TextBlock Text="{Binding Name}" Padding="5,3,5,0" Width="120" ToolTip="{Binding Index}"
+                                                <TextBlock    Width="0"   Text="{Binding Index}"/>
+                                                <TextBlock Text="{Binding Name}" Padding="5,3,5,0" Width="120" ToolTip="{Binding Index}"
                                                 Background="{Binding IsRun, Converter={StaticResource state_res}}"  MouseDown="ChangeState" TextAlignment="Center" HorizontalAlignment="Left" />
-                                            <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding Symbol}" MouseDown="RobotSelect_MouseDown"/>
-                                            <TextBlock Foreground="{Binding Position, Converter={StaticResource numberColor_res}}" MouseDown="RobotSelect_MouseDown"  Padding="5,5,0,0" Width="50"   Text="{Binding Position}"/>
-                                            <TextBlock Foreground="{Binding Profit, Converter={StaticResource numberColor_res}}" MouseDown="RobotSelect_MouseDown" Padding="5,5,0,0" Width="50"   Text="{Binding Profit}"/>
-                                            <TextBlock   Padding="5,5,0,0" Width="50" MouseDown="RobotSelect_MouseDown"  Text="{Binding Orders}"/>
-                                            <Button  x:Name="BtnCloseRobot"  Padding="5,0" Background="MintCream" FontSize="10" Click="BtnCloseRobot_Click">Закрыть поз</Button>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
+                                                <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding Symbol}" MouseDown="RobotSelect_MouseDown"/>
+                                                <TextBlock Foreground="{Binding Position, Converter={StaticResource numberColor_res}}" MouseDown="RobotSelect_MouseDown"  Padding="5,5,0,0" Width="50"   Text="{Binding Position}"/>
+                                                <TextBlock Foreground="{Binding Profit, Converter={StaticResource numberColor_res}}" MouseDown="RobotSelect_MouseDown" Padding="5,5,0,0" Width="50"   Text="{Binding Profit}"/>
+                                                <TextBlock   Padding="5,5,0,0" Width="50" MouseDown="RobotSelect_MouseDown"  Text="{Binding Orders}"/>
+                                                <Button  x:Name="BtnCloseRobot"  Padding="5,0" Background="MintCream" FontSize="10" Click="BtnCloseRobot_Click">Закрыть поз</Button>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
 
-                            </ItemsControl>
-                        </StackPanel>
-
-                    </ScrollViewer>
-                    <ScrollViewer Height="269" VerticalAlignment="Bottom">
-                        <StackPanel>
-                            <StackPanel.Resources>
-                                <MVVM:SymbolVM x:Key="symbol_res"/>
-                            </StackPanel.Resources>
-                            <StackPanel Margin="0,2,0,0"  Height="24"  Background="WhiteSmoke" Orientation="Horizontal">
-                                <TextBlock   Padding="5,3,5,0" Width="120" Text="Символ"/>
-                                <TextBlock   Padding="10,5,0,0" Width="70"   Text="Цена"/>
-                                <TextBlock   Padding="10,5,0,0" Width="60"   Text="Позиция"/>
+                                </ItemsControl>
                             </StackPanel>
-                            <ItemsControl ItemsSource="{Binding symbols}" DataContext="{StaticResource symbol_res}" >
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate >
-                                        <StackPanel Margin="0,2,0,0"  Height="24"  Orientation="Horizontal"  >
-                                            <TextBlock Text="{Binding Name}" Padding="5,3,5,0" Width="120" 
+
+                        </ScrollViewer>
+                        <ScrollViewer Height="269" VerticalAlignment="Bottom">
+                            <StackPanel>
+                                <StackPanel.Resources>
+                                    <MVVM:SymbolVM x:Key="symbol_res"/>
+                                </StackPanel.Resources>
+                                <StackPanel Margin="0,2,0,0"  Height="24"  Background="WhiteSmoke" Orientation="Horizontal">
+                                    <TextBlock   Padding="5,3,5,0" Width="120" Text="Символ"/>
+                                    <TextBlock   Padding="10,5,0,0" Width="70"   Text="Цена"/>
+                                    <TextBlock   Padding="10,5,0,0" Width="60"   Text="Позиция"/>
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding symbols}" DataContext="{StaticResource symbol_res}" >
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate >
+                                            <StackPanel Margin="0,2,0,0"  Height="24"  Orientation="Horizontal"  >
+                                                <TextBlock Text="{Binding Name}" Padding="5,3,5,0" Width="120" 
                                                    TextAlignment="Center" HorizontalAlignment="Left" />
-                                            <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding Price}"/>
-                                            <TextBlock Foreground="{Binding Position, Converter={StaticResource numberColor_res}}"  Padding="10,5,0,0" Width="60"   Text="{Binding Position}"/>
-                                            <Button x:Name="BtnCloseSymbolPosition" Height="22"  FontSize="10" Padding="8,0"  Background="MintCream"
+                                                <TextBlock   Padding="10,5,0,0" Width="70"   Text="{Binding Price}"/>
+                                                <TextBlock Foreground="{Binding Position, Converter={StaticResource numberColor_res}}"  Padding="10,5,0,0" Width="60"   Text="{Binding Position}"/>
+                                                <Button x:Name="BtnCloseSymbolPosition" Height="22"  FontSize="10" Padding="8,0"  Background="MintCream"
                                                     Click="BtnCloseSymbolPosition_Click">Закрыть поз</Button>
-                                            <Button x:Name="BtnCancelSymbolOrders" Height="22"  FontSize="10" Padding="8,0"  Background="MintCream" Click="BtnCancelSymbolOrders_Click"
+                                                <Button x:Name="BtnCancelSymbolOrders" Height="22"  FontSize="10" Padding="8,0"  Background="MintCream" Click="BtnCancelSymbolOrders_Click"
                                                     >Снять ордера</Button>
 
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
 
-                            </ItemsControl>
-                        </StackPanel>
+                                </ItemsControl>
+                            </StackPanel>
 
-                    </ScrollViewer>
+                        </ScrollViewer>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -214,7 +214,7 @@
 
                 </Grid>
             </TabItem>
-            <TabItem Header="Параметры робота">
+            <TabItem Header="Параметры робота" Height="22" Margin="-2,0,-2,0" VerticalAlignment="Bottom">
                 <Grid x:Name="main_grid">
                     <TextBlock x:Name="MonitorRobotName" Text="" Margin="0,5" Padding="10,3,0,0" Height="24" VerticalAlignment="Top" FontSize="14" FontWeight="Bold"/>
                     <Grid Margin="10,35,0,0" HorizontalAlignment="Left" Width="322" Height="158" VerticalAlignment="Top" >
@@ -260,18 +260,20 @@
 
                     <Line X1="350" X2="350" Y1="60" Y2="360" Stroke="#FF8D979C"/>
 
-                    <Grid Margin="370,35,0,0" HorizontalAlignment="Left" Width="322" Height="206" VerticalAlignment="Top" >
+                    <Grid Margin="370,35,0,0" HorizontalAlignment="Left" Width="300" Height="206" VerticalAlignment="Top" >
                         <TextBlock Text="Фильтр по дням недели"  Padding="10,3,0,0" Height="22" VerticalAlignment="Top"/>
-                        <TextBlock Text="Пн     Вт       Ср       Чт       Пт       Сб       Вс"  Padding="63,3,0,0" Height="22" VerticalAlignment="Top" Margin="0,25,0,0"/>
-                        <StackPanel Width="50" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,55,0,0">
-                            <TextBlock Text="W 1" Padding="8,3,0,0" Margin="5"/>
-                            <TextBlock Text="W 2" Padding="8,3,0,0" Margin="5"/>
-                            <TextBlock Text="W 3" Padding="8,3,0,0" Margin="5"/>
-                            <TextBlock Text="W 4" Padding="8,3,0,0" Margin="5"/>
-                            <TextBlock Text="W 5" Padding="8,3,0,0" Margin="5"/>
-
+                        <StackPanel Orientation="Horizontal" Margin="1,28,0,0">
+                            <TextBlock Text="Вс"  TextAlignment="Center" Height="22" Width="40" VerticalAlignment="Top" Margin="1"/>
+                            <TextBlock Text="Пн"  TextAlignment="Center" Height="22" Width="40" VerticalAlignment="Top" Margin="1"/>
+                            <TextBlock Text="Вт"  TextAlignment="Center" Height="22" Width="40" VerticalAlignment="Top" Margin="1"/>
+                            <TextBlock Text="Ср"  TextAlignment="Center" Height="22" Width="40" VerticalAlignment="Top" Margin="1"/>
+                            <TextBlock Text="Чт"  TextAlignment="Center" Height="22" Width="40" VerticalAlignment="Top" Margin="1"/>
+                            <TextBlock Text="Пт"  TextAlignment="Center" Height="22" Width="40" VerticalAlignment="Top" Margin="1"/>
+                            <TextBlock Text="Сб"  TextAlignment="Center" Height="22" Width="40" VerticalAlignment="Top" Margin="1"/>
+                            
                         </StackPanel>
-                        <Grid x:Name="day_week"  Margin="45,52,1,1">
+                        
+                        <Grid x:Name="day_week"  Margin="1,52,4,1">
                             <ItemsControl ItemsSource="{Binding cells}" DataContext="{StaticResource cellDayWeek_res}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -281,7 +283,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock  Background="{Binding State, Converter={StaticResource state_res}}" Margin="1" Text="{Binding Index}" 
-                                                    MouseDown="DayWeekState" TextAlignment="Center" Padding="0,4"/>
+                                                    MouseDown="DayWeekState" TextAlignment="Center" Padding="0,4" Width="40"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
@@ -291,7 +293,7 @@
 
                     <Line X1="370" X2="700" Y1="250" Y2="250" Stroke="#FF8D979C"/>
 
-                    <Grid x:Name="Grid_baseSettings" Margin="371,263,0,0" Height="244" VerticalAlignment="Top" HorizontalAlignment="Left" Width="391">
+                    <Grid x:Name="Grid_baseSettings" Margin="371,263,0,0" Height="326" VerticalAlignment="Top" HorizontalAlignment="Left" Width="391">
 
 
                         <Label Content="SL" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="21,34,0,0"/>
@@ -316,18 +318,28 @@
                         <Label Content="Symbol" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="49" Margin="0,4,0,0"/>
                         <Label Content="TF" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="142,4,0,0"/>
                         <Label Content="Lot" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="30" Margin="3,148,0,0"/>
-                        <TextBox x:Name="BT_Vol" Width="60" IsEnabled="{Binding IsVariableLot, Converter={StaticResource enableState_res}}" Text="{Binding Volume}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="39,150,0,0" />
-                        <Label Content="Depo" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="40" Margin="-5,176,0,0"/>
-                        <TextBox x:Name="BT_Depo" Width="60" IsEnabled="{Binding IsVariableLot}" Text="{Binding Deposit}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="39,179,0,0" />
-                        <CheckBox IsChecked="{Binding IsVariableLot}"  Content="Variable lot" Margin="119,152,134,0" Height="18" VerticalAlignment="Top"/>
+                        <TextBox x:Name="BT_Vol" Width="60" IsEnabled="{Binding IsVariableLot, Converter={StaticResource enableState_res}}" Text="{Binding Volume}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="59,150,0,0" />
+                        <Label Content="Depo" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="40" Margin="1,176,0,0"/>
+                        <TextBox x:Name="BT_Depo" Width="60" IsEnabled="{Binding IsVariableLot}" Text="{Binding Deposit}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="59,179,0,0" />
+                        <CheckBox IsChecked="{Binding IsVariableLot}"  Content="Variable lot" Margin="139,152,114,0" Height="18" VerticalAlignment="Top"/>
 
                         <CheckBox  IsChecked="{Binding SLPercent}"  Content="SL Percent" Margin="108,39,200,0" Height="18" VerticalAlignment="Top"/>
                         <CheckBox  IsChecked="{Binding TPPercent}"  Content="TP Percent" Margin="108,67,200,0" Height="18" VerticalAlignment="Top"/>
-                        <Label Content="{Binding CurrentDeposit}" x:Name="LabCurrDepo" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="52" Margin="100,176,0,0"/>
+                        <Label Content="{Binding CurrentDeposit}" x:Name="LabCurrDepo" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="52" Margin="141,176,0,0"/>
                         <TextBox x:Name="BT_Offset"  Width="46" Text="{Binding Offset}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="51,93,0,0" />
                         <Label Content="Offset" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="45" Margin="2,90,0,0"/>
                         <CheckBox  IsChecked="{Binding IsOffsetPercent}"  Content="Offset Percent" Margin="108,96,180,0" Height="18" VerticalAlignment="Top"/>
                         <Label Content="{Binding OffsetPercent}" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="68" Margin="212,91,0,0"/>
+
+                        <Label Content="{Binding LableParam1}" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="54" Margin="1,206,0,0"/>
+                        <TextBox x:Name="BT_Param1" Width="60" Text="{Binding Param1}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="59,209,0,0" />
+
+                        <Label Content="{Binding LableParam2}" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="54" Margin="150,206,0,0"/>
+                        <TextBox x:Name="BT_Param2" Width="60" Text="{Binding Param2}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="220,209,0,0" />
+                        <Label Content="{Binding LableParam4}" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="54" Margin="150,236,0,0"/>
+                        <TextBox x:Name="BT_Param4" Width="60" Text="{Binding Param4}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="220,239,0,0" />
+                        <Label Content="{Binding LableParam3}" Height="30" VerticalAlignment="Top" HorizontalAlignment="Left" Width="54" Margin="1,236,0,0"/>
+                        <TextBox x:Name="BT_Param3" Width="60" Text="{Binding Param3}" Height="22" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="59,239,0,0" />
                     </Grid>
 
 
@@ -584,12 +596,12 @@
             </TabItem>
         </TabControl>
 
-        
-        
-        
+
+
+
 
         <Grid x:Name="GridMessage" Visibility="{Binding IsMessageActive, Converter={StaticResource visibility_res}}"
-              Background="LightGray" Margin="86,116,78,0" Height="374" VerticalAlignment="Top">
+              Background="LightGray" Margin="86,200,78,0" Height="374" VerticalAlignment="Top">
             <ScrollViewer Margin="10,10,10,60">
 
                 <TextBox Text="{Binding Message}"   ></TextBox>

@@ -19,7 +19,7 @@ namespace ShortPeakRobot.Market
 
         //---  Order -------------------
         public static async Task SaveRobotOrdersAsync(int robotId, List<RobotOrder> orders)
-        {            
+        {
             string fileName = "Reserve/RobotOrders/RobotOrders_" + robotId + ".json";
             if (orders.Count == 0)
             {
@@ -53,7 +53,7 @@ namespace ShortPeakRobot.Market
             }
             catch (System.Exception error)
             {
-                MarketData.Info.Message += "Save order " +  " " + error.Message + "\n";
+                MarketData.Info.Message += "Save order " + " " + error.Message + "\n";
                 MarketData.Info.IsMessageActive = true;
             }
 
@@ -90,14 +90,14 @@ namespace ShortPeakRobot.Market
         }
         //-------Trade -------------
         public static async Task SaveRobotTradesAsync(int robotId, List<RobotTrade> trades)
-        {            
+        {
 
             string fileName = "Reserve/RobotTrades/RobotTrades_" + robotId + ".json";
-            if (trades.Count == 0) 
+            if (trades.Count == 0)
             {
                 try
                 {
-                File.Delete(fileName);
+                    File.Delete(fileName);
                     return;
                 }
                 catch (System.Exception error)
@@ -126,7 +126,7 @@ namespace ShortPeakRobot.Market
             }
             catch (System.Exception error)
             {
-                MarketData.Info.Message += "Save trades "+ robotId +" " + error.Message + "\n";
+                MarketData.Info.Message += "Save trades " + robotId + " " + error.Message + "\n";
                 MarketData.Info.IsMessageActive = true;
             }
 
@@ -134,7 +134,7 @@ namespace ShortPeakRobot.Market
 
         public static async Task<List<RobotTrade>> LoadRobotTradesAsync(int robotId)
         {
-            var robotTrades = new List<RobotTrade>();            
+            var robotTrades = new List<RobotTrade>();
 
             var fileName = "Reserve/RobotTrades/RobotTrades_" + robotId + ".json";
             if (Directory.Exists("Reserve/RobotTrades/") && File.Exists(fileName))
@@ -153,7 +153,7 @@ namespace ShortPeakRobot.Market
                 }
                 catch (System.Exception error)
                 {
-                    MarketData.Info.Message += "Load trades " + robotId + " " + error.Message +"\n";
+                    MarketData.Info.Message += "Load trades " + robotId + " " + error.Message + "\n";
                     MarketData.Info.IsMessageActive = true;
                 }
             }
@@ -365,6 +365,32 @@ namespace ShortPeakRobot.Market
             }
 
             return robotStateResponse;
+
+        }
+
+        public static async void SaveRobotDealAsync(int robotId, RobotDeal deal)
+        {
+
+            string fileName = "Reserve/RobotDeals/ErrorRobotDealSave_" + robotId + ".json";
+
+            if (!Directory.Exists("Reserve/RobotDeals"))
+            {
+                Directory.CreateDirectory("Reserve/RobotDeals");
+            }
+
+            try
+            {
+                using (FileStream fs = new FileStream(fileName, FileMode.Create))
+                {
+                    await JsonSerializer.SerializeAsync(fs, deal);
+                }
+
+            }
+            catch (System.Exception error)
+            {
+                MarketData.Info.Message += "Save deals " + robotId + " " + error.Message + "\n";
+                MarketData.Info.IsMessageActive = true;
+            }
 
         }
 

@@ -17,6 +17,7 @@ using ShortPeakRobot.Socket;
 using ShortPeakRobot.Robots.Algorithms.Models;
 using System.IO;
 using System.Security.Cryptography;
+using System.Windows.Markup;
 
 namespace ShortPeakRobot.Market
 {
@@ -26,8 +27,7 @@ namespace ShortPeakRobot.Market
 
         public static CandleChartDwawDelegate candleChartDwaw;
 
-        //public static ApplicationDbContext _context = new ApplicationDbContext();
-
+        
 
         public async static Task<decimal> GetSymbolPositionAsync(string symbol)
         {
@@ -307,6 +307,7 @@ namespace ShortPeakRobot.Market
                 if (robot.Symbol.Equals(symbol))
                 {
                     SetRobotVariableLot(robot.Index, price);
+                    SetRobotParamPercent(robot.Index, price);
                 }
             }
 
@@ -324,6 +325,27 @@ namespace ShortPeakRobot.Market
 
             }
 
+        }
+
+        public static void SetRobotParamPercent(int robotIndex, decimal price)
+        {
+            if (RobotVM.robots[robotIndex].BaseSettings.TPPercent)
+            {
+                RobotVM.robots[robotIndex].BaseSettings.TakeProfitPercent =
+                        Math.Round(price / 100 * RobotVM.robots[robotIndex].BaseSettings.TakeProfit, SymbolIndexes.price[RobotVM.robots[robotIndex].Symbol]);                
+            }
+
+            if (RobotVM.robots[robotIndex].BaseSettings.SLPercent)
+            {
+                RobotVM.robots[robotIndex].BaseSettings.StopLossPercent =
+                        Math.Round(price / 100 * RobotVM.robots[robotIndex].BaseSettings.StopLoss, SymbolIndexes.price[RobotVM.robots[robotIndex].Symbol]);
+            }
+
+            if (RobotVM.robots[robotIndex].BaseSettings.IsOffsetPercent)
+            {
+                RobotVM.robots[robotIndex].BaseSettings.OffsetPercent =
+                        Math.Round(price / 100 * RobotVM.robots[robotIndex].BaseSettings.Offset, SymbolIndexes.price[RobotVM.robots[robotIndex].Symbol]);
+            }
         }
 
         public async static void StopAllSubscribes()

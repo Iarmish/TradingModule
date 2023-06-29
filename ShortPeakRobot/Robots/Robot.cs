@@ -211,8 +211,6 @@ namespace ShortPeakRobot.Robots
                     }
                 }
             }
-
-
         }
 
         public void NewOrderUpdate(DataEvent<BinanceFuturesStreamOrderUpdate> data)
@@ -387,6 +385,9 @@ namespace ShortPeakRobot.Robots
                     case "LastDayHL10": ((LastDayHL10)algorithm.Algo).NewTick(Command); break;
                     case "SL3": ((SL3)algorithm.Algo).NewTick(Command); break;
                     case "ShortPeakPlusTime": ((ShortPeakPlusTime)algorithm.Algo).NewTick(Command); break;
+                    case "BollEma": ((BollingerEma)algorithm.Algo).NewTick(Command); break;
+                    case "BollStd": ((BollingerStd)algorithm.Algo).NewTick(Command); break;
+                    case "MedianaLD": ((MedianaLD)algorithm.Algo).NewTick(Command); break;
                 }
 
                 if (Command != RobotCommands.Nothing)
@@ -417,30 +418,7 @@ namespace ShortPeakRobot.Robots
 
         public void CheckSLTPCross(decimal price)
         {
-            //if (Position != 0 )
-            //{               
 
-            //    if (Position > 0)
-            //    {
-            //        if (price > OpenPositionPrice + BaseSettings.TakeProfitPercent || price < OpenPositionPrice - BaseSettings.StopLossPercent)
-            //        {
-            //            Thread.Sleep(2000);
-            //            CloseRobotPosition();
-            //        }
-            //    }
-            //    if (Position < 0)
-            //    {
-            //        if (price < OpenPositionPrice - BaseSettings.TakeProfitPercent || price > OpenPositionPrice + BaseSettings.StopLossPercent)
-            //        {
-            //            Thread.Sleep(2000);
-            //            CloseRobotPosition();
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    return;
-            //}
 
 
         }
@@ -1101,10 +1079,12 @@ namespace ShortPeakRobot.Robots
                 return false;
             }
 
-            if (!BaseSettings.AllowedDayWeek[date.Day - 1])
+
+            if (!BaseSettings.AllowedDayWeek[(int)date.DayOfWeek])
             {
-                //return false;
+                return false;
             }
+
 
             if (!BaseSettings.AllowedHours[date.Hour])
             {

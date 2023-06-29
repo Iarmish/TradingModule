@@ -98,7 +98,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 LastTime = currentTime;
 
                 vwap = new VWAP();
-                MarketData.VWAPs.Clear();
+                MarketData.CandleExtParams.Clear();
                 IsSignalSellOrderPlaced = false;
                 IsSignalBuyOrderPlaced = false;
 
@@ -149,7 +149,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                     Thread.Sleep(500);
 
                     vwap = new VWAP();
-                    MarketData.VWAPs.Clear();
+                    MarketData.CandleExtParams.Clear();
 
                     await GetVWAPCandles();
                     CalculateVWAP();
@@ -372,7 +372,7 @@ namespace ShortPeakRobot.Robots.Algorithms
                 App.Current.Dispatcher.Invoke(() =>
                 {
                     RobotInfoVM.ClearParams();
-                    RobotInfoVM.AddParam("VWAPs.Count", MarketData.VWAPs.Count.ToString());
+                    RobotInfoVM.AddParam("VWAPs.Count", MarketData.CandleExtParams.Count.ToString());
 
                     RobotInfoVM.AddParam("VWAP.Volume", Math.Round(VWAPcandles[^1].VWAP, SymbolIndexes.price[robot.Symbol]).ToString());
                     RobotInfoVM.AddParam("VWAP.Position", VWAPStatus.ToString());

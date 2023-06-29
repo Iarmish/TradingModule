@@ -26,6 +26,9 @@ namespace ShortPeakRobot.Robots.Algorithms
                 case "LastDayHL10": Algo = new LastDayHL10(robotId, robotIndex); break;
                 case "SL3": Algo = new SL3(robotId, robotIndex); break;
                 case "ShortPeakPlusTime": Algo = new ShortPeakPlusTime(robotId, robotIndex); break;
+                case "BollEma": Algo = new BollingerEma(robotId, robotIndex); break;
+                case "BollStd": Algo = new BollingerStd(robotId, robotIndex); break;
+                case "MedianaLD": Algo = new MedianaLD(robotId, robotIndex); break;
             }
             
         }
